@@ -1,0 +1,914 @@
+﻿import React, { useState } from 'react';
+import { Plus, Ruler, Truck, Inbox, CheckCircle, Tag, Camera, Image as ImageIcon, Trash2 } from 'lucide-react';
+import { ClientAutocomplete } from '../components/ClientAutocomplete';
+import { Button } from '../components/ui/button';
+import { Badge } from '../components/ui/badge';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '../components/ui/dialog';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '../components/ui/card';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '../components/ui/table';
+
+import { supabase } from '../lib/supabase';
+import { Pagination } from '../components/ui/pagination';
+import { SECTORS } from '../lib/constants';
+import { useAuth } from '../contexts/AuthContext';
+
+// Interfaz que engloba a Supabase
+export interface ServicioAlfombra {
+    id: string;
+    cliente_id: string;
+    cliente_nombre: string;
+    tipo_servicio: string; // lana, pelo corto, etc
+    dimensiones: string;
+    ancho: number | null;
+    largo: number | null;
+    m2: number | null;
+    valor_m2: number | null;
+    valor_total: number | null;
+    fecha_recepcion: string | null;
+    fecha_entrega: string | null;
+    ubicacion: string;
+    estado: string; // espera, in_process, ready, delivered
+    photo_url?: string | null;
+    is_pickup?: boolean;
+    sector?: string;
+    cliente_telefono?: string;
+    pickup_date?: string;
+}
+
+const getStatusBadge = (status: string) => {
+    switch (status) {
+        case 'received':
+            return <Badge variant="secondary">En Recepción</Badge>;
+        case 'in_process':
+            return <Badge variant="default">En Proceso</Badge>;
+        case 'ready':
+            return <Badge variant="success">Listo para Entrega</Badge>;
+        case 'delivered':
+            return <Badge variant="secondary" className="bg-gray-100 text-gray-800">Entregado</Badge>;
+        case 'scheduled_pickup':
+            return <Badge variant="default" className="bg-blue-600 hover:bg-blue-700">Retiro Programado</Badge>;
+        default:
+            return <Badge variant="outline">{status}</Badge>;
+    }
+};
+
+// Helper to calculate 5 business days
+const addBusinessDays = (date: Date, days: number) => {
+    const result = new Date(date);
+    let count = 0;
+    while (count < days) {
+        result.setDate(result.getDate() + 1);
+        if (result.getDay() !== 0 && result.getDay() !== 6) { // Skip Sunday (0) and Saturday (6)
+            count++;
+        }
+    }
+    return result;
+};
+
+export const AlfombrasPage = () => {
+    const { profile } = useAuth();
+    const isWorker = profile?.rol === 'worker';
+
+    const [rugs, setRugs] = useState<ServicioAlfombra[]>([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 12;
+
+    const [viewPhoto, setViewPhoto] = useState<string | null>(null);
+
+    // Fetch desde Supabase
+    React.useEffect(() => {
+        fetchRugs();
+    }, []);
+
+    const fetchRugs = async () => {
+        const { data, error } = await supabase
+            .from('servicios_alfombras')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (!error && data) {
+            const mappedData = (data as ServicioAlfombra[]);
+
+            // Batch-query de teléfonos desde la tabla clientes
+            const ids = [...new Set(mappedData.map(r => r.cliente_id).filter(Boolean))];
+            if (ids.length > 0) {
+                const { data: clientesData } = await supabase
+                    .from('clientes')
+                    .select('id, phone')
+                    .in('id', ids);
+                const phoneMap: Record<string, string> = {};
+                clientesData?.forEach((c: any) => { phoneMap[c.id] = c.phone || ''; });
+                mappedData.forEach(r => { r.cliente_telefono = phoneMap[r.cliente_id] || ''; });
+            }
+            setRugs(mappedData);
+        }
+    };
+
+    // Filters
+    const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState('all');
+    const [sectorFilter, setSectorFilter] = useState('all');
+
+    const filteredRugs = rugs.filter(rug => {
+        const matchesSearch = (rug.cliente_nombre || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            rug.id.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesStatus = statusFilter === 'all' || rug.estado === statusFilter;
+        const matchesSector = sectorFilter === 'all' || (rug.sector && rug.sector === sectorFilter);
+
+        return matchesSearch && matchesStatus && matchesSector;
+    });
+
+    const totalPages = Math.ceil(filteredRugs.length / itemsPerPage);
+    const paginatedRugs = filteredRugs.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    );
+
+    const [isReceiveOpen, setIsReceiveOpen] = useState(false);
+    const [selectedRug, setSelectedRug] = useState<ServicioAlfombra | null>(null);
+    const [isEditing, setIsEditing] = useState(false);
+    const [newRug, setNewRug] = useState({
+        cliente_id: '',
+        cliente_nombre: '',
+        dims: '',
+        type: '',
+        notes: '',
+        isPickup: false,
+        pickupDate: '',
+        pickupTime: '',
+        sector: '',
+        direccion: '',
+        telefono: ''
+    });
+    const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setNewRug(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setPhotoPreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleReceiveRug = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (!newRug.cliente_id) {
+            alert('Debe buscar un cliente real en el autocompletar.');
+            return;
+        }
+
+        const today = new Date();
+        const deliveryDate = addBusinessDays(today, 5);
+        let recepcionFinal = today.toISOString();
+        if (newRug.isPickup && newRug.pickupDate) {
+            const timeStr = newRug.pickupTime || '09:00';
+            recepcionFinal = new Date(`${newRug.pickupDate}T${timeStr}:00`).toISOString();
+        }
+
+        // Carga de archivo a Storage no implementada, simulamos o dejamos en null la foto_url
+        // En una app real, foto se subiría a Supabase Storage y retornaríamos su URL pública.
+
+        const insertData = {
+            cliente_id: newRug.cliente_id,
+            cliente_nombre: newRug.cliente_nombre, // Se envía a DB ahora
+            tipo_servicio: newRug.type || 'Estandar',
+            dimensiones: newRug.dims,
+            fecha_recepcion: recepcionFinal,
+            fecha_entrega: newRug.isPickup ? null : deliveryDate.toISOString(),
+            estado: newRug.isPickup ? 'scheduled_pickup' : 'recepcionada',
+            ubicacion: newRug.isPickup ? (newRug.direccion || 'Domicilio (Sin detallar)') : 'Recepción',
+            sector: newRug.sector,
+            is_pickup: newRug.isPickup,
+            pickup_date: newRug.pickupDate || null,
+            photo_url: photoPreview
+        };
+
+        const { data, error } = await supabase
+            .from('servicios_alfombras')
+            .insert([insertData])
+            .select('*');
+
+        if (error) {
+            alert('Error grabando: ' + error.message);
+            return;
+        }
+
+        if (data && data.length > 0) {
+            setRugs([data[0], ...rugs]);
+            setIsReceiveOpen(false);
+            setNewRug({ cliente_id: '', cliente_nombre: '', dims: '', type: '', notes: '', isPickup: false, pickupDate: '', pickupTime: '', sector: '', direccion: '', telefono: '' });
+            setPhotoPreview(null);
+        }
+    };
+
+    const handleConfirmPickup = async (id: string) => {
+        const today = new Date();
+        const deliveryDate = addBusinessDays(today, 5);
+
+        const { error } = await supabase
+            .from('servicios_alfombras')
+            .update({
+                estado: 'recepcionada',
+                fecha_recepcion: today.toISOString(),
+                ubicacion: 'Planta',
+                fecha_entrega: deliveryDate.toISOString()
+            })
+            .eq('id', id);
+
+        if (!error) {
+            setRugs(rugs.map(r =>
+                r.id === id
+                    ? {
+                        ...r,
+                        estado: 'recepcionada',
+                        fecha_recepcion: today.toISOString(),
+                        ubicacion: 'Planta',
+                        fecha_entrega: deliveryDate.toISOString()
+                    }
+                    : r
+            ));
+        }
+    };
+
+    const handleUpdateStatus = async (status: string) => {
+        if (!selectedRug) return;
+
+        const { error } = await supabase
+            .from('servicios_alfombras')
+            .update({ estado: status })
+            .eq('id', selectedRug.id);
+
+        if (!error) {
+            const updatedRugs = rugs.map(r =>
+                r.id === selectedRug.id ? { ...r, estado: status } : r
+            );
+            setRugs(updatedRugs);
+            setSelectedRug(null);
+        }
+    };
+
+    const handleUpdateRug = async () => {
+        if (!selectedRug) return;
+
+        const { error } = await supabase
+            .from('servicios_alfombras')
+            .update({
+                cliente_id: selectedRug.cliente_id,
+                cliente_nombre: selectedRug.cliente_nombre,
+                tipo_servicio: selectedRug.tipo_servicio,
+                fecha_recepcion: selectedRug.fecha_recepcion,
+                fecha_entrega: selectedRug.fecha_entrega,
+                estado: selectedRug.estado, photo_url: photoPreview || selectedRug.photo_url
+            })
+            .eq('id', selectedRug.id);
+
+        if (!error) {
+            setRugs(rugs.map(r => r.id === selectedRug.id ? { ...selectedRug, photo_url: photoPreview || selectedRug.photo_url } : r));
+            setIsEditing(false);
+            setSelectedRug(null);
+            setPhotoPreview(null);
+        }
+    };
+
+    const handleDeleteRug = async (id: string) => {
+        if (window.confirm('¿Estás seguro de que deseas eliminar este registro permanentemente?')) {
+            const { error } = await supabase
+                .from('servicios_alfombras')
+                .delete()
+                .eq('id', id);
+
+            if (!error) {
+                setRugs(rugs.filter(r => r.id !== id));
+            }
+        }
+    };
+
+    const handleCloseDetails = () => {
+        setSelectedRug(null);
+        setIsEditing(false);
+    };
+
+    const getTrafficLightColor = (receivedDate: string) => {
+        const daysInShop = Math.floor((new Date().getTime() - new Date(receivedDate).getTime()) / (1000 * 3600 * 24));
+        if (daysInShop <= 2) return 'bg-green-100 text-green-800 border-green-200';
+        if (daysInShop <= 4) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'bg-red-100 text-red-800 border-red-200';
+    };
+
+    return (
+        <div className="space-y-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 className="text-3xl font-bold tracking-tight">Alfombras en Taller</h2>
+                    <p className="text-muted-foreground">
+                        Control de inventario y estado de alfombras en planta.
+                    </p>
+                </div>
+                <Dialog open={isReceiveOpen} onOpenChange={setIsReceiveOpen}>
+                    <DialogTrigger asChild>
+                        <Button>
+                            <Plus className="mr-2 h-4 w-4" /> Nueva Recepción
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[500px] w-[95%]">
+                        <DialogHeader>
+                            <DialogTitle>Recepcionar Alfombra</DialogTitle>
+                            <DialogDescription>
+                                Ingresa los detalles. La fecha de entrega se calculará automáticamente (5 días hábiles).
+                            </DialogDescription>
+                        </DialogHeader>
+                        <form onSubmit={handleReceiveRug} className="space-y-4">
+                            <div className="flex justify-center mb-4">
+                                <div className="relative w-full h-40 bg-muted rounded-md flex flex-col items-center justify-center border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors">
+                                    {photoPreview ? (
+                                        <img src={photoPreview} alt="Preview" className="w-full h-full object-cover rounded-md" />
+                                    ) : (
+                                        <div className="text-center p-4">
+                                            <Camera className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                                            <p className="text-sm text-muted-foreground">Tocar para tomar foto</p>
+                                        </div>
+                                    )}
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        // capture="environment" // Comentado para evitar errores en desktop, útil en móvil
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                        onChange={handlePhotoChange}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="client">Cliente</Label>
+                                <ClientAutocomplete
+                                    onSelect={(client) => {
+                                        setNewRug(prev => ({
+                                            ...prev,
+                                            cliente_nombre: client.name,
+                                            cliente_id: client.id,
+                                            sector: client.sector || '',
+                                            direccion: client.address || ''
+                                        }));
+                                    }}
+                                    selectedClientName={newRug.cliente_nombre}
+                                />
+                            </div>
+
+                            <div className="flex items-center space-x-2 pb-2">
+                                <input
+                                    type="checkbox"
+                                    id="isPickup"
+                                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    checked={newRug.isPickup}
+                                    onChange={(e) => setNewRug({ ...newRug, isPickup: e.target.checked })}
+                                />
+                                <Label htmlFor="isPickup" className="cursor-pointer">Solicitud de Retiro a Domicilio</Label>
+                            </div>
+
+                            {newRug.isPickup && (
+                                <div className="grid gap-4 bg-muted/50 p-4 rounded-md border border-border">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="pickupDate">Fecha Retiro</Label>
+                                            <Input
+                                                type="date"
+                                                id="pickupDate"
+                                                name="pickupDate"
+                                                value={newRug.pickupDate}
+                                                onChange={handleInputChange}
+                                                required={newRug.isPickup}
+                                            />
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="pickupTime">Hora / Bloque</Label>
+                                            <Input
+                                                type="text"
+                                                id="pickupTime"
+                                                name="pickupTime"
+                                                placeholder="Ej: 10:00 - 12:00"
+                                                value={newRug.pickupTime}
+                                                onChange={handleInputChange}
+                                                required={newRug.isPickup}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="direccion" className="flex items-center gap-1">
+                                            📍 Dirección de Retiro
+                                            <span className="text-xs text-muted-foreground font-normal">(Pre-cargada desde cliente, modificable)</span>
+                                        </Label>
+                                        <Input
+                                            type="text"
+                                            id="direccion"
+                                            name="direccion"
+                                            placeholder="Ej: Las Rosas 123, Concepción"
+                                            value={newRug.direccion}
+                                            onChange={handleInputChange}
+                                            required={newRug.isPickup}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="sector">Sector</Label>
+                                <select
+                                    id="sector"
+                                    name="sector"
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                    value={newRug.sector}
+                                    onChange={handleInputChange}
+                                    required
+                                >
+                                    <option value="">Seleccionar sector...</option>
+                                    {SECTORS.map((sector) => (
+                                        <option key={sector} value={sector}>
+                                            {sector}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="type">Tipo</Label>
+                                    <select
+                                        id="type"
+                                        name="type"
+                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                        value={newRug.type}
+                                        onChange={handleInputChange}
+                                    >
+                                        <option value="Pelo Corto">Pelo corto</option>
+                                        <option value="Pelo Largo">Pelo largo</option>
+                                        <option value="Lana">Lana</option>
+                                    </select>
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="dims">Dimensiones</Label>
+                                    <Input
+                                        id="dims"
+                                        name="dims"
+                                        placeholder="Ej: 1.60x230"
+                                        value={newRug.dims}
+                                        onChange={handleInputChange}
+                                        list="common-dims"
+                                        required
+                                    />
+                                    <datalist id="common-dims">
+                                        <option value="1.60x230" />
+                                        <option value="2.30x2.90" />
+                                        <option value="2.20x1.50" />
+                                    </datalist>
+                                </div>
+                            </div>
+
+                            <div className="rounded-md bg-blue-50 p-3 text-xs text-blue-700">
+                                <p className="font-semibold">Fecha Estimada de Entrega:</p>
+                                {addBusinessDays(new Date(), 5).toLocaleDateString()}
+                            </div>
+
+                            <DialogFooter>
+                                <Button type="submit">Ingresar Alfombra</Button>
+                            </DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Dialog>
+
+                <Dialog open={!!selectedRug} onOpenChange={(open) => !open && handleCloseDetails()}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Actualizar Estado</DialogTitle>
+                            <DialogDescription>
+                                Gestionar flujo de la alfombra {selectedRug?.id}
+                            </DialogDescription>
+                        </DialogHeader>
+                        {selectedRug && (
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <Label className="font-bold block mb-1">Cliente:</Label>
+                                        {isEditing ? (
+                                            <ClientAutocomplete
+                                                onSelect={(client) => setSelectedRug({
+                                                    ...selectedRug,
+                                                    cliente_id: client.id,
+                                                    cliente_nombre: client.name
+                                                })}
+                                                selectedClientName={selectedRug.cliente_nombre || ''}
+                                            />
+                                        ) : (
+                                            <span>{selectedRug.cliente_nombre}</span>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <Label className="font-bold block mb-1">Tipo:</Label>
+                                        {isEditing ? (
+                                            <select
+                                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                                value={selectedRug.tipo_servicio}
+                                                onChange={(e) => setSelectedRug({ ...selectedRug, tipo_servicio: e.target.value })}
+                                            >
+                                                <option value="Pelo Corto">Pelo corto</option>
+                                                <option value="Pelo Largo">Pelo largo</option>
+                                                <option value="Lana">Lana</option>
+                                            </select>
+                                        ) : (
+                                            <span>{selectedRug.tipo_servicio}</span>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <Label className="font-bold block mb-1">Ingreso:</Label>
+                                        {isEditing ? (
+                                            <Input
+                                                type="date"
+                                                value={selectedRug.fecha_recepcion ? selectedRug.fecha_recepcion.split('T')[0] : ''}
+                                                onChange={(e) => setSelectedRug({ ...selectedRug, fecha_recepcion: e.target.value })}
+                                            />
+                                        ) : (
+                                            <span>{selectedRug.fecha_recepcion ? new Date(selectedRug.fecha_recepcion).toLocaleDateString() : '-'}</span>
+                                        )}
+                                    </div>
+                                    <div className="col-span-2">
+                                        <Label className="font-bold block mb-1">📍 Dirección de Entrega:</Label>
+                                        <p className="text-xs text-muted-foreground mb-1">Pre-cargada desde el cliente. Modificable si la entrega es en otro domicilio.</p>
+                                        {isEditing ? (
+                                            <Input
+                                                type="text"
+                                                placeholder="Ej: Las Rosas 123, Concepción"
+                                                value={(selectedRug as any).direccion_entrega || selectedRug.ubicacion || ''}
+                                                onChange={(e) => setSelectedRug({ ...selectedRug, ubicacion: e.target.value })}
+                                            />
+                                        ) : (
+                                            <span className="text-sm">{(selectedRug as any).direccion_entrega || selectedRug.ubicacion || 'Sin dirección registrada'}</span>
+                                        )}
+                                    </div>
+                                </div>
+                                {selectedRug.photo_url && (
+                                    <div className="h-40 w-full bg-muted rounded-md overflow-hidden">
+                                        <img src={selectedRug.photo_url} alt="Evidencia" className="w-full h-full object-cover" />
+                                    </div>
+                                )}
+                                <div className="pt-2">
+                                    <Label className="mb-2 block font-bold">Estado:</Label>
+                                    {isEditing ? (
+                                        <select
+                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                            value={selectedRug.estado}
+                                            onChange={(e) => setSelectedRug({ ...selectedRug, estado: e.target.value })}
+                                        >
+                                            <option value="recepcionada">En Recepción</option>
+                                            <option value="in_process">En Proceso</option>
+                                            <option value="ready">Listo para Entrega</option>
+                                            <option value="delivered">Entregado</option>
+                                        </select>
+                                    ) : (
+                                        <div className="grid grid-cols-1 gap-2">
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <Button
+                                                    variant={selectedRug.estado === 'recepcionada' ? 'default' : 'outline'}
+                                                    onClick={() => handleUpdateStatus('recepcionada')}
+                                                    size="sm"
+                                                >
+                                                    En Recepción
+                                                </Button>
+                                                <Button
+                                                    variant={selectedRug.estado === 'in_process' ? 'default' : 'outline'}
+                                                    onClick={() => handleUpdateStatus('in_process')}
+                                                    size="sm"
+                                                    className={selectedRug.estado === 'recepcionada' ? "border-blue-500 text-blue-600 hover:bg-blue-50" : ""}
+                                                >
+                                                    Pasar a Proceso
+                                                </Button>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <Button
+                                                    variant={selectedRug.estado === 'ready' ? 'default' : 'outline'}
+                                                    onClick={() => handleUpdateStatus('ready')}
+                                                    size="sm"
+                                                    className={selectedRug.estado === 'ready' ? "bg-green-600 hover:bg-green-700" : "text-green-600 border-green-200 hover:bg-green-50"}
+                                                >
+                                                    Listo para Entrega
+                                                </Button>
+                                                <Button
+                                                    variant={selectedRug.estado === 'delivered' ? 'default' : 'outline'}
+                                                    onClick={() => handleUpdateStatus('delivered')}
+                                                    size="sm"
+                                                    className={selectedRug.estado === 'delivered' ? "bg-gray-800 text-white" : "border-gray-300 text-gray-600 hover:bg-gray-50"}
+                                                >
+                                                    Entregado
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                        <DialogFooter>
+                            {isEditing ? (
+                                <>
+                                    <Button variant="outline" onClick={() => setIsEditing(false)}>Cancelar</Button>
+                                    <Button onClick={handleUpdateRug}>Guardar Cambios</Button>
+                                </>
+                            ) : (
+                                <>
+                                    <Button variant="secondary" onClick={() => setIsEditing(true)}>Editar Detalles</Button>
+                                    <Button variant="outline" onClick={handleCloseDetails}>Cerrar</Button>
+                                </>
+                            )}
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+            </div>
+
+            <Dialog open={!!viewPhoto} onOpenChange={() => setViewPhoto(null)}>
+                <DialogContent className="max-w-3xl w-full p-1 bg-transparent border-none shadow-none">
+                    <div className="relative w-full h-full flex items-center justify-center">
+                        <img
+                            src={viewPhoto || ''}
+                            alt="Vista Ampliada"
+                            className="max-w-full max-h-[80vh] rounded-md shadow-2xl"
+                        />
+                        <Button
+                            className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 h-8 w-8"
+                            onClick={() => setViewPhoto(null)}
+                        >
+                            ✕
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            <Card>
+                <CardHeader>
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <CardTitle>Inventario Activo</CardTitle>
+                            <CardDescription>
+                                Alfombras actualmente en proceso o espera.
+                            </CardDescription>
+                        </div>
+                        <div className="flex gap-2 items-center">
+                            <Input
+                                placeholder="Buscar por cliente o ID..."
+                                className="w-64"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                            <select
+                                className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                            >
+                                <option value="all">Todos los Estados</option>
+                                <option value="scheduled_pickup">Por Retirar</option>
+                                <option value="received">En Recepción</option>
+                                <option value="in_process">En Proceso</option>
+                                <option value="ready">Listas</option>
+                                <option value="delivered">Entregadas</option>
+                            </select>
+                            <select
+                                className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                value={sectorFilter}
+                                onChange={(e) => setSectorFilter(e.target.value)}
+                            >
+                                <option value="all">Todos los Sectores</option>
+                                {SECTORS.map(s => <option key={s} value={s}>{s}</option>)}
+                            </select>
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>ID</TableHead>
+                                <TableHead>Cliente</TableHead>
+                                <TableHead>Dirección / Sector</TableHead>
+                                <TableHead>Tipo / Dimensiones</TableHead>
+                                <TableHead>Fecha / Hora</TableHead>
+                                <TableHead>Estado Tiempo</TableHead>
+                                <TableHead>Ubicación</TableHead>
+                                <TableHead>Estado</TableHead>
+                                <TableHead className="text-right min-w-[120px]">Acciones</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {paginatedRugs.map((item) => (
+                                <TableRow key={item.id}>
+                                    <TableCell className="font-mono text-xs font-bold text-primary">
+                                        <div className="flex items-center gap-2">
+                                            {item.photo_url ? (
+                                                <div
+                                                    className="h-8 w-8 rounded overflow-hidden cursor-pointer border border-border hover:border-blue-500 transition-colors"
+                                                    onClick={() => setViewPhoto(item.photo_url || null)}
+                                                >
+                                                    <img src={item.photo_url} alt="Miniatura" className="h-full w-full object-cover" />
+                                                </div>
+                                            ) : (
+                                                <ImageIcon className="h-4 w-4 text-muted-foreground/30" />
+                                            )}
+                                            {item.id}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="font-medium">
+                                        <div className="flex flex-col">
+                                            <span>{item.cliente_nombre}</span>
+                                            {item.cliente_telefono && (
+                                                <a href={`tel:${item.cliente_telefono}`} className="text-green-700 text-xs font-bold hover:underline mt-0.5">
+                                                    📞 {item.cliente_telefono}
+                                                </a>
+                                            )}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex flex-col text-sm">
+                                            <span>{item.is_pickup ? (item.ubicacion === 'Domicilio Cliente' ? 'Domicilio s/d' : item.ubicacion) : 'Local Taller'}</span>
+                                            <span className="text-muted-foreground text-xs">{item.sector || ''}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex flex-col text-sm">
+                                            <span>{item.tipo_servicio}</span>
+                                            <span className="text-muted-foreground text-xs">{item.dimensiones || '-'}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        {item.estado === 'scheduled_pickup' ? (
+                                            <div className="flex flex-col text-sm">
+                                                <span className="flex items-center text-blue-600 font-medium">
+                                                    <Truck className="mr-1 h-3 w-3" /> {item.fecha_recepcion ? new Date(item.fecha_recepcion).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : '-'}
+                                                </span>
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col text-sm">
+                                                <span className="flex items-center">
+                                                    <Inbox className="mr-1 h-3 w-3 text-muted-foreground" />
+                                                    {item.fecha_recepcion ? new Date(item.fecha_recepcion).toLocaleDateString() : '-'}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </TableCell>
+                                    <TableCell>
+                                        {item.estado === 'scheduled_pickup' ? (
+                                            <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                                                Programado
+                                            </span>
+                                        ) : (
+                                            <span className={`px-2 py-1 rounded-full text-xs font-semibold border ${item.fecha_recepcion ? getTrafficLightColor(item.fecha_recepcion) : ''}`}>
+                                                {item.fecha_recepcion ? `${Math.floor((new Date().getTime() - new Date(item.fecha_recepcion).getTime()) / (1000 * 3600 * 24))} días` : '-'}
+                                            </span>
+                                        )}
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center text-sm text-muted-foreground">
+                                            <Tag className="mr-1 h-3 w-3" />
+                                            {item.ubicacion}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        {getStatusBadge(item.estado)}
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <div className="flex justify-end gap-2">
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => setSelectedRug(item)}
+                                            >
+                                                Actualizar
+                                            </Button>
+                                            {item.estado === 'scheduled_pickup' && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="hover:bg-green-50 hover:text-green-700"
+                                                    title="Confirmar Retiro (Ingreso a Planta)"
+                                                    onClick={() => handleConfirmPickup(item.id)}
+                                                >
+                                                    <Inbox className="h-4 w-4 text-green-600" />
+                                                </Button>
+                                            )}
+                                            {!isWorker && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                    onClick={() => handleDeleteRug(item.id)}
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={setCurrentPage}
+                    />
+                </CardContent>
+            </Card>
+
+            <div className="grid gap-4 md:grid-cols-4">
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Por Retirar</CardTitle>
+                        <Truck className="h-4 w-4 text-blue-600" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">
+                            {rugs.filter(r => r.estado === 'scheduled_pickup').length}
+                        </div>
+                        <p className="text-xs text-muted-foreground">Logística pendiente</p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">En Taller</CardTitle>
+                        <Inbox className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">
+                            {rugs.filter(r => r.estado !== 'delivered' && r.estado !== 'scheduled_pickup').length}
+                        </div>
+                        <p className="text-xs text-muted-foreground">Inventario físico real</p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">En Recepción</CardTitle>
+                        <Inbox className="h-4 w-4 text-blue-500" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">
+                            {rugs.filter(r => r.estado === 'recepcionada' || r.estado === 'received').length}
+                        </div>
+                        <p className="text-xs text-muted-foreground">Por comenzar lavado</p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">En Proceso</CardTitle>
+                        <Ruler className="h-4 w-4 text-orange-500" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">
+                            {rugs.filter(r => r.estado === 'in_process').length}
+                        </div>
+                        <p className="text-xs text-muted-foreground">Lavado / Secado</p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Listas</CardTitle>
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">
+                            {rugs.filter(r => r.estado === 'ready').length}
+                        </div>
+                        <p className="text-xs text-muted-foreground">Esperando entrega</p>
+                    </CardContent>
+                </Card>
+            </div>
+
+        </div>
+    );
+};

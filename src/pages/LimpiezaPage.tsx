@@ -276,7 +276,8 @@ export const LimpiezaPage = () => {
                                             ...prev,
                                             cliente_id: client.id,
                                             cliente_nombre: client.name,
-                                            direccion: client.address || prev.direccion
+                                            direccion: client.address || prev.direccion,
+                                            sector: client.sector || prev.sector
                                         }));
                                     }}
                                     selectedClientName={newService.cliente_nombre}

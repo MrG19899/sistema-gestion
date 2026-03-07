@@ -2,9 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
     PieChart, Pie, Cell, Tooltip, ResponsiveContainer
 } from 'recharts';
-const TrendingUp = ({ className }: { className?: string }) => <span className={className}>📈</span>;
-const Users = ({ className }: { className?: string }) => <span className={className}>👥</span>;
-const Calendar = ({ className }: { className?: string }) => <span className={className}>📅</span>;
 const ListTodo = ({ className }: { className?: string }) => <span className={className}>📋</span>;
 const Plus = ({ className }: { className?: string }) => <span className={className}>➕</span>;
 const Trash2 = ({ className }: { className?: string }) => <span className={className}>🗑️</span>;
@@ -264,7 +261,7 @@ export const ReportsPage: React.FC = () => {
 
             {/* Componente "Productividad por Técnico" completamente removido mediante solicitud del usuario */}
 
-            {/* Additional Metrics / Highlights */}
+            {/* Additional Metrics / Highlights (Comentado temporalmente por falta de relevancia)
             <Card className="shadow-sm border-none bg-white">
                 <CardHeader>
                     <CardTitle className="text-lg">Hitos y Alertas</CardTitle>
@@ -303,6 +300,7 @@ export const ReportsPage: React.FC = () => {
                     </div>
                 </CardContent>
             </Card>
+            */}
         </div>
     );
 };

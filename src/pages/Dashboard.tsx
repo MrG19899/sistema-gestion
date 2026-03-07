@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { supabase } from '../lib/supabase';
+import { SECTORS } from '../lib/constants';
 import { isToday, isThisWeek } from 'date-fns';
 
 export interface AgendaItem {
@@ -19,6 +20,7 @@ export interface AgendaItem {
     telefono: string;
     color: string;
     bg: string;
+    sector?: string; // Para aplicar filtros de sector logísticos
 }
 
 export const Dashboard: React.FC = () => {
@@ -26,6 +28,7 @@ export const Dashboard: React.FC = () => {
     const [periodFilter, setPeriodFilter] = useState<'HOY' | 'SEMANA'>('HOY');
     const [serviceFilter, setServiceFilter] = useState<'TODOS' | 'PLAGAS' | 'LIMPIEZA' | 'ALFOMBRAS'>('TODOS');
     const [customDate, setCustomDate] = useState('');
+    const [sectorFilter, setSectorFilter] = useState('all');
     const [itinerario, setItinerario] = useState<AgendaItem[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -41,21 +44,21 @@ export const Dashboard: React.FC = () => {
 
     useEffect(() => {
         fetchDashboardData();
-    }, [periodFilter, customDate]);
+    }, [periodFilter, customDate, sectorFilter]);
 
     const fetchDashboardData = async () => {
         setLoading(true);
         try {
             const [{ data: plagas }, { data: limpiezas }, { data: alfombras }] = await Promise.all([
                 supabase.from('servicios_plagas')
-                    .select('id, tipo_servicio, direccion, fecha_ejecucion, cliente_id, cliente_nombre, estado')
+                    .select('id, tipo_servicio, direccion, sector, fecha_ejecucion, cliente_id, cliente_nombre, estado')
                     .in('estado', ['programado', 'vigente', 'pending']),
                 supabase.from('servicios_limpieza')
-                    .select('id, tipo_servicio, direccion, fecha, hora, cliente_id, cliente_nombre, estado')
+                    .select('id, tipo_servicio, direccion, sector, fecha, hora, cliente_id, cliente_nombre, estado')
                     .in('estado', ['scheduled', 'pending']),
                 supabase.from('servicios_alfombras')
                     .select('id, is_pickup, fecha_entrega, fecha_recepcion, sector, ubicacion, cliente_id, cliente_nombre, estado, created_at')
-                    .in('estado', ['scheduled_pickup', 'recepcionada', 'in_process', 'ready'])
+                    .in('estado', ['scheduled_pickup', 'ready'])
             ]);
 
             const allItems: AgendaItem[] = [];
@@ -90,7 +93,8 @@ export const Dashboard: React.FC = () => {
                     cliente: item.cliente_nombre || 'Sin nombre',
                     telefono: '',
                     color: 'text-orange-600',
-                    bg: 'bg-orange-600'
+                    bg: 'bg-orange-600',
+                    sector: item.sector
                 });
             });
 
@@ -112,13 +116,14 @@ export const Dashboard: React.FC = () => {
                     cliente: item.cliente_nombre || 'Sin nombre',
                     telefono: '',
                     color: 'text-blue-600',
-                    bg: 'bg-blue-600'
+                    bg: 'bg-blue-600',
+                    sector: item.sector
                 });
             });
 
             // --- ALFOMBRAS ---
             // scheduled_pickup → aplica filtro de fecha (tarea futura pendiente)
-            // recepcionada / in_process / ready → SIEMPRE se muestran (trabajo activo en taller)
+            // ready → SIEMPRE se muestran (trabajo activo en taller listo para entrega)
             const tituloMap: Record<string, string> = {
                 'scheduled_pickup': '🚚 Retiro Programado',
                 'recepcionada': '📥 En Recepción',
@@ -149,7 +154,8 @@ export const Dashboard: React.FC = () => {
                         cliente: item.cliente_nombre || 'Sin nombre',
                         telefono: '',
                         color: 'text-purple-600',
-                        bg: 'bg-purple-600'
+                        bg: 'bg-purple-600',
+                        sector: item.sector
                     });
                 } else {
                     // Items activos en taller: siempre aparecen, no aplica filtro de fecha
@@ -164,7 +170,8 @@ export const Dashboard: React.FC = () => {
                         cliente: item.cliente_nombre || 'Sin nombre',
                         telefono: '',
                         color: 'text-purple-600',
-                        bg: 'bg-purple-600'
+                        bg: 'bg-purple-600',
+                        sector: item.sector
                     });
                 }
             });
@@ -198,8 +205,14 @@ export const Dashboard: React.FC = () => {
     };
 
     const getFilteredItinerario = () => {
-        if (serviceFilter === 'TODOS') return itinerario;
-        return itinerario.filter(i => i.servicio === serviceFilter);
+        let filtered = itinerario;
+        if (serviceFilter !== 'TODOS') {
+            filtered = filtered.filter(i => i.servicio === serviceFilter);
+        }
+        if (sectorFilter !== 'all') {
+            filtered = filtered.filter(i => i.sector === sectorFilter);
+        }
+        return filtered;
     };
 
     const filteredItems = getFilteredItinerario();
@@ -263,6 +276,15 @@ export const Dashboard: React.FC = () => {
                             <Button variant="ghost" size="sm" className="rounded-full text-xs text-muted-foreground"
                                 onClick={() => setCustomDate('')}>✕ Limpiar</Button>
                         )}
+
+                        <select
+                            className="h-8 text-xs w-auto min-w-[140px] border-slate-200 shadow-sm border rounded-full px-3 text-slate-700 font-medium"
+                            value={sectorFilter}
+                            onChange={(e) => setSectorFilter(e.target.value)}
+                        >
+                            <option value="all">🗺️ Todos los Sectores</option>
+                            {SECTORS.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
 
                         <div className="w-px h-6 bg-slate-200 mx-1 self-center hidden sm:block" />
 

@@ -185,6 +185,7 @@ export const PlagasPage = () => {
             cliente_nombre: form.clienteNombre,
             sector: form.sector,
             tipo_servicio: form.tiposServicio.join(', '),
+            tipos_servicio: form.tiposServicio,
             tecnico_asignado: form.tecnico,
             fecha_ejecucion: form.fecha,
             direccion: form.clienteDireccion,

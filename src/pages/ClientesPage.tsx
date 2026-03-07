@@ -12,14 +12,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { Label } from '../components/ui/label';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '../components/ui/dialog';
+import { FullScreenDialog } from '../components/ui/FullScreenDialog';
 import {
     Card,
     CardContent,
@@ -567,150 +560,146 @@ export const ClientesPage = () => {
             )}
 
             {/* Dialog para agregar cliente */}
-            <Dialog open={isAddClientOpen} onOpenChange={setIsAddClientOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Agregar Nuevo Cliente</DialogTitle>
-                        <DialogDescription>
-                            Ingresa los datos del nuevo cliente para registrarlo en el sistema.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <form onSubmit={handleAddClient} className="space-y-4">
+            <FullScreenDialog
+                open={isAddClientOpen}
+                onOpenChange={setIsAddClientOpen}
+                title="Agregar Nuevo Cliente"
+                description="Ingresa los datos del nuevo cliente para registrarlo en el sistema."
+            >
+                <form onSubmit={handleAddClient} className="space-y-6 pt-2 pb-12">
+                    <div className="grid gap-2">
+                        <Label htmlFor="name" className="text-base font-semibold">Nombre Empresa / Cliente</Label>
+                        <Input id="name" name="name" className="h-12 text-base" value={newClient.name} onChange={handleInputChange} required />
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="name">Nombre Empresa / Cliente</Label>
-                            <Input id="name" name="name" value={newClient.name} onChange={handleInputChange} required />
+                            <Label htmlFor="contact" className="text-base font-semibold">Nombre Contacto</Label>
+                            <Input id="contact" name="contact" className="h-12 text-base" value={newClient.contact} onChange={handleInputChange} required />
                         </div>
-                        <div className="grid sm:grid-cols-2 gap-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="contact">Nombre Contacto</Label>
-                                <Input id="contact" name="contact" value={newClient.contact} onChange={handleInputChange} required />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="type">Tipo Cliente</Label>
-                                <select
-                                    id="type"
-                                    name="type"
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                    value={newClient.type}
-                                    onChange={handleInputChange}
-                                >
-                                    <option value="Restaurant">Restaurant</option>
-                                    <option value="Residencial">Residencial</option>
-                                    <option value="Comercial">Comercial</option>
-                                </select>
-                            </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="type" className="text-base font-semibold">Tipo Cliente</Label>
+                            <select
+                                id="type"
+                                name="type"
+                                className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base"
+                                value={newClient.type}
+                                onChange={handleInputChange}
+                            >
+                                <option value="Restaurant">Restaurant</option>
+                                <option value="Residencial">Residencial</option>
+                                <option value="Comercial">Comercial</option>
+                            </select>
                         </div>
-                        <div className="grid sm:grid-cols-2 gap-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="email">Email</Label>
-                                <Input id="email" name="email" type="email" value={newClient.email} onChange={handleInputChange} required />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="phone">Teléfono</Label>
-                                <Input id="phone" name="phone" value={newClient.phone} onChange={handleInputChange} required />
-                            </div>
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="email" className="text-base font-semibold">Email</Label>
+                            <Input id="email" name="email" type="email" className="h-12 text-base" value={newClient.email} onChange={handleInputChange} required />
                         </div>
-                        <div className="grid sm:grid-cols-2 gap-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="address">Dirección</Label>
-                                <Input id="address" name="address" value={newClient.address} onChange={handleInputChange} required />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="sector">Sector</Label>
-                                <select
-                                    id="sector"
-                                    name="sector"
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                    value={newClient.sector}
-                                    onChange={handleInputChange}
-                                    required
-                                >
-                                    <option value="">Seleccionar...</option>
-                                    {SECTORS.map((sector) => (
-                                        <option key={sector} value={sector}>{sector}</option>
-                                    ))}
-                                </select>
-                            </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="phone" className="text-base font-semibold">Teléfono</Label>
+                            <Input id="phone" name="phone" className="h-12 text-base" value={newClient.phone} onChange={handleInputChange} required />
                         </div>
-                        <DialogFooter>
-                            <Button type="submit">Guardar Cliente</Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="address" className="text-base font-semibold">Dirección</Label>
+                            <Input id="address" name="address" className="h-12 text-base" value={newClient.address} onChange={handleInputChange} required />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="sector" className="text-base font-semibold">Sector</Label>
+                            <select
+                                id="sector"
+                                name="sector"
+                                className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base"
+                                value={newClient.sector}
+                                onChange={handleInputChange}
+                                required
+                            >
+                                <option value="">Seleccionar...</option>
+                                {SECTORS.map((sector) => (
+                                    <option key={sector} value={sector}>{sector}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                    <div className="pt-6 grid grid-cols-2 gap-4">
+                        <Button type="button" variant="outline" size="lg" className="h-14 text-base" onClick={() => setIsAddClientOpen(false)}>Cancelar</Button>
+                        <Button type="submit" size="lg" className="h-14 text-base">Guardar Cliente</Button>
+                    </div>
+                </form>
+            </FullScreenDialog>
 
             {/* Dialog para editar cliente */}
-            <Dialog open={isEditClientOpen} onOpenChange={setIsEditClientOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Editar Cliente</DialogTitle>
-                        <DialogDescription>
-                            Modifica la información del cliente.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <form onSubmit={handleEditClient} className="space-y-4">
+            <FullScreenDialog
+                open={isEditClientOpen}
+                onOpenChange={setIsEditClientOpen}
+                title="Editar Cliente"
+                description="Modifica la información del cliente."
+            >
+                <form onSubmit={handleEditClient} className="space-y-6 pt-2 pb-12">
+                    <div className="grid gap-2">
+                        <Label htmlFor="edit-name" className="text-base font-semibold">Nombre Empresa / Cliente</Label>
+                        <Input id="edit-name" name="name" className="h-12 text-base" value={newClient.name} onChange={handleInputChange} required />
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="edit-name">Nombre Empresa / Cliente</Label>
-                            <Input id="edit-name" name="name" value={newClient.name} onChange={handleInputChange} required />
+                            <Label htmlFor="edit-contact" className="text-base font-semibold">Nombre Contacto</Label>
+                            <Input id="edit-contact" name="contact" className="h-12 text-base" value={newClient.contact} onChange={handleInputChange} required />
                         </div>
-                        <div className="grid sm:grid-cols-2 gap-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="edit-contact">Nombre Contacto</Label>
-                                <Input id="edit-contact" name="contact" value={newClient.contact} onChange={handleInputChange} required />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="edit-type">Tipo Cliente</Label>
-                                <select
-                                    id="edit-type"
-                                    name="type"
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                    value={newClient.type}
-                                    onChange={handleInputChange}
-                                >
-                                    <option value="Restaurant">Restaurant</option>
-                                    <option value="Residencial">Residencial</option>
-                                    <option value="Comercial">Comercial</option>
-                                </select>
-                            </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="edit-type" className="text-base font-semibold">Tipo Cliente</Label>
+                            <select
+                                id="edit-type"
+                                name="type"
+                                className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base"
+                                value={newClient.type}
+                                onChange={handleInputChange}
+                            >
+                                <option value="Restaurant">Restaurant</option>
+                                <option value="Residencial">Residencial</option>
+                                <option value="Comercial">Comercial</option>
+                            </select>
                         </div>
-                        <div className="grid sm:grid-cols-2 gap-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="edit-email">Email</Label>
-                                <Input id="edit-email" name="email" type="email" value={newClient.email} onChange={handleInputChange} required />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="edit-phone">Teléfono</Label>
-                                <Input id="edit-phone" name="phone" value={newClient.phone} onChange={handleInputChange} required />
-                            </div>
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="edit-email" className="text-base font-semibold">Email</Label>
+                            <Input id="edit-email" name="email" type="email" className="h-12 text-base" value={newClient.email} onChange={handleInputChange} required />
                         </div>
-                        <div className="grid sm:grid-cols-2 gap-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="edit-address">Dirección</Label>
-                                <Input id="edit-address" name="address" value={newClient.address} onChange={handleInputChange} required />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="edit-sector">Sector</Label>
-                                <select
-                                    id="edit-sector"
-                                    name="sector"
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                    value={newClient.sector}
-                                    onChange={handleInputChange}
-                                    required
-                                >
-                                    <option value="">Seleccionar...</option>
-                                    {SECTORS.map((sector) => (
-                                        <option key={sector} value={sector}>{sector}</option>
-                                    ))}
-                                </select>
-                            </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="edit-phone" className="text-base font-semibold">Teléfono</Label>
+                            <Input id="edit-phone" name="phone" className="h-12 text-base" value={newClient.phone} onChange={handleInputChange} required />
                         </div>
-                        <DialogFooter>
-                            <Button type="submit">Guardar Cambios</Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="edit-address" className="text-base font-semibold">Dirección</Label>
+                            <Input id="edit-address" name="address" className="h-12 text-base" value={newClient.address} onChange={handleInputChange} required />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="edit-sector" className="text-base font-semibold">Sector</Label>
+                            <select
+                                id="edit-sector"
+                                name="sector"
+                                className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base"
+                                value={newClient.sector}
+                                onChange={handleInputChange}
+                                required
+                            >
+                                <option value="">Seleccionar...</option>
+                                {SECTORS.map((sector) => (
+                                    <option key={sector} value={sector}>{sector}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                    <div className="pt-6 grid grid-cols-2 gap-4">
+                        <Button type="button" variant="outline" size="lg" className="h-14 text-base" onClick={() => setIsEditClientOpen(false)}>Cancelar</Button>
+                        <Button type="submit" size="lg" className="h-14 text-base">Guardar Cambios</Button>
+                    </div>
+                </form>
+            </FullScreenDialog>
         </div>
     );
 };

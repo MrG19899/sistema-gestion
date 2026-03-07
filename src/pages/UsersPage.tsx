@@ -12,14 +12,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { Label } from '../components/ui/label';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '../components/ui/dialog';
+import { FullScreenDialog } from '../components/ui/FullScreenDialog';
 import {
     Card,
     CardContent,
@@ -339,87 +332,83 @@ export const UsersPage = () => {
             </Card>
 
             {/* Dialog Agregar Usuario */}
-            <Dialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Agregar Nuevo Usuario</DialogTitle>
-                        <DialogDescription>
-                            Crea un nuevo acceso para el personal.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <form onSubmit={handleAddUser} className="space-y-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="nombre">Nombre Completo</Label>
-                            <Input id="nombre" name="nombre" value={newUser.nombre} onChange={handleInputChange} required />
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="email">Email</Label>
-                            <Input id="email" name="email" type="email" value={newUser.email} onChange={handleInputChange} required />
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="password">Contraseña (Mínimo 6 caracteres)</Label>
-                            <Input id="password" name="password" type="text" placeholder="******" value={newUser.password || ''} onChange={handleInputChange} required />
-                            <p className="text-xs text-muted-foreground">Esta será la contraseña que le entregarás al trabajador para acceder.</p>
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="rol">Rol</Label>
-                            <select
-                                id="rol"
-                                name="rol"
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                value={newUser.rol}
-                                onChange={handleInputChange}
-                            >
-                                <option value="admin">Administrador Regular</option>
-                                <option value="worker">Trabajador</option>
-                                <option value="adminsupremo">Admin Supremo</option>
-                            </select>
-                        </div>
-                        <DialogFooter>
-                            <Button type="submit">Crear Usuario</Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
+            <FullScreenDialog
+                open={isAddUserOpen}
+                onOpenChange={setIsAddUserOpen}
+                title="Agregar Nuevo Usuario"
+                description="Crea un nuevo acceso para el personal."
+            >
+                <form onSubmit={handleAddUser} className="space-y-6 pt-2 pb-12">
+                    <div className="grid gap-2">
+                        <Label htmlFor="nombre" className="text-base font-semibold">Nombre Completo</Label>
+                        <Input id="nombre" name="nombre" className="h-12 text-base" value={newUser.nombre} onChange={handleInputChange} required />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="email" className="text-base font-semibold">Email</Label>
+                        <Input id="email" name="email" type="email" className="h-12 text-base" value={newUser.email} onChange={handleInputChange} required />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="password" className="text-base font-semibold">Contraseña (Mínimo 6 caracteres)</Label>
+                        <Input id="password" name="password" type="text" className="h-12 text-base" placeholder="******" value={newUser.password || ''} onChange={handleInputChange} required />
+                        <p className="text-xs text-muted-foreground mt-1">Esta será la contraseña que le entregarás al trabajador para acceder.</p>
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="rol" className="text-base font-semibold">Rol</Label>
+                        <select
+                            id="rol"
+                            name="rol"
+                            className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base"
+                            value={newUser.rol}
+                            onChange={handleInputChange}
+                        >
+                            <option value="admin">Administrador Regular</option>
+                            <option value="worker">Trabajador</option>
+                            <option value="adminsupremo">Admin Supremo</option>
+                        </select>
+                    </div>
+                    <div className="pt-6 grid grid-cols-2 gap-4">
+                        <Button type="button" variant="outline" size="lg" className="h-14 text-base" onClick={() => setIsAddUserOpen(false)}>Cancelar</Button>
+                        <Button type="submit" size="lg" className="h-14 text-base">Crear Usuario</Button>
+                    </div>
+                </form>
+            </FullScreenDialog>
 
             {/* Dialog Editar Usuario */}
-            <Dialog open={isEditUserOpen} onOpenChange={setIsEditUserOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Editar Usuario</DialogTitle>
-                        <DialogDescription>
-                            Modificar permisos y datos del usuario.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <form onSubmit={handleEditUser} className="space-y-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="edit-nombre">Nombre Completo</Label>
-                            <Input id="edit-nombre" name="nombre" value={newUser.nombre} onChange={handleInputChange} required />
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="edit-email">Email</Label>
-                            <Input id="edit-email" name="email" type="email" value={newUser.email} disabled className="bg-muted" />
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="edit-rol">Rol</Label>
-                            <select
-                                id="edit-rol"
-                                name="rol"
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                value={newUser.rol}
-                                onChange={handleInputChange}
-                            >
-                                <option value="admin">Administrador Regular</option>
-                                <option value="worker">Trabajador</option>
-                                <option value="adminsupremo">Admin Supremo</option>
-                            </select>
-                        </div>
-                        <DialogFooter>
-                            <Button type="submit">Guardar Cambios</Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
+            <FullScreenDialog
+                open={isEditUserOpen}
+                onOpenChange={setIsEditUserOpen}
+                title="Editar Usuario"
+                description="Modificar permisos y datos del usuario."
+            >
+                <form onSubmit={handleEditUser} className="space-y-6 pt-2 pb-12">
+                    <div className="grid gap-2">
+                        <Label htmlFor="edit-nombre" className="text-base font-semibold">Nombre Completo</Label>
+                        <Input id="edit-nombre" name="nombre" className="h-12 text-base" value={newUser.nombre} onChange={handleInputChange} required />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="edit-email" className="text-base font-semibold">Email</Label>
+                        <Input id="edit-email" name="email" type="email" className="h-12 text-base bg-muted" value={newUser.email} disabled />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="edit-rol" className="text-base font-semibold">Rol</Label>
+                        <select
+                            id="edit-rol"
+                            name="rol"
+                            className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base"
+                            value={newUser.rol}
+                            onChange={handleInputChange}
+                        >
+                            <option value="admin">Administrador Regular</option>
+                            <option value="worker">Trabajador</option>
+                            <option value="adminsupremo">Admin Supremo</option>
+                        </select>
+                    </div>
+                    <div className="pt-6 grid grid-cols-2 gap-4">
+                        <Button type="button" variant="outline" size="lg" className="h-14 text-base" onClick={() => setIsEditUserOpen(false)}>Cancelar</Button>
+                        <Button type="submit" size="lg" className="h-14 text-base">Guardar Cambios</Button>
+                    </div>
+                </form>
+            </FullScreenDialog>
         </div>
     );
 };

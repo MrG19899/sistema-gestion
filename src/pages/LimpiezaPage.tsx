@@ -20,8 +20,8 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from '../components/ui/dialog';
+import { FullScreenDialog } from '../components/ui/FullScreenDialog';
 import {
     Card,
     CardContent,
@@ -254,43 +254,43 @@ export const LimpiezaPage = () => {
                         Programación y seguimiento de servicios de aseo.
                     </p>
                 </div>
-                <Dialog open={isScheduleOpen} onOpenChange={setIsScheduleOpen}>
-                    <DialogTrigger asChild>
-                        <Button>
-                            <Plus className="mr-2 h-4 w-4" /> Agendar Servicio
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Agendar Nuevo Servicio</DialogTitle>
-                            <DialogDescription>
-                                Programa una nueva visita de limpieza para un cliente.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <form onSubmit={handleScheduleService} className="space-y-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="client">Cliente</Label>
-                                <ClientAutocomplete
-                                    onSelect={(client) => {
-                                        setNewService(prev => ({
-                                            ...prev,
-                                            cliente_id: client.id,
-                                            cliente_nombre: client.name,
-                                            direccion: client.address || prev.direccion,
-                                            sector: client.sector || prev.sector
-                                        }));
-                                    }}
-                                    selectedClientName={newService.cliente_nombre}
-                                />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="service">Tipo de Servicio *</Label>
+                <Button onClick={() => setIsScheduleOpen(true)}>
+                    <Plus className="mr-2 h-4 w-4" /> Agendar Servicio
+                </Button>
+
+                <FullScreenDialog
+                    open={isScheduleOpen}
+                    onOpenChange={setIsScheduleOpen}
+                    title="Agendar Nuevo Servicio"
+                    description="Programa una nueva visita de limpieza para un cliente."
+                >
+                    <form onSubmit={handleScheduleService} className="space-y-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="client" className="text-base font-semibold">Cliente</Label>
+                            <ClientAutocomplete
+                                onSelect={(client) => {
+                                    setNewService(prev => ({
+                                        ...prev,
+                                        cliente_id: client.id,
+                                        cliente_nombre: client.name,
+                                        direccion: client.address || prev.direccion,
+                                        sector: client.sector || prev.sector
+                                    }));
+                                }}
+                                selectedClientName={newService.cliente_nombre}
+                            />
+                        </div>
+
+                        <div className="bg-slate-50 border p-4 rounded-xl space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="service" className="text-base font-semibold">Tipo de Servicio *</Label>
                                 <select
                                     id="service"
                                     name="servicio"
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                    className="flex h-12 w-full rounded-md border border-input bg-white px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                                     value={newService.servicio}
                                     onChange={handleInputChange}
+                                    required
                                 >
                                     <option value="">Selecciónar servicio...</option>
                                     <option value="Aseo General">Aseo General</option>
@@ -301,28 +301,34 @@ export const LimpiezaPage = () => {
                                     <option value="Limpieza de Tapices y Muebles">Limpieza de Tapices y Muebles</option>
                                 </select>
                             </div>
+
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="date">Fecha</Label>
-                                    <Input id="date" name="fecha" type="date" value={newService.fecha} onChange={handleInputChange} />
+                                <div className="space-y-2">
+                                    <Label htmlFor="date" className="text-base font-medium">Fecha</Label>
+                                    <Input id="date" name="fecha" type="date" className="h-12 text-base bg-white" value={newService.fecha} onChange={handleInputChange} required />
                                 </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="time">Hora</Label>
-                                    <Input id="time" name="hora" type="time" value={newService.hora} onChange={handleInputChange} />
+                                <div className="space-y-2">
+                                    <Label htmlFor="time" className="text-base font-medium">Hora</Label>
+                                    <Input id="time" name="hora" type="time" className="h-12 text-base bg-white" value={newService.hora} onChange={handleInputChange} required />
                                 </div>
                             </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="address">Dirección del Servicio</Label>
-                                <Input id="address" name="direccion" value={newService.direccion} onChange={handleInputChange} />
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="address" className="text-base font-semibold">Dirección Exacta</Label>
+                                <Input id="address" name="direccion" className="h-12 text-base" value={newService.direccion} onChange={handleInputChange} required />
                             </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="sector">Sector</Label>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="sector" className="text-base font-semibold">Sector Logístico</Label>
                                 <select
                                     id="sector"
                                     name="sector"
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                    className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                                     value={newService.sector}
                                     onChange={handleInputChange}
+                                    required
                                 >
                                     <option value="">Seleccionar sector...</option>
                                     {SECTORS.map((sector) => (
@@ -332,12 +338,15 @@ export const LimpiezaPage = () => {
                                     ))}
                                 </select>
                             </div>
-                            <DialogFooter>
-                                <Button type="submit">Agendar Visita</Button>
-                            </DialogFooter>
-                        </form>
-                    </DialogContent>
-                </Dialog>
+                        </div>
+
+                        <div className="pt-4 pb-12">
+                            <Button type="submit" size="lg" className="w-full h-14 text-lg font-bold bg-blue-600 hover:bg-blue-700 shadow-lg">
+                                Agendar Visita
+                            </Button>
+                        </div>
+                    </form>
+                </FullScreenDialog>
 
                 <Dialog open={!!selectedService} onOpenChange={(open) => !open && handleCloseDetails()}>
                     <DialogContent>

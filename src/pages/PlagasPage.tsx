@@ -26,6 +26,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '../components/ui/dialog';
+import { FullScreenDialog } from '../components/ui/FullScreenDialog';
 import {
     Card,
     CardContent,
@@ -184,7 +185,6 @@ export const PlagasPage = () => {
             cliente_nombre: form.clienteNombre,
             sector: form.sector,
             tipo_servicio: form.tiposServicio.join(', '),
-            tipos_servicio: form.tiposServicio,
             tecnico_asignado: form.tecnico,
             fecha_ejecucion: form.fecha,
             direccion: form.clienteDireccion,
@@ -457,226 +457,231 @@ export const PlagasPage = () => {
             {/* ═══════════════════════════════════════════════════
                 MODAL UNIFICADO — REGISTRAR SERVICIO
             ═══════════════════════════════════════════════════ */}
-            <Dialog open={isFormOpen} onOpenChange={open => { if (!open) { setIsFormOpen(false); setForm(emptyForm); } }}>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle>🐛 Registrar Servicio de Control de Plagas</DialogTitle>
-                        <DialogDescription>
-                            Completa los datos del servicio. Puedes programarlo para el futuro o registrarlo como ya completado.
-                        </DialogDescription>
-                    </DialogHeader>
+            <FullScreenDialog
+                open={isFormOpen}
+                onOpenChange={(open: boolean) => { if (!open) { setIsFormOpen(false); setForm(emptyForm); } }}
+                title="🐛 Registrar Servicio de Control de Plagas"
+                description="Completa los datos del servicio. Puedes programarlo para el futuro o registrarlo como ya completado."
+            >
+                <form onSubmit={handleSubmit} className="space-y-6 py-2 pb-12">
 
-                    <form onSubmit={handleSubmit} className="space-y-5 py-2">
+                    {/* CLIENTE */}
+                    <div className="space-y-2">
+                        <Label className="text-base font-semibold">👤 Cliente</Label>
+                        <ClientAutocomplete
+                            onSelect={client => setForm(prev => ({
+                                ...prev,
+                                clienteId: client.id,
+                                clienteNombre: client.name,
+                                clienteTelefono: client.phone || '',
+                                clienteDireccion: client.address || '',
+                                sector: client.sector || prev.sector,
+                            }))}
+                            selectedClientName={form.clienteNombre}
+                        />
+                        {form.clienteTelefono && (
+                            <p className="text-sm text-green-700 font-semibold flex items-center gap-1 mt-1">
+                                <Phone className="w-4 h-4" /> {form.clienteTelefono}
+                            </p>
+                        )}
+                    </div>
 
-                        {/* CLIENTE */}
+                    {/* DIRECCIÓN + SECTOR */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 border rounded-xl">
                         <div className="space-y-2">
-                            <Label className="font-bold">👤 Cliente</Label>
-                            <ClientAutocomplete
-                                onSelect={client => setForm(prev => ({
-                                    ...prev,
-                                    clienteId: client.id,
-                                    clienteNombre: client.name,
-                                    clienteTelefono: client.phone || '',
-                                    clienteDireccion: client.address || '',
-                                    sector: client.sector || prev.sector,
-                                }))}
-                                selectedClientName={form.clienteNombre}
-                            />
-                            {form.clienteTelefono && (
-                                <p className="text-sm text-green-700 font-semibold flex items-center gap-1">
-                                    <Phone className="w-3 h-3" /> {form.clienteTelefono}
-                                </p>
-                            )}
-                        </div>
-
-                        {/* DIRECCIÓN + SECTOR */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label className="font-bold">📍 Dirección del Servicio</Label>
-                                <Input
-                                    placeholder="Ej: Las Rosas 123"
-                                    value={form.clienteDireccion}
-                                    onChange={e => setForm(p => ({ ...p, clienteDireccion: e.target.value }))}
-                                    required
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label className="font-bold">🗺️ Sector</Label>
-                                <select
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                    value={form.sector}
-                                    onChange={e => setForm(p => ({ ...p, sector: e.target.value }))}
-                                    required
-                                >
-                                    <option value="">Seleccionar sector...</option>
-                                    {SECTORS.map(s => <option key={s} value={s}>{s}</option>)}
-                                </select>
-                            </div>
-                        </div>
-
-                        {/* TIPOS DE SERVICIO */}
-                        <div className="space-y-2">
-                            <Label className="font-bold">🛡️ Tipo de Servicio</Label>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 border rounded-lg p-3 bg-slate-50">
-                                {serviceTypes.map(t => (
-                                    <label key={t.id} className={`flex items-center gap-2 p-2 rounded-md cursor-pointer border transition-colors ${form.tiposServicio.includes(t.id)
-                                        ? 'bg-orange-100 border-orange-400 font-semibold'
-                                        : 'bg-white border-transparent hover:border-slate-200'
-                                        }`}>
-                                        <input
-                                            type="checkbox"
-                                            checked={form.tiposServicio.includes(t.id)}
-                                            onChange={() => toggleTipo(t.id)}
-                                            className="h-4 w-4 accent-orange-600"
-                                        />
-                                        <span className="text-sm">{t.label}</span>
-                                    </label>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* FECHA + HORA */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label className="font-bold">📅 Fecha</Label>
-                                <Input type="date"
-                                    value={form.fecha}
-                                    onChange={e => setForm(p => ({ ...p, fecha: e.target.value }))}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label className="font-bold">🕐 Hora</Label>
-                                <Input type="time"
-                                    value={form.hora}
-                                    onChange={e => setForm(p => ({ ...p, hora: e.target.value }))}
-                                />
-                            </div>
-                        </div>
-
-                        {/* TÉCNICO */}
-                        <div className="space-y-2">
-                            <Label className="font-bold">👷 Técnico Asignado</Label>
+                            <Label className="text-sm font-semibold">📍 Dirección del Servicio</Label>
                             <Input
-                                placeholder="Nombre del técnico"
-                                value={form.tecnico}
-                                onChange={e => setForm(p => ({ ...p, tecnico: e.target.value }))}
+                                placeholder="Ej: Las Rosas 123"
+                                className="h-12 bg-white"
+                                value={form.clienteDireccion}
+                                onChange={e => setForm(p => ({ ...p, clienteDireccion: e.target.value }))}
+                                required
                             />
                         </div>
-
-                        {/* ESTADO */}
                         <div className="space-y-2">
-                            <Label className="font-bold">📋 Estado del Servicio</Label>
-                            <div className="flex gap-3">
-                                {[
-                                    { value: 'programado', label: '🗓️ Programado (a futuro)', desc: 'Aparece en el Dashboard como tarea pendiente' },
-                                    { value: 'completado', label: '✅ Completado (ya realizado)', desc: 'Registra el servicio como ejecutado' },
-                                ].map(opt => (
-                                    <label key={opt.value} className={`flex-1 p-3 rounded-lg border cursor-pointer transition-colors ${form.estado === opt.value
-                                        ? 'bg-orange-50 border-orange-400 font-semibold'
-                                        : 'bg-white border-slate-200 hover:border-slate-300'
-                                        }`}>
-                                        <div className="flex items-center gap-2">
-                                            <input type="radio" name="estado" value={opt.value}
-                                                checked={form.estado === opt.value}
-                                                onChange={() => setForm(p => ({ ...p, estado: opt.value as any }))}
-                                                className="accent-orange-600"
-                                            />
-                                            <span className="text-sm">{opt.label}</span>
-                                        </div>
-                                        <p className="text-xs text-muted-foreground mt-1 ml-5">{opt.desc}</p>
-                                    </label>
-                                ))}
-                            </div>
+                            <Label className="text-sm font-semibold">🗺️ Sector</Label>
+                            <select
+                                className="flex h-12 w-full rounded-md border border-input bg-white px-3 py-2 text-base"
+                                value={form.sector}
+                                onChange={e => setForm(p => ({ ...p, sector: e.target.value }))}
+                                required
+                            >
+                                <option value="">Seleccionar sector...</option>
+                                {SECTORS.map(s => <option key={s} value={s}>{s}</option>)}
+                            </select>
                         </div>
+                    </div>
 
-                        {/* PERIODICIDAD */}
-                        <div className="space-y-2 border rounded-lg p-4 bg-blue-50 border-blue-100">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox"
-                                    checked={form.tienePeriodicidad}
-                                    onChange={e => setForm(p => ({ ...p, tienePeriodicidad: e.target.checked }))}
-                                    className="h-4 w-4 accent-blue-600"
-                                />
-                                <span className="font-bold text-blue-800">🔁 ¿Requiere visitas periódicas?</span>
-                            </label>
-                            {form.tienePeriodicidad && (
-                                <div className="ml-6 mt-2 space-y-2">
-                                    <Label className="text-sm text-blue-700">Frecuencia de visita:</Label>
-                                    <div className="flex gap-2 flex-wrap">
-                                        {[
-                                            { v: '1', l: '📅 Mensual' },
-                                            { v: '2', l: '📅 Bimestral' },
-                                            { v: '3', l: '📅 Trimestral' },
-                                            { v: '6', l: '📅 Semestral' },
-                                            { v: '12', l: '📅 Anual' },
-                                        ].map(opt => (
-                                            <label key={opt.v} className={`px-3 py-1.5 rounded-full border text-sm cursor-pointer transition-colors ${form.periodicidadMeses === opt.v
-                                                ? 'bg-blue-600 text-white border-blue-600 font-bold'
-                                                : 'bg-white border-blue-200 text-blue-700 hover:border-blue-400'
-                                                }`}>
-                                                <input type="radio" name="periodicidad" value={opt.v}
-                                                    checked={form.periodicidadMeses === opt.v}
-                                                    onChange={() => setForm(p => ({ ...p, periodicidadMeses: opt.v }))}
-                                                    className="sr-only"
-                                                />
-                                                {opt.l}
-                                            </label>
-                                        ))}
-                                    </div>
-                                    {form.fecha && (
-                                        <p className="text-xs text-blue-600 font-medium mt-2">
-                                            📌 Próxima visita calculada:{' '}
-                                            <strong>{new Date(`${calcProximaRenovacion()}T12:00:00`).toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</strong>
-                                        </p>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* CERTIFICADO (solo si completado) */}
-                        {form.estado === 'completado' && (
-                            <div className="space-y-2 border rounded-lg p-4 bg-green-50 border-green-100">
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox"
-                                        checked={form.generarCertificado}
-                                        onChange={e => setForm(p => ({ ...p, generarCertificado: e.target.checked }))}
-                                        className="h-4 w-4 accent-green-600"
+                    {/* TIPOS DE SERVICIO */}
+                    <div className="space-y-2">
+                        <Label className="text-base font-semibold">🛡️ Tipo de Servicio</Label>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 border rounded-xl p-4 bg-slate-50">
+                            {serviceTypes.map(t => (
+                                <label key={t.id} className={`flex items-center gap-2 p-3 rounded-lg cursor-pointer border-2 transition-colors ${form.tiposServicio.includes(t.id)
+                                    ? 'bg-orange-100 border-orange-500 font-bold'
+                                    : 'bg-white border-transparent hover:border-slate-300'
+                                    }`}>
+                                    <input
+                                        type="checkbox"
+                                        checked={form.tiposServicio.includes(t.id)}
+                                        onChange={() => toggleTipo(t.id)}
+                                        className="h-5 w-5 accent-orange-600 rounded border-gray-300"
                                     />
-                                    <span className="font-bold text-green-800">📄 ¿Emitir certificado de control de plagas?</span>
+                                    <span className="text-sm">{t.label}</span>
                                 </label>
-                                {form.generarCertificado && (
-                                    <div className="ml-6 mt-2">
-                                        <Label className="text-sm text-green-700">N° de Certificado</Label>
-                                        <Input
-                                            className="mt-1"
-                                            placeholder="Ej: CERT-2026-001"
-                                            value={form.numeroCertificado}
-                                            onChange={e => setForm(p => ({ ...p, numeroCertificado: e.target.value }))}
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* FECHA + HORA */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label className="text-sm font-semibold">📅 Fecha</Label>
+                            <Input type="date"
+                                className="h-12 text-base"
+                                value={form.fecha}
+                                onChange={e => setForm(p => ({ ...p, fecha: e.target.value }))}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="text-sm font-semibold">🕐 Hora</Label>
+                            <Input type="time"
+                                className="h-12 text-base"
+                                value={form.hora}
+                                onChange={e => setForm(p => ({ ...p, hora: e.target.value }))}
+                            />
+                        </div>
+                    </div>
+
+                    {/* TÉCNICO */}
+                    <div className="space-y-2">
+                        <Label className="text-base font-semibold">👷 Técnico Asignado</Label>
+                        <Input
+                            placeholder="Nombre del técnico"
+                            className="h-12 text-base"
+                            value={form.tecnico}
+                            onChange={e => setForm(p => ({ ...p, tecnico: e.target.value }))}
+                        />
+                    </div>
+
+                    {/* ESTADO */}
+                    <div className="space-y-2">
+                        <Label className="text-base font-semibold">📋 Estado del Servicio</Label>
+                        <div className="flex flex-col sm:flex-row gap-3">
+                            {[
+                                { value: 'programado', label: '🗓️ Programado', desc: 'Aparece como pendiente' },
+                                { value: 'completado', label: '✅ Completado', desc: 'Servicio ya ejecutado' },
+                            ].map(opt => (
+                                <label key={opt.value} className={`flex-1 p-4 rounded-xl border-2 cursor-pointer transition-colors ${form.estado === opt.value
+                                    ? 'bg-orange-50 border-orange-500 font-bold'
+                                    : 'bg-white border-slate-200 hover:border-slate-300'
+                                    }`}>
+                                    <div className="flex items-center gap-3">
+                                        <input type="radio" name="estado" value={opt.value}
+                                            checked={form.estado === opt.value}
+                                            onChange={() => setForm(p => ({ ...p, estado: opt.value as any }))}
+                                            className="h-5 w-5 accent-orange-600"
                                         />
+                                        <span className="text-base">{opt.label}</span>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground mt-2 ml-8">{opt.desc}</p>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* PERIODICIDAD */}
+                    <div className="space-y-3 border-2 rounded-xl p-5 bg-blue-50/50 border-blue-200">
+                        <label className="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox"
+                                checked={form.tienePeriodicidad}
+                                onChange={e => setForm(p => ({ ...p, tienePeriodicidad: e.target.checked }))}
+                                className="h-6 w-6 rounded border-blue-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            <span className="font-bold text-lg text-blue-900">🔁 ¿Requiere visitas periódicas?</span>
+                        </label>
+                        {form.tienePeriodicidad && (
+                            <div className="ml-9 mt-4 space-y-4">
+                                <Label className="text-sm font-semibold text-blue-800">Frecuencia de visita:</Label>
+                                <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                                    {[
+                                        { v: '1', l: '📅 Mensual' },
+                                        { v: '2', l: '📅 Bimestral' },
+                                        { v: '3', l: '📅 Trimestral' },
+                                        { v: '6', l: '📅 Semestral' },
+                                        { v: '12', l: '📅 Anual' },
+                                    ].map(opt => (
+                                        <label key={opt.v} className={`flex justify-center items-center py-3 rounded-lg border-2 text-sm cursor-pointer transition-colors ${form.periodicidadMeses === opt.v
+                                            ? 'bg-blue-600 text-white border-blue-700 font-bold shadow-md'
+                                            : 'bg-white border-blue-200 text-blue-800 hover:bg-blue-100'
+                                            }`}>
+                                            <input type="radio" name="periodicidad" value={opt.v}
+                                                checked={form.periodicidadMeses === opt.v}
+                                                onChange={() => setForm(p => ({ ...p, periodicidadMeses: opt.v }))}
+                                                className="sr-only"
+                                            />
+                                            {opt.l}
+                                        </label>
+                                    ))}
+                                </div>
+                                {form.fecha && (
+                                    <div className="bg-white p-3 rounded-md border border-blue-100 flex items-center justify-between">
+                                        <span className="text-sm text-blue-800 font-medium">📌 Próxima visita estimada:</span>
+                                        <span className="text-base font-bold text-blue-900">
+                                            {new Date(`${calcProximaRenovacion()}T12:00:00`).toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                        </span>
                                     </div>
                                 )}
                             </div>
                         )}
+                    </div>
 
-                        {/* OBSERVACIONES */}
-                        <div className="space-y-2">
-                            <Label className="font-bold">📝 Observaciones (opcional)</Label>
-                            <Input
-                                placeholder="Notas adicionales del servicio..."
-                                value={form.observaciones}
-                                onChange={e => setForm(p => ({ ...p, observaciones: e.target.value }))}
-                            />
+                    {/* CERTIFICADO (solo si completado) */}
+                    {form.estado === 'completado' && (
+                        <div className="space-y-3 border-2 rounded-xl p-5 bg-green-50 border-green-200">
+                            <label className="flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox"
+                                    checked={form.generarCertificado}
+                                    onChange={e => setForm(p => ({ ...p, generarCertificado: e.target.checked }))}
+                                    className="h-6 w-6 rounded border-green-300 text-green-600 focus:ring-green-500"
+                                />
+                                <span className="font-bold text-lg text-green-900">📄 ¿Emitir certificado de control de plagas?</span>
+                            </label>
+                            {form.generarCertificado && (
+                                <div className="ml-9 mt-4">
+                                    <Label className="text-sm font-semibold text-green-800">N° de Certificado (Automático o Manual)</Label>
+                                    <Input
+                                        className="mt-2 h-12 text-base bg-white"
+                                        placeholder="Ej: CERT-2026-001"
+                                        value={form.numeroCertificado}
+                                        onChange={e => setForm(p => ({ ...p, numeroCertificado: e.target.value }))}
+                                    />
+                                </div>
+                            )}
                         </div>
+                    )}
 
-                        <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => { setIsFormOpen(false); setForm(emptyForm); }}>Cancelar</Button>
-                            <Button type="submit" className="bg-orange-600 hover:bg-orange-700 text-white">
-                                {form.estado === 'completado' ? '✅ Guardar Servicio' : '🗓️ Agendar Visita'}
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
+                    {/* OBSERVACIONES */}
+                    <div className="space-y-2">
+                        <Label className="text-base font-semibold">📝 Observaciones (opcional)</Label>
+                        <Input
+                            placeholder="Notas adicionales del servicio..."
+                            className="h-12 text-base"
+                            value={form.observaciones}
+                            onChange={e => setForm(p => ({ ...p, observaciones: e.target.value }))}
+                        />
+                    </div>
+
+                    <div className="pt-6 grid grid-cols-2 gap-4">
+                        <Button type="button" variant="outline" size="lg" className="h-14 text-base" onClick={() => { setIsFormOpen(false); setForm(emptyForm); }}>
+                            Cancelar
+                        </Button>
+                        <Button type="submit" size="lg" className="h-14 text-base font-bold bg-orange-600 hover:bg-orange-700 text-white shadow-lg">
+                            {form.estado === 'completado' ? '✅ Guardar Servicio' : '🗓️ Agendar Visita'}
+                        </Button>
+                    </div>
+                </form>
+            </FullScreenDialog>
 
             {/* MODAL DETALLES */}
             <Dialog open={!!selectedService} onOpenChange={open => { if (!open) { setSelectedService(null); setIsEditing(false); } }}>

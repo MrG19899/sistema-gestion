@@ -13,8 +13,8 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from '../components/ui/dialog';
+import { FullScreenDialog } from '../components/ui/FullScreenDialog';
 import {
     Card,
     CardContent,
@@ -339,115 +339,115 @@ export const AlfombrasPage = () => {
                         Control de inventario y estado de alfombras en planta.
                     </p>
                 </div>
-                <Dialog open={isReceiveOpen} onOpenChange={setIsReceiveOpen}>
-                    <DialogTrigger asChild>
-                        <Button>
-                            <Plus className="mr-2 h-4 w-4" /> Nueva Recepción
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[500px] w-[95%]">
-                        <DialogHeader>
-                            <DialogTitle>Recepcionar Alfombra</DialogTitle>
-                            <DialogDescription>
-                                Ingresa los detalles. La fecha de entrega se calculará automáticamente (5 días hábiles).
-                            </DialogDescription>
-                        </DialogHeader>
-                        <form onSubmit={handleReceiveRug} className="space-y-4">
-                            <div className="flex justify-center mb-4">
-                                <div className="relative w-full h-40 bg-muted rounded-md flex flex-col items-center justify-center border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors">
-                                    {photoPreview ? (
-                                        <img src={photoPreview} alt="Preview" className="w-full h-full object-cover rounded-md" />
-                                    ) : (
-                                        <div className="text-center p-4">
-                                            <Camera className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-                                            <p className="text-sm text-muted-foreground">Tocar para tomar foto</p>
-                                        </div>
-                                    )}
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        // capture="environment" // Comentado para evitar errores en desktop, útil en móvil
-                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                        onChange={handlePhotoChange}
-                                    />
-                                </div>
-                            </div>
+                <Button onClick={() => setIsReceiveOpen(true)}>
+                    <Plus className="mr-2 h-4 w-4" /> Nueva Recepción
+                </Button>
 
-                            <div className="grid gap-2">
-                                <Label htmlFor="client">Cliente</Label>
-                                <ClientAutocomplete
-                                    onSelect={(client) => {
-                                        setNewRug(prev => ({
-                                            ...prev,
-                                            cliente_nombre: client.name,
-                                            cliente_id: client.id,
-                                            sector: client.sector || '',
-                                            direccion: client.address || ''
-                                        }));
-                                    }}
-                                    selectedClientName={newRug.cliente_nombre}
-                                />
-                            </div>
-
-                            <div className="flex items-center space-x-2 pb-2">
-                                <input
-                                    type="checkbox"
-                                    id="isPickup"
-                                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                    checked={newRug.isPickup}
-                                    onChange={(e) => setNewRug({ ...newRug, isPickup: e.target.checked })}
-                                />
-                                <Label htmlFor="isPickup" className="cursor-pointer">Solicitud de Retiro a Domicilio</Label>
-                            </div>
-
-                            {newRug.isPickup && (
-                                <div className="grid gap-4 bg-muted/50 p-4 rounded-md border border-border">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="pickupDate">Fecha Retiro</Label>
-                                            <Input
-                                                type="date"
-                                                id="pickupDate"
-                                                name="pickupDate"
-                                                value={newRug.pickupDate}
-                                                onChange={handleInputChange}
-                                            />
-                                        </div>
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="pickupTime">Hora / Bloque</Label>
-                                            <Input
-                                                type="text"
-                                                id="pickupTime"
-                                                name="pickupTime"
-                                                placeholder="Ej: 10:00 - 12:00"
-                                                value={newRug.pickupTime}
-                                                onChange={handleInputChange}
-                                            />
-                                        </div>
+                <FullScreenDialog
+                    open={isReceiveOpen}
+                    onOpenChange={setIsReceiveOpen}
+                    title="Recepcionar Alfombra"
+                    description="Ingresa los detalles. La fecha de entrega se calculará automáticamente (5 días hábiles)."
+                >
+                    <form onSubmit={handleReceiveRug} className="space-y-6 pb-12">
+                        <div className="flex justify-center mb-4">
+                            <div className="relative w-full h-40 bg-muted rounded-xl flex flex-col items-center justify-center border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors">
+                                {photoPreview ? (
+                                    <img src={photoPreview} alt="Preview" className="w-full h-full object-cover rounded-xl" />
+                                ) : (
+                                    <div className="text-center p-4">
+                                        <Camera className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                                        <p className="text-sm text-muted-foreground">Tocar para tomar foto</p>
                                     </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="direccion" className="flex items-center gap-1">
-                                            📍 Dirección de Retiro
-                                            <span className="text-xs text-muted-foreground font-normal">(Pre-cargada desde cliente, modificable)</span>
-                                        </Label>
+                                )}
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                    onChange={handlePhotoChange}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="client" className="text-base font-semibold">Cliente</Label>
+                            <ClientAutocomplete
+                                onSelect={(client) => {
+                                    setNewRug(prev => ({
+                                        ...prev,
+                                        cliente_nombre: client.name,
+                                        cliente_id: client.id,
+                                        sector: client.sector || '',
+                                        direccion: client.address || ''
+                                    }));
+                                }}
+                                selectedClientName={newRug.cliente_nombre}
+                            />
+                        </div>
+
+                        <div className="flex items-center space-x-3 p-4 bg-slate-50 border rounded-xl">
+                            <input
+                                type="checkbox"
+                                id="isPickup"
+                                className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                checked={newRug.isPickup}
+                                onChange={(e) => setNewRug({ ...newRug, isPickup: e.target.checked })}
+                            />
+                            <Label htmlFor="isPickup" className="cursor-pointer text-base font-semibold">Solicitud de Retiro a Domicilio</Label>
+                        </div>
+
+                        {newRug.isPickup && (
+                            <div className="grid gap-4 bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="pickupDate" className="text-sm font-medium">Fecha Retiro</Label>
+                                        <Input
+                                            type="date"
+                                            id="pickupDate"
+                                            name="pickupDate"
+                                            className="h-12 bg-white"
+                                            value={newRug.pickupDate}
+                                            onChange={handleInputChange}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="pickupTime" className="text-sm font-medium">Bloque Horario</Label>
                                         <Input
                                             type="text"
-                                            id="direccion"
-                                            name="direccion"
-                                            placeholder="Ej: Las Rosas 123, Concepción"
-                                            value={newRug.direccion}
+                                            id="pickupTime"
+                                            name="pickupTime"
+                                            className="h-12 bg-white"
+                                            placeholder="10:00 - 12:00"
+                                            value={newRug.pickupTime}
                                             onChange={handleInputChange}
                                         />
                                     </div>
                                 </div>
-                            )}
+                                <div className="space-y-2">
+                                    <Label htmlFor="direccion" className="flex items-center gap-1 text-sm font-medium">
+                                        📍 Dirección Exacta de Retiro
+                                    </Label>
+                                    <Input
+                                        type="text"
+                                        id="direccion"
+                                        name="direccion"
+                                        className="h-12 bg-white"
+                                        placeholder="Ej: Las Rosas 123, Concepción"
+                                        value={newRug.direccion}
+                                        onChange={handleInputChange}
+                                    />
+                                    <p className="text-xs text-muted-foreground">Pre-cargada desde cliente, modificable si retira en otro lado.</p>
+                                </div>
+                            </div>
+                        )}
 
-                            <div className="grid gap-2">
-                                <Label htmlFor="sector">Sector</Label>
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="sector" className="text-base font-semibold">Sector Logístico</Label>
                                 <select
                                     id="sector"
                                     name="sector"
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                    className="flex h-12 w-full rounded-md border border-input bg-white px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                                     value={newRug.sector}
                                     onChange={handleInputChange}
                                 >
@@ -461,12 +461,12 @@ export const AlfombrasPage = () => {
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="type">Tipo</Label>
+                                <div className="space-y-2">
+                                    <Label htmlFor="type" className="text-base font-semibold">Tipo</Label>
                                     <select
                                         id="type"
                                         name="type"
-                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                        className="flex h-12 w-full rounded-md border border-input bg-white px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                                         value={newRug.type}
                                         onChange={handleInputChange}
                                     >
@@ -475,11 +475,12 @@ export const AlfombrasPage = () => {
                                         <option value="Lana">Lana</option>
                                     </select>
                                 </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="dims">Dimensiones</Label>
+                                <div className="space-y-2">
+                                    <Label htmlFor="dims" className="text-base font-semibold">Dimensiones</Label>
                                     <Input
                                         id="dims"
                                         name="dims"
+                                        className="h-12 bg-white"
                                         placeholder="Ej: 1.60x230"
                                         value={newRug.dims}
                                         onChange={handleInputChange}
@@ -492,18 +493,20 @@ export const AlfombrasPage = () => {
                                     </datalist>
                                 </div>
                             </div>
+                        </div>
 
-                            <div className="rounded-md bg-blue-50 p-3 text-xs text-blue-700">
-                                <p className="font-semibold">Fecha Estimada de Entrega:</p>
-                                {addBusinessDays(new Date(), 5).toLocaleDateString()}
-                            </div>
+                        <div className="rounded-xl bg-blue-50 p-4 border border-blue-100 flex flex-col items-center justify-center text-center">
+                            <p className="text-sm font-semibold text-blue-800 mb-1">Fecha Estimada de Entrega:</p>
+                            <p className="text-lg font-bold text-blue-900">{addBusinessDays(new Date(), 5).toLocaleDateString()}</p>
+                        </div>
 
-                            <DialogFooter>
-                                <Button type="submit">Ingresar Alfombra</Button>
-                            </DialogFooter>
-                        </form>
-                    </DialogContent>
-                </Dialog>
+                        <div className="pt-4">
+                            <Button type="submit" size="lg" className="h-14 w-full text-lg font-bold bg-green-600 hover:bg-green-700 shadow-lg">
+                                Ingresar Alfombra
+                            </Button>
+                        </div>
+                    </form>
+                </FullScreenDialog>
 
                 <Dialog open={!!selectedRug} onOpenChange={(open) => !open && handleCloseDetails()}>
                     <DialogContent>

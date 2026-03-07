@@ -374,16 +374,27 @@ export const PlagasPage = () => {
                                         <div className="flex flex-col">
                                             <span className="font-medium">{service.cliente_nombre}</span>
                                             {service.cliente_telefono && (
-                                                <a href={`tel:${service.cliente_telefono}`}
-                                                    className="text-green-700 text-xs font-bold hover:underline mt-0.5">
-                                                    <Phone className="inline w-3 h-3" /> {service.cliente_telefono}
+                                                <a href={`https://wa.me/${service.cliente_telefono.replace(/\+/g, '').replace(/\s/g, '')}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    title="Enviar WhatsApp"
+                                                    className="text-green-700 text-xs font-bold hover:underline mt-0.5 flex items-center">
+                                                    <span className="mr-1">📞</span> {service.cliente_telefono}
                                                 </a>
                                             )}
                                         </div>
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex flex-col text-sm">
-                                            <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{service.direccion || '-'}</span>
+                                            <a
+                                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${service.direccion || ''} ${service.sector || ''}`)}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center gap-1 hover:text-blue-600 hover:underline"
+                                                title="Abrir en Maps"
+                                            >
+                                                <MapPin className="w-3 h-3" />{service.direccion || '-'}
+                                            </a>
                                             <span className="text-muted-foreground text-xs">{service.sector}</span>
                                         </div>
                                     </TableCell>
@@ -533,7 +544,6 @@ export const PlagasPage = () => {
                                 <Input type="date"
                                     value={form.fecha}
                                     onChange={e => setForm(p => ({ ...p, fecha: e.target.value }))}
-                                    required
                                 />
                             </div>
                             <div className="space-y-2">
@@ -541,7 +551,6 @@ export const PlagasPage = () => {
                                 <Input type="time"
                                     value={form.hora}
                                     onChange={e => setForm(p => ({ ...p, hora: e.target.value }))}
-                                    required
                                 />
                             </div>
                         </div>

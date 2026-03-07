@@ -283,14 +283,13 @@ export const LimpiezaPage = () => {
                                 />
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="service">Tipo de Servicio</Label>
+                                <Label htmlFor="service">Tipo de Servicio *</Label>
                                 <select
                                     id="service"
                                     name="servicio"
                                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                                     value={newService.servicio}
                                     onChange={handleInputChange}
-                                    required
                                 >
                                     <option value="">Selecciónar servicio...</option>
                                     <option value="Aseo General">Aseo General</option>
@@ -304,16 +303,16 @@ export const LimpiezaPage = () => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="grid gap-2">
                                     <Label htmlFor="date">Fecha</Label>
-                                    <Input id="date" name="fecha" type="date" value={newService.fecha} onChange={handleInputChange} required />
+                                    <Input id="date" name="fecha" type="date" value={newService.fecha} onChange={handleInputChange} />
                                 </div>
                                 <div className="grid gap-2">
                                     <Label htmlFor="time">Hora</Label>
-                                    <Input id="time" name="hora" type="time" value={newService.hora} onChange={handleInputChange} required />
+                                    <Input id="time" name="hora" type="time" value={newService.hora} onChange={handleInputChange} />
                                 </div>
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="address">Dirección del Servicio</Label>
-                                <Input id="address" name="direccion" value={newService.direccion} onChange={handleInputChange} required />
+                                <Input id="address" name="direccion" value={newService.direccion} onChange={handleInputChange} />
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="sector">Sector</Label>
@@ -323,7 +322,6 @@ export const LimpiezaPage = () => {
                                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                                     value={newService.sector}
                                     onChange={handleInputChange}
-                                    required
                                 >
                                     <option value="">Seleccionar sector...</option>
                                     {SECTORS.map((sector) => (
@@ -498,13 +496,24 @@ export const LimpiezaPage = () => {
                                         <TableCell>
                                             <div className="flex flex-col">
                                                 <span className="font-medium">{service.cliente_nombre || 'Desconocido'}</span>
-                                                <div className="flex items-center text-muted-foreground text-xs mt-0.5">
+                                                <a
+                                                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(service.direccion || '')}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex items-center text-muted-foreground text-xs mt-0.5 hover:text-blue-600 hover:underline"
+                                                    title="Abrir en Maps"
+                                                >
                                                     <MapPin className="mr-1 h-3 w-3" />
-                                                    {service.direccion}
-                                                </div>
+                                                    {service.direccion || 'Sin dirección'}
+                                                </a>
                                                 {service.cliente_telefono && (
-                                                    <a href={`tel:${service.cliente_telefono}`} className="text-green-700 text-xs font-bold hover:underline mt-0.5">
-                                                        📞 {service.cliente_telefono}
+                                                    <a href={`https://wa.me/${service.cliente_telefono.replace(/\+/g, '').replace(/\s/g, '')}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-green-700 text-xs font-bold hover:underline mt-0.5 flex items-center"
+                                                        title="Enviar WhatsApp"
+                                                    >
+                                                        <span className="mr-1">📞</span> {service.cliente_telefono}
                                                     </a>
                                                 )}
                                             </div>

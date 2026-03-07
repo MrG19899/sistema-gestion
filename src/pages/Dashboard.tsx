@@ -48,10 +48,10 @@ export const Dashboard: React.FC = () => {
         try {
             const [{ data: plagas }, { data: limpiezas }, { data: alfombras }] = await Promise.all([
                 supabase.from('servicios_plagas')
-                    .select('id, tipo_servicio, direccion, fecha_ejecucion, cliente_id, cliente_nombre')
+                    .select('id, tipo_servicio, direccion, fecha_ejecucion, cliente_id, cliente_nombre, estado')
                     .in('estado', ['programado', 'vigente', 'pending']),
                 supabase.from('servicios_limpieza')
-                    .select('id, tipo_servicio, direccion, fecha, hora, cliente_id, cliente_nombre')
+                    .select('id, tipo_servicio, direccion, fecha, hora, cliente_id, cliente_nombre, estado')
                     .in('estado', ['scheduled', 'pending']),
                 supabase.from('servicios_alfombras')
                     .select('id, is_pickup, fecha_entrega, fecha_recepcion, sector, ubicacion, cliente_id, cliente_nombre, estado, created_at')
@@ -295,8 +295,8 @@ export const Dashboard: React.FC = () => {
                                         key={item.id}
                                         onClick={() => navigate(getRouteForService(item.servicio))}
                                         className={`flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl border transition-all gap-3 shadow-sm cursor-pointer ${isDone
-                                                ? 'bg-green-50 border-green-200 hover:border-green-400 hover:shadow-md'
-                                                : 'bg-slate-50 border-slate-100 hover:bg-white hover:border-slate-300 hover:shadow-md'
+                                            ? 'bg-green-50 border-green-200 hover:border-green-400 hover:shadow-md'
+                                            : 'bg-slate-50 border-slate-100 hover:bg-white hover:border-slate-300 hover:shadow-md'
                                             }`}
                                         title={`Ir a ${item.servicio}`}
                                     >
@@ -322,15 +322,27 @@ export const Dashboard: React.FC = () => {
                                                     <span className="text-sm font-semibold text-slate-700">👤 {item.cliente}</span>
                                                     {item.telefono ? (
                                                         <a
-                                                            href={`tel:${item.telefono}`}
+                                                            href={`https://wa.me/${item.telefono.replace(/\+/g, '').replace(/\s/g, '')}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
                                                             className="text-green-700 text-sm font-bold hover:underline"
                                                             onClick={e => e.stopPropagation()}
+                                                            title="Enviar WhatsApp"
                                                         >📞 {item.telefono}</a>
                                                     ) : null}
                                                 </div>
                                                 <div className="flex items-center gap-1 mt-0.5 text-xs text-slate-500">
-                                                    <MapPin className="w-3 h-3" />
-                                                    <span className="truncate">{item.lugar}</span>
+                                                    <a
+                                                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.lugar)}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="flex items-center gap-1 hover:text-blue-600 hover:underline"
+                                                        onClick={e => e.stopPropagation()}
+                                                        title="Abrir en Maps"
+                                                    >
+                                                        <MapPin className="w-3 h-3" />
+                                                        <span className="truncate">{item.lugar}</span>
+                                                    </a>
                                                 </div>
                                             </div>
                                         </div>

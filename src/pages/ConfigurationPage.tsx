@@ -3,8 +3,6 @@ import { useState, useEffect } from 'react';
 // import { Save, Bell, Settings, Database, Server, UploadCloud } from 'lucide-react';
 import { Save } from 'lucide-react';
 const Server = ({ className }: { className?: string }) => <span className={className}>🖥️</span>;
-const UploadCloud = ({ className }: { className?: string }) => <span className={className}>☁️</span>;
-import { seedDatabase } from '../utils/seedData';
 import { supabase } from '../lib/supabase';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -323,26 +321,6 @@ export const ConfigurationPage = () => {
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-4 rounded-lg border p-4 border-blue-200 bg-blue-50">
-                                <UploadCloud className="h-8 w-8 text-blue-600" />
-                                <div className="flex-1">
-                                    <p className="font-medium text-blue-900">Migración de Datos</p>
-                                    <p className="text-sm text-blue-700">
-                                        Cargar datos de prueba a Firebase.
-                                    </p>
-                                </div>
-                                <Button
-                                    onClick={() => {
-                                        if (confirm('¿Estás seguro? Esto subirá los datos de prueba a Firebase.')) {
-                                            seedDatabase();
-                                        }
-                                    }}
-                                    variant="outline"
-                                    className="border-blue-200 hover:bg-blue-100 text-blue-700"
-                                >
-                                    Cargar Datos
-                                </Button>
-                            </div>
                         </CardContent>
                         <CardFooter>
                             <Button onClick={handleSave} disabled={isLoading}>

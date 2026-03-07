@@ -97,7 +97,7 @@ export const AlfombrasPage = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 12;
 
-    const [viewPhoto, setViewPhoto] = useState<string | null>(null);
+    const [viewPhotoIndex, setViewPhotoIndex] = useState<number | null>(null);
 
     // Fetch desde Supabase
     React.useEffect(() => {
@@ -147,6 +147,8 @@ export const AlfombrasPage = () => {
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
     );
+
+    const rugsWithPhotos = filteredRugs.filter(r => !!r.photo_url);
 
     const [isReceiveOpen, setIsReceiveOpen] = useState(false);
     const [selectedRug, setSelectedRug] = useState<ServicioAlfombra | null>(null);
@@ -409,7 +411,6 @@ export const AlfombrasPage = () => {
                                                 name="pickupDate"
                                                 value={newRug.pickupDate}
                                                 onChange={handleInputChange}
-                                                required={newRug.isPickup}
                                             />
                                         </div>
                                         <div className="grid gap-2">
@@ -421,7 +422,6 @@ export const AlfombrasPage = () => {
                                                 placeholder="Ej: 10:00 - 12:00"
                                                 value={newRug.pickupTime}
                                                 onChange={handleInputChange}
-                                                required={newRug.isPickup}
                                             />
                                         </div>
                                     </div>
@@ -437,7 +437,6 @@ export const AlfombrasPage = () => {
                                             placeholder="Ej: Las Rosas 123, Concepción"
                                             value={newRug.direccion}
                                             onChange={handleInputChange}
-                                            required={newRug.isPickup}
                                         />
                                     </div>
                                 </div>
@@ -451,7 +450,6 @@ export const AlfombrasPage = () => {
                                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                                     value={newRug.sector}
                                     onChange={handleInputChange}
-                                    required
                                 >
                                     <option value="">Seleccionar sector...</option>
                                     {SECTORS.map((sector) => (
@@ -486,7 +484,6 @@ export const AlfombrasPage = () => {
                                         value={newRug.dims}
                                         onChange={handleInputChange}
                                         list="common-dims"
-                                        required
                                     />
                                     <datalist id="common-dims">
                                         <option value="1.60x230" />
@@ -654,21 +651,48 @@ export const AlfombrasPage = () => {
                 </Dialog>
             </div>
 
-            <Dialog open={!!viewPhoto} onOpenChange={() => setViewPhoto(null)}>
+            <Dialog open={viewPhotoIndex !== null} onOpenChange={() => setViewPhotoIndex(null)}>
                 <DialogContent className="max-w-3xl w-full p-1 bg-transparent border-none shadow-none">
-                    <div className="relative w-full h-full flex items-center justify-center">
-                        <img
-                            src={viewPhoto || ''}
-                            alt="Vista Ampliada"
-                            className="max-w-full max-h-[80vh] rounded-md shadow-2xl"
-                        />
-                        <Button
-                            className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 h-8 w-8"
-                            onClick={() => setViewPhoto(null)}
-                        >
-                            ✕
-                        </Button>
-                    </div>
+                    {viewPhotoIndex !== null && rugsWithPhotos[viewPhotoIndex] && (
+                        <div className="relative w-full h-full flex flex-col items-center justify-center">
+                            <div className="relative flex items-center justify-center w-full">
+                                {viewPhotoIndex > 0 && (
+                                    <Button
+                                        className="absolute left-2 md:-left-12 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 h-12 w-12 z-10 flex items-center justify-center"
+                                        onClick={() => setViewPhotoIndex(viewPhotoIndex - 1)}
+                                    >
+                                        <span className="text-xl font-bold">{"<"}</span>
+                                    </Button>
+                                )}
+                                <img
+                                    src={rugsWithPhotos[viewPhotoIndex].photo_url || ''}
+                                    alt="Vista Ampliada"
+                                    className="max-w-full max-h-[85vh] rounded-md shadow-2xl"
+                                />
+                                {viewPhotoIndex < rugsWithPhotos.length - 1 && (
+                                    <Button
+                                        className="absolute right-2 md:-right-12 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 h-12 w-12 z-10 flex items-center justify-center"
+                                        onClick={() => setViewPhotoIndex(viewPhotoIndex + 1)}
+                                    >
+                                        <span className="text-xl font-bold">{">"}</span>
+                                    </Button>
+                                )}
+                            </div>
+                            <div className="mt-4 bg-black/80 text-white px-6 py-2 rounded-full text-sm font-medium shadow-lg flex items-center gap-3">
+                                <span>{rugsWithPhotos[viewPhotoIndex].cliente_nombre}</span>
+                                <span className="opacity-50">|</span>
+                                <span className="opacity-75">ID: {rugsWithPhotos[viewPhotoIndex].id.substring(0, 8)}</span>
+                                <span className="opacity-50">|</span>
+                                <span className="text-blue-300 font-bold">{viewPhotoIndex + 1} de {rugsWithPhotos.length}</span>
+                            </div>
+                            <Button
+                                className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 h-8 w-8 flex items-center justify-center"
+                                onClick={() => setViewPhotoIndex(null)}
+                            >
+                                ✕
+                            </Button>
+                        </div>
+                    )}
                 </DialogContent>
             </Dialog>
 
@@ -733,8 +757,11 @@ export const AlfombrasPage = () => {
                                         <div className="flex items-center gap-2">
                                             {item.photo_url ? (
                                                 <div
-                                                    className="h-8 w-8 rounded overflow-hidden cursor-pointer border border-border hover:border-blue-500 transition-colors"
-                                                    onClick={() => setViewPhoto(item.photo_url || null)}
+                                                    className="h-8 w-8 rounded overflow-hidden cursor-pointer border border-border hover:border-blue-500 transition-colors shrink-0"
+                                                    onClick={() => {
+                                                        const idx = rugsWithPhotos.findIndex(r => r.id === item.id);
+                                                        setViewPhotoIndex(idx !== -1 ? idx : null);
+                                                    }}
                                                 >
                                                     <img src={item.photo_url} alt="Miniatura" className="h-full w-full object-cover" />
                                                 </div>
@@ -748,15 +775,28 @@ export const AlfombrasPage = () => {
                                         <div className="flex flex-col">
                                             <span>{item.cliente_nombre}</span>
                                             {item.cliente_telefono && (
-                                                <a href={`tel:${item.cliente_telefono}`} className="text-green-700 text-xs font-bold hover:underline mt-0.5">
-                                                    📞 {item.cliente_telefono}
+                                                <a href={`https://wa.me/${item.cliente_telefono.replace(/\+/g, '').replace(/\s/g, '')}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-green-700 text-xs font-bold hover:underline mt-0.5 flex items-center"
+                                                    title="Enviar WhatsApp"
+                                                >
+                                                    <span className="mr-1">📞</span> {item.cliente_telefono}
                                                 </a>
                                             )}
                                         </div>
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex flex-col text-sm">
-                                            <span>{item.is_pickup ? (item.ubicacion === 'Domicilio Cliente' ? 'Domicilio s/d' : item.ubicacion) : 'Local Taller'}</span>
+                                            <a
+                                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${item.ubicacion} ${item.sector || ''}`)}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="hover:text-blue-600 hover:underline flex items-center gap-1"
+                                                title="Abrir en Maps"
+                                            >
+                                                {item.is_pickup ? (item.ubicacion === 'Domicilio Cliente' ? 'Domicilio s/d' : item.ubicacion) : 'Local Taller'}
+                                            </a>
                                             <span className="text-muted-foreground text-xs">{item.sector || ''}</span>
                                         </div>
                                     </TableCell>

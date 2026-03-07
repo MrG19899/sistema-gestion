@@ -2,14 +2,7 @@ import { useState } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from './ui/dialog';
+import { FullScreenDialog } from './ui/FullScreenDialog';
 import { SECTORS } from '../lib/constants';
 import { supabase } from '../lib/supabase';
 
@@ -128,147 +121,137 @@ export const QuickClientCreateModal = ({
         }
     };
 
-    const handleCancel = () => {
-        setFormData({
-            name: '',
-            contact: '',
-            email: '',
-            phone: '',
-            address: '',
-            type: 'Comercial',
-            sector: ''
-        });
-        setError('');
-        onOpenChange(false);
-    };
-
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[500px]">
-                <DialogHeader>
-                    <DialogTitle>Crear Cliente Rápido</DialogTitle>
-                    <DialogDescription>
-                        Ingresa los datos esenciales, incluyendo el sector para logística.
-                    </DialogDescription>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4 text-left">
-                    <div className="grid gap-2">
-                        <Label htmlFor="quick-name">
-                            Nombre Empresa / Cliente <span className="text-red-500">*</span>
+        <FullScreenDialog
+            open={open}
+            onOpenChange={onOpenChange}
+            title="Nuevo Cliente Rápido"
+            description="Ingresa los datos esenciales para registrar el cliente"
+        >
+            <form onSubmit={handleSubmit} className="space-y-5 text-left pb-10">
+                <div className="space-y-2">
+                    <Label htmlFor="quick-name">
+                        Nombre Empresa / Cliente <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                        id="quick-name"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleInputChange}
+                        placeholder="Ej: Restaurante El Buen Sabor"
+                        className="h-12 text-base"
+                        required
+                    />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border p-4 bg-slate-50/50 rounded-xl">
+                    <div className="space-y-2">
+                        <Label htmlFor="quick-contact">
+                            Nombre Contacto <span className="text-red-500">*</span>
                         </Label>
                         <Input
-                            id="quick-name"
-                            name="name"
-                            value={formData.name}
+                            id="quick-contact"
+                            name="contact"
+                            value={formData.contact}
                             onChange={handleInputChange}
-                            placeholder="Ej: Restaurante El Buen Sabor"
+                            placeholder="Ej: Juan Pérez"
+                            className="h-12 text-base bg-white"
                             required
                         />
                     </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="quick-contact">
-                                Nombre Contacto <span className="text-red-500">*</span>
-                            </Label>
-                            <Input
-                                id="quick-contact"
-                                name="contact"
-                                value={formData.contact}
-                                onChange={handleInputChange}
-                                placeholder="Ej: Juan Pérez"
-                                required
-                            />
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="quick-type">Tipo Cliente</Label>
-                            <select
-                                id="quick-type"
-                                name="type"
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                                value={formData.type}
-                                onChange={handleInputChange}
-                            >
-                                <option value="Restaurant">Restaurant</option>
-                                <option value="Residencial">Residencial</option>
-                                <option value="Comercial">Comercial</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="quick-phone">
-                                Teléfono <span className="text-red-500">*</span>
-                            </Label>
-                            <Input
-                                id="quick-phone"
-                                name="phone"
-                                value={formData.phone}
-                                onChange={handleInputChange}
-                                placeholder="+56 9 1234 5678"
-                                required
-                            />
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="quick-sector">Sector <span className="text-red-500">*</span></Label>
-                            <select
-                                id="quick-sector"
-                                name="sector"
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                                value={formData.sector}
-                                onChange={handleInputChange}
-                                required
-                            >
-                                <option value="">Seleccionar...</option>
-                                {SECTORS.map((sector) => (
-                                    <option key={sector} value={sector}>
-                                        {sector}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-
-                    <div className="grid gap-2">
-                        <Label htmlFor="quick-email">Email</Label>
-                        <Input
-                            id="quick-email"
-                            name="email"
-                            type="email"
-                            value={formData.email}
+                    <div className="space-y-2">
+                        <Label htmlFor="quick-type">Tipo Cliente</Label>
+                        <select
+                            id="quick-type"
+                            name="type"
+                            className="flex h-12 w-full rounded-md border border-input bg-white px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                            value={formData.type}
                             onChange={handleInputChange}
-                            placeholder="contacto@empresa.cl"
+                        >
+                            <option value="Restaurant">Restaurant</option>
+                            <option value="Residencial">Residencial</option>
+                            <option value="Comercial">Comercial</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border p-4 bg-slate-50/50 rounded-xl">
+                    <div className="space-y-2">
+                        <Label htmlFor="quick-phone">
+                            Teléfono <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                            id="quick-phone"
+                            name="phone"
+                            type="tel"
+                            value={formData.phone}
+                            onChange={handleInputChange}
+                            placeholder="+56 9 1234 5678"
+                            className="h-12 text-base bg-white"
+                            required
                         />
                     </div>
-
-                    <div className="grid gap-2">
-                        <Label htmlFor="quick-address">Dirección</Label>
-                        <Input
-                            id="quick-address"
-                            name="address"
-                            value={formData.address}
+                    <div className="space-y-2">
+                        <Label htmlFor="quick-sector">Sector Logístico <span className="text-red-500">*</span></Label>
+                        <select
+                            id="quick-sector"
+                            name="sector"
+                            className="flex h-12 w-full rounded-md border border-input bg-white px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                            value={formData.sector}
                             onChange={handleInputChange}
-                            placeholder="Calle Principal 123, Ciudad"
-                        />
+                            required
+                        >
+                            <option value="">Seleccionar...</option>
+                            {SECTORS.map((sector) => (
+                                <option key={sector} value={sector}>
+                                    {sector}
+                                </option>
+                            ))}
+                        </select>
                     </div>
+                </div>
 
-                    {error && (
-                        <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
-                            {error}
-                        </div>
-                    )}
+                <div className="space-y-2">
+                    <Label htmlFor="quick-address">Dirección</Label>
+                    <Input
+                        id="quick-address"
+                        name="address"
+                        value={formData.address}
+                        onChange={handleInputChange}
+                        placeholder="Calle Principal 123"
+                        className="h-12 text-base"
+                    />
+                </div>
 
-                    <DialogFooter>
-                        <Button type="button" variant="outline" onClick={handleCancel}>
-                            Cancelar
-                        </Button>
-                        <Button type="submit">
-                            Guardar Cliente
-                        </Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
+                <div className="space-y-2">
+                    <Label htmlFor="quick-email">Email (Opcional)</Label>
+                    <Input
+                        id="quick-email"
+                        name="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        placeholder="contacto@empresa.cl"
+                        className="h-12 text-base"
+                    />
+                </div>
+
+                {error && (
+                    <div className="rounded-lg border border-red-200 bg-red-50 p-4 font-bold text-red-700 animate-in fade-in slide-in-from-top-2">
+                        ⚠️ {error}
+                    </div>
+                )}
+
+                <div className="pt-4 flex flex-col sm:flex-row gap-3">
+                    <Button
+                        type="submit"
+                        size="lg"
+                        className="w-full text-base font-bold bg-green-600 hover:bg-green-700"
+                    >
+                        ✓ Guardar y Usar Cliente
+                    </Button>
+                </div>
+            </form>
+        </FullScreenDialog>
     );
 };

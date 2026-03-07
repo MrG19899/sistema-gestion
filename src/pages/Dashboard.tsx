@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-const CheckCircle = ({ className }: { className?: string }) => <span className={className}>✅</span>;
 const MapPin = ({ className }: { className?: string }) => <span className={className}>📍</span>;
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -39,8 +38,6 @@ export const Dashboard: React.FC = () => {
             case 'ALFOMBRAS': return '/alfombras';
         }
     };
-
-    const [stats, setStats] = useState({ serviciosMes: 0, alertasPendientes: 0 });
 
     useEffect(() => {
         fetchDashboardData();
@@ -192,10 +189,6 @@ export const Dashboard: React.FC = () => {
             }
 
             setItinerario(allItems);
-            setStats({
-                serviciosMes: (plagas?.length || 0) + (limpiezas?.length || 0) + (alfombras?.length || 0),
-                alertasPendientes: plagas?.length || 0
-            });
 
         } catch (error) {
             console.error('Error Itinerario:', error);
@@ -224,7 +217,7 @@ export const Dashboard: React.FC = () => {
                 <p className="text-muted-foreground mt-1">Panel operativo del equipo</p>
             </div>
 
-            {/* Stats */}
+            {/* Stats (Oculto a petición del usuario por ahora)
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <Card className="hover:shadow-md transition-shadow">
                     <CardContent className="p-6">
@@ -241,6 +234,7 @@ export const Dashboard: React.FC = () => {
                     </CardContent>
                 </Card>
             </div>
+            */}
 
             {/* Itinerario Operativo */}
             <Card className="shadow-sm border-none bg-white">
@@ -353,17 +347,26 @@ export const Dashboard: React.FC = () => {
                                                         >📞 {item.telefono}</a>
                                                     ) : null}
                                                 </div>
-                                                <div className="flex items-center gap-1 mt-0.5 text-[11px] text-slate-500">
+                                                <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-500">
                                                     <a
                                                         href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.lugar)}`}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        className="flex items-center gap-1 hover:text-blue-600 hover:underline"
+                                                        className="flex items-center gap-1 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 px-2 py-1 rounded border border-slate-200"
                                                         onClick={e => e.stopPropagation()}
-                                                        title="Abrir en Maps"
+                                                        title="Abrir en Google Maps"
                                                     >
-                                                        <MapPin className="w-2.5 h-2.5" />
-                                                        <span className="truncate">{item.lugar}</span>
+                                                        <MapPin className="w-2.5 h-2.5" /> Maps
+                                                    </a>
+                                                    <a
+                                                        href={`https://waze.com/ul?q=${encodeURIComponent(item.lugar)}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="flex items-center gap-1 bg-slate-100 hover:bg-sky-50 hover:text-sky-600 px-2 py-1 rounded border border-slate-200"
+                                                        onClick={e => e.stopPropagation()}
+                                                        title="Abrir en Waze"
+                                                    >
+                                                        🚙 Waze
                                                     </a>
                                                 </div>
                                             </div>

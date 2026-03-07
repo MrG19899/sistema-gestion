@@ -36,12 +36,12 @@ const DialogContent = React.forwardRef<
         <DialogPrimitive.Content
             ref={ref}
             className={cn(
-                // Base classes (Mobile Fullscreen)
-                "fixed left-[50%] top-[50%] z-50 grid w-full h-[100dvh] max-w-none translate-x-[-50%] translate-y-[-50%] gap-4 border-0 bg-background p-6 pt-12 shadow-lg duration-200 overflow-y-auto",
+                // Base classes (Mobile Fullscreen: anclado 100% como si fuera un layout nuevo)
+                "fixed top-0 left-0 right-0 bottom-0 z-[100] w-screen h-[100dvh] flex flex-col gap-4 border-0 bg-background p-4 pt-12 shadow-none overflow-y-auto overscroll-none m-0 rounded-none",
                 // Animations
-                "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
+                "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-out-to-bottom-[100%] data-[state=open]:slide-in-from-bottom-[100%]",
                 // Desktop / Tablet (sm:) restoration back to centered popup
-                "sm:w-[95%] sm:h-auto sm:max-w-lg sm:max-h-[85vh] sm:border sm:rounded-lg sm:pt-6",
+                "sm:bottom-auto sm:right-auto sm:left-[50%] sm:top-[50%] sm:w-[95%] sm:h-auto sm:max-w-lg sm:max-h-[85vh] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:border sm:rounded-lg sm:pt-6 sm:shadow-lg sm:data-[state=closed]:slide-out-to-left-1/2 sm:data-[state=closed]:slide-out-to-top-[48%] sm:data-[state=open]:slide-in-from-left-1/2 sm:data-[state=open]:slide-in-from-top-[48%]",
                 className
             )}
             {...props}

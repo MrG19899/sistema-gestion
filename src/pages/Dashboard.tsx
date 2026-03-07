@@ -316,44 +316,44 @@ export const Dashboard: React.FC = () => {
                                     <div
                                         key={item.id}
                                         onClick={() => navigate(getRouteForService(item.servicio))}
-                                        className={`flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl border transition-all gap-3 shadow-sm cursor-pointer ${isDone
-                                            ? 'bg-green-50 border-green-200 hover:border-green-400 hover:shadow-md'
-                                            : 'bg-slate-50 border-slate-100 hover:bg-white hover:border-slate-300 hover:shadow-md'
+                                        className={`flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg border transition-all gap-2 shadow-sm cursor-pointer ${isDone
+                                            ? 'bg-green-50 border-green-200 hover:border-green-400'
+                                            : 'bg-slate-50 border-slate-100 hover:bg-white hover:border-slate-300'
                                             }`}
                                         title={`Ir a ${item.servicio}`}
                                     >
                                         {/* Izquierda */}
-                                        <div className="flex gap-3 items-start flex-1 min-w-0">
-                                            <div className={`w-10 h-10 rounded-xl shrink-0 flex items-center justify-center text-lg ${isDone ? 'bg-green-100' : `${item.bg} bg-opacity-10`
+                                        <div className="flex gap-2.5 items-start flex-1 min-w-0">
+                                            <div className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center text-sm ${isDone ? 'bg-green-100' : `${item.bg} bg-opacity-10`
                                                 }`}>
                                                 {isDone ? '✅' : (item.servicio === 'PLAGAS' ? '🐛' : item.servicio === 'LIMPIEZA' ? '🧹' : '🪣')}
                                             </div>
                                             <div className="min-w-0">
-                                                <div className="flex items-center gap-2 flex-wrap">
-                                                    <h4 className={`font-bold text-sm ${isDone ? 'text-green-800' : 'text-slate-800'}`}>{item.titulo}</h4>
-                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold text-white uppercase tracking-wider ${item.bg}`}>
+                                                <div className="flex items-center gap-1.5 flex-wrap">
+                                                    <h4 className={`font-bold text-xs ${isDone ? 'text-green-800' : 'text-slate-800'}`}>{item.titulo}</h4>
+                                                    <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold text-white uppercase tracking-wider ${item.bg}`}>
                                                         {item.servicio}
                                                     </span>
                                                     {isDone && (
-                                                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-green-600 text-white uppercase">
+                                                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-green-600 text-white uppercase">
                                                             En Taller
                                                         </span>
                                                     )}
                                                 </div>
-                                                <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5">
-                                                    <span className="text-sm font-semibold text-slate-700">👤 {item.cliente}</span>
+                                                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
+                                                    <span className="text-xs font-semibold text-slate-700">👤 {item.cliente}</span>
                                                     {item.telefono ? (
                                                         <a
                                                             href={`https://wa.me/${item.telefono.replace(/\+/g, '').replace(/\s/g, '')}`}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
-                                                            className="text-green-700 text-sm font-bold hover:underline"
+                                                            className="text-green-700 text-xs font-bold hover:underline"
                                                             onClick={e => e.stopPropagation()}
                                                             title="Enviar WhatsApp"
                                                         >📞 {item.telefono}</a>
                                                     ) : null}
                                                 </div>
-                                                <div className="flex items-center gap-1 mt-0.5 text-xs text-slate-500">
+                                                <div className="flex items-center gap-1 mt-0.5 text-[11px] text-slate-500">
                                                     <a
                                                         href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.lugar)}`}
                                                         target="_blank"
@@ -362,7 +362,7 @@ export const Dashboard: React.FC = () => {
                                                         onClick={e => e.stopPropagation()}
                                                         title="Abrir en Maps"
                                                     >
-                                                        <MapPin className="w-3 h-3" />
+                                                        <MapPin className="w-2.5 h-2.5" />
                                                         <span className="truncate">{item.lugar}</span>
                                                     </a>
                                                 </div>
@@ -370,14 +370,16 @@ export const Dashboard: React.FC = () => {
                                         </div>
 
                                         {/* Derecha: fecha/hora */}
-                                        <div className="text-left md:text-right shrink-0 border-t border-slate-200 md:border-none pt-2 md:pt-0">
-                                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Ejecución</p>
-                                            <p className="font-bold text-slate-800 text-sm">
-                                                {new Date(item.fechaRaw).toLocaleDateString('es-CL', { weekday: 'short', day: 'numeric', month: 'short' })}
-                                            </p>
-                                            <p className="text-slate-500 text-sm">
-                                                {new Date(item.fechaRaw).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
-                                            </p>
+                                        <div className="text-left sm:text-right shrink-0 border-t border-slate-200 mt-1 sm:mt-0 sm:border-none pt-2 sm:pt-0 flex items-center justify-between sm:block">
+                                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest sm:mb-1">Ejecución</p>
+                                            <div className="flex items-center sm:flex-col sm:items-end gap-1 sm:gap-0">
+                                                <p className="font-bold text-slate-800 text-xs">
+                                                    {new Date(item.fechaRaw).toLocaleDateString('es-CL', { weekday: 'short', day: 'numeric', month: 'short' })}
+                                                </p>
+                                                <p className="text-slate-500 text-[11px] font-medium">
+                                                    {new Date(item.fechaRaw).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
                                 );

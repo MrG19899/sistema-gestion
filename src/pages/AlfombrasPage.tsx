@@ -515,10 +515,10 @@ export const AlfombrasPage = () => {
                     description={`Gestionar flujo de la alfombra ${selectedRug?.id}`}
                 >
                     {selectedRug && (
-                        <div className="space-y-6 pt-2 pb-12">
-                            <div className="grid grid-cols-1 gap-4 text-sm">
-                                <div className="space-y-2">
-                                    <Label className="text-base font-bold">Cliente:</Label>
+                        <div className="space-y-4 pt-2">
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <Label className="font-bold block mb-1">Cliente:</Label>
                                     {isEditing ? (
                                         <ClientAutocomplete
                                             onSelect={(client) => setSelectedRug({
@@ -529,14 +529,14 @@ export const AlfombrasPage = () => {
                                             selectedClientName={selectedRug.cliente_nombre || ''}
                                         />
                                     ) : (
-                                        <div className="h-12 flex items-center px-3 border rounded-md bg-muted/50 text-base">{selectedRug.cliente_nombre}</div>
+                                        <div className="flex h-10 items-center px-3 border rounded-md bg-muted/50">{selectedRug.cliente_nombre}</div>
                                     )}
                                 </div>
-                                <div className="space-y-2">
-                                    <Label className="text-base font-bold">Tipo:</Label>
+                                <div>
+                                    <Label className="font-bold block mb-1">Tipo:</Label>
                                     {isEditing ? (
                                         <select
-                                            className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base"
+                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                                             value={selectedRug.tipo_servicio}
                                             onChange={(e) => setSelectedRug({ ...selectedRug, tipo_servicio: e.target.value })}
                                         >
@@ -545,48 +545,48 @@ export const AlfombrasPage = () => {
                                             <option value="Lana">Lana</option>
                                         </select>
                                     ) : (
-                                        <div className="h-12 flex items-center px-3 border rounded-md bg-muted/50 text-base">{selectedRug.tipo_servicio}</div>
+                                        <div className="flex h-10 items-center px-3 border rounded-md bg-muted/50">{selectedRug.tipo_servicio}</div>
                                     )}
                                 </div>
-                                <div className="space-y-2">
-                                    <Label className="text-base font-bold">Ingreso:</Label>
+                                <div>
+                                    <Label className="font-bold block mb-1">Ingreso:</Label>
                                     {isEditing ? (
                                         <Input
                                             type="date"
-                                            className="h-12 text-base bg-white"
+                                            className="h-10 text-sm bg-white"
                                             value={selectedRug.fecha_recepcion ? selectedRug.fecha_recepcion.split('T')[0] : ''}
                                             onChange={(e) => setSelectedRug({ ...selectedRug, fecha_recepcion: e.target.value })}
                                         />
                                     ) : (
-                                        <div className="h-12 flex items-center px-3 border rounded-md bg-muted/50 text-base">{selectedRug.fecha_recepcion ? new Date(selectedRug.fecha_recepcion).toLocaleDateString() : '-'}</div>
+                                        <div className="flex h-10 items-center px-3 border rounded-md bg-muted/50">{selectedRug.fecha_recepcion ? new Date(selectedRug.fecha_recepcion).toLocaleDateString() : '-'}</div>
                                     )}
                                 </div>
-                                <div className="col-span-1 space-y-2">
-                                    <Label className="text-base font-bold">📍 Dirección de Entrega:</Label>
-                                    <p className="text-sm text-muted-foreground mb-1">Pre-cargada desde el cliente. Modificable si la entrega es en otro domicilio.</p>
+                                <div className="col-span-2">
+                                    <Label className="font-bold block mb-1">📍 Dirección de Entrega:</Label>
+                                    <p className="text-xs text-muted-foreground mb-1">Pre-cargada desde el cliente. Modificable si la entrega es en otro domicilio.</p>
                                     {isEditing ? (
                                         <Input
                                             type="text"
-                                            className="h-12 text-base"
+                                            className="h-10 text-sm"
                                             placeholder="Ej: Las Rosas 123, Concepción"
                                             value={(selectedRug as any).direccion_entrega || selectedRug.ubicacion || ''}
                                             onChange={(e) => setSelectedRug({ ...selectedRug, ubicacion: e.target.value })}
                                         />
                                     ) : (
-                                        <div className="min-h-12 flex items-center px-3 border rounded-md bg-muted/50 text-base">{(selectedRug as any).direccion_entrega || selectedRug.ubicacion || 'Sin dirección registrada'}</div>
+                                        <div className="min-h-10 flex items-center px-3 py-2 border rounded-md bg-muted/50 text-sm">{(selectedRug as any).direccion_entrega || selectedRug.ubicacion || 'Sin dirección registrada'}</div>
                                     )}
                                 </div>
                             </div>
                             {selectedRug.photo_url && (
-                                <div className="h-64 w-full bg-muted rounded-md overflow-hidden mt-4">
-                                    <img src={selectedRug.photo_url} alt="Evidencia" className="w-full h-full object-contain bg-black/5" />
+                                <div className="h-40 w-full bg-muted rounded-md overflow-hidden mt-2">
+                                    <img src={selectedRug.photo_url} alt="Evidencia" className="w-full h-full object-cover bg-black/5" />
                                 </div>
                             )}
-                            <div className="pt-4 border-t mt-6">
-                                <Label className="mb-3 block text-base font-bold">Cambiar Estado Operativo:</Label>
+                            <div className="pt-4 border-t mt-4">
+                                <Label className="mb-2 block font-bold">Estado Operativo:</Label>
                                 {isEditing ? (
                                     <select
-                                        className="flex h-14 w-full rounded-md border border-input bg-background px-3 py-2 text-base font-medium"
+                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                                         value={selectedRug.estado}
                                         onChange={(e) => setSelectedRug({ ...selectedRug, estado: e.target.value })}
                                     >
@@ -596,39 +596,38 @@ export const AlfombrasPage = () => {
                                         <option value="delivered">Entregado</option>
                                     </select>
                                 ) : (
-                                    <div className="grid grid-cols-1 gap-3">
-                                        <div className="grid grid-cols-2 gap-3">
+                                    <div className="grid grid-cols-1 gap-2">
+                                        <div className="grid grid-cols-2 gap-2">
                                             <Button
                                                 variant={selectedRug.estado === 'recepcionada' ? 'default' : 'outline'}
                                                 onClick={() => handleUpdateStatus('recepcionada')}
-                                                size="lg"
-                                                className={`h-14 text-sm font-semibold ${selectedRug.estado === 'recepcionada' ? "" : "hover:bg-gray-100"}`}
+                                                size="sm"
                                             >
                                                 En Recepción
                                             </Button>
                                             <Button
                                                 variant={selectedRug.estado === 'in_process' ? 'default' : 'outline'}
                                                 onClick={() => handleUpdateStatus('in_process')}
-                                                size="lg"
-                                                className={`h-14 text-sm font-semibold ${selectedRug.estado === 'in_process' ? "bg-blue-600 hover:bg-blue-700 text-white" : "border-blue-500 text-blue-600 hover:bg-blue-50"}`}
+                                                size="sm"
+                                                className={selectedRug.estado === 'recepcionada' ? "border-blue-500 text-blue-600 hover:bg-blue-50" : ""}
                                             >
                                                 Pasar a Proceso
                                             </Button>
                                         </div>
-                                        <div className="grid grid-cols-2 gap-3">
+                                        <div className="grid grid-cols-2 gap-2">
                                             <Button
                                                 variant={selectedRug.estado === 'ready' ? 'default' : 'outline'}
                                                 onClick={() => handleUpdateStatus('ready')}
-                                                size="lg"
-                                                className={`h-14 text-sm font-semibold ${selectedRug.estado === 'ready' ? "bg-green-600 hover:bg-green-700 text-white" : "text-green-600 border-green-500 hover:bg-green-50"}`}
+                                                size="sm"
+                                                className={selectedRug.estado === 'ready' ? "bg-green-600 hover:bg-green-700 text-white" : "text-green-600 border-green-200 hover:bg-green-50"}
                                             >
                                                 Listo para Entrega
                                             </Button>
                                             <Button
                                                 variant={selectedRug.estado === 'delivered' ? 'default' : 'outline'}
                                                 onClick={() => handleUpdateStatus('delivered')}
-                                                size="lg"
-                                                className={`h-14 text-sm font-semibold ${selectedRug.estado === 'delivered' ? "bg-gray-800 text-white hover:bg-gray-900" : "border-gray-400 text-gray-700 hover:bg-gray-100"}`}
+                                                size="sm"
+                                                className={selectedRug.estado === 'delivered' ? "bg-gray-800 text-white" : "border-gray-300 text-gray-600 hover:bg-gray-50"}
                                             >
                                                 Entregado
                                             </Button>
@@ -636,16 +635,16 @@ export const AlfombrasPage = () => {
                                     </div>
                                 )}
                             </div>
-                            <div className="pt-6 grid grid-cols-2 gap-4">
+                            <div className="pt-4 flex justify-end gap-2">
                                 {isEditing ? (
                                     <>
-                                        <Button variant="outline" size="lg" className="h-14 text-base" onClick={() => setIsEditing(false)}>Cancelar</Button>
-                                        <Button size="lg" className="h-14 text-base" onClick={handleUpdateRug}>Guardar Cambios</Button>
+                                        <Button variant="outline" onClick={() => setIsEditing(false)}>Cancelar</Button>
+                                        <Button onClick={handleUpdateRug}>Guardar Cambios</Button>
                                     </>
                                 ) : (
                                     <>
-                                        <Button variant="outline" size="lg" className="h-14 text-base" onClick={handleCloseDetails}>Cerrar</Button>
-                                        <Button variant="secondary" size="lg" className="h-14 text-base" onClick={() => setIsEditing(true)}>Editar Detalles</Button>
+                                        <Button variant="outline" onClick={handleCloseDetails}>Cerrar</Button>
+                                        <Button variant="secondary" onClick={() => setIsEditing(true)}>Editar Detalles</Button>
                                     </>
                                 )}
                             </div>
@@ -657,44 +656,46 @@ export const AlfombrasPage = () => {
             <FullScreenDialog
                 open={viewPhotoIndex !== null}
                 onOpenChange={() => setViewPhotoIndex(null)}
-                title="Vista Ampliada"
-                description={viewPhotoIndex !== null && rugsWithPhotos[viewPhotoIndex] ? `Alfombra de ${rugsWithPhotos[viewPhotoIndex].cliente_nombre}` : ''}
+                hideHeader
+                className="bg-black/95"
+                contentClassName="max-w-4xl mx-auto p-0 flex items-center justify-center relative w-full h-[100dvh]"
             >
                 {viewPhotoIndex !== null && rugsWithPhotos[viewPhotoIndex] && (
-                    <div className="relative w-full h-[70vh] flex flex-col items-center justify-center bg-black/5 rounded-lg overflow-hidden mt-4">
-                        <div className="relative flex items-center justify-center w-full h-full">
+                    <div className="relative w-full h-full flex flex-col items-center justify-center p-4">
+                        <div className="relative flex items-center justify-center w-full h-full max-h-[80vh]">
                             {viewPhotoIndex > 0 && (
                                 <Button
-                                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 h-14 w-14 z-10 flex items-center justify-center shadow-lg"
+                                    className="absolute left-2 md:-left-12 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 h-12 w-12 z-10 flex items-center justify-center"
                                     onClick={() => setViewPhotoIndex(viewPhotoIndex - 1)}
                                 >
-                                    <span className="text-2xl font-bold">{"<"}</span>
+                                    <span className="text-xl font-bold">{"<"}</span>
                                 </Button>
                             )}
                             <img
                                 src={rugsWithPhotos[viewPhotoIndex].photo_url || ''}
                                 alt="Vista Ampliada"
-                                className="max-w-full max-h-full object-contain drop-shadow-2xl"
+                                className="max-w-full max-h-full object-contain rounded-md shadow-2xl"
                             />
                             {viewPhotoIndex < rugsWithPhotos.length - 1 && (
                                 <Button
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 h-14 w-14 z-10 flex items-center justify-center shadow-lg"
+                                    className="absolute right-2 md:-right-12 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 h-12 w-12 z-10 flex items-center justify-center"
                                     onClick={() => setViewPhotoIndex(viewPhotoIndex + 1)}
                                 >
-                                    <span className="text-2xl font-bold">{">"}</span>
-
+                                    <span className="text-xl font-bold">{">"}</span>
                                 </Button>
                             )}
                         </div>
-                        <div className="mt-4 bg-black/80 text-white px-6 py-2 rounded-full text-sm font-medium shadow-lg flex items-center gap-3">
+
+                        <div className="absolute bottom-6 bg-black/80 text-white px-6 py-2 rounded-full text-sm font-medium shadow-lg flex items-center gap-3">
                             <span>{rugsWithPhotos[viewPhotoIndex].cliente_nombre}</span>
                             <span className="opacity-50">|</span>
                             <span className="opacity-75">ID: {rugsWithPhotos[viewPhotoIndex].id.substring(0, 8)}</span>
                             <span className="opacity-50">|</span>
                             <span className="text-blue-300 font-bold">{viewPhotoIndex + 1} de {rugsWithPhotos.length}</span>
                         </div>
+
                         <Button
-                            className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 h-10 w-10 flex items-center justify-center"
+                            className="absolute top-4 right-4 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 h-10 w-10 flex items-center justify-center"
                             onClick={() => setViewPhotoIndex(null)}
                         >
                             ✕

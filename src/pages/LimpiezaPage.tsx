@@ -355,62 +355,60 @@ export const LimpiezaPage = () => {
                     description={`Información completa de la orden de servicio #${selectedService?.id}`}
                 >
                     {selectedService && (
-                        <div className="space-y-6 pt-2 pb-12">
-                            <div className="grid grid-cols-1 gap-2">
-                                <Label className="text-base font-semibold">Cliente:</Label>
-                                <div className="h-12 flex items-center px-3 border rounded-md bg-muted/50">{selectedService.cliente_nombre}</div>
-                            </div>
-                            <div className="grid grid-cols-1 gap-2">
-                                <Label className="text-base font-semibold">Servicio:</Label>
-                                <div className="h-12 flex items-center px-3 border rounded-md bg-muted/50">{selectedService.tipo_servicio}</div>
-                            </div>
-                            <div className="grid md:grid-cols-2 gap-4">
-                                <div className="grid grid-cols-1 gap-2">
-                                    <Label className="text-base font-semibold">Fecha:</Label>
+                        <div className="space-y-4 pt-2">
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div className="col-span-2 sm:col-span-1">
+                                    <Label className="font-bold block mb-1">Cliente:</Label>
+                                    <div className="flex h-10 items-center px-3 border rounded-md bg-muted/50">{selectedService.cliente_nombre}</div>
+                                </div>
+                                <div className="col-span-2 sm:col-span-1">
+                                    <Label className="font-bold block mb-1">Servicio:</Label>
+                                    <div className="flex h-10 items-center px-3 border rounded-md bg-muted/50">{selectedService.tipo_servicio}</div>
+                                </div>
+                                <div className="col-span-2 sm:col-span-1">
+                                    <Label className="font-bold block mb-1">Fecha:</Label>
                                     {isEditing ? (
                                         <Input
                                             type="date"
                                             value={selectedService.fecha}
                                             onChange={(e) => setSelectedService({ ...selectedService, fecha: e.target.value })}
-                                            className="h-12 text-base bg-white"
+                                            className="h-10 text-sm bg-white"
                                         />
                                     ) : (
-                                        <div className="h-12 flex items-center px-3 border rounded-md bg-muted/50">{selectedService.fecha ? new Date(selectedService.fecha).toLocaleDateString() : '-'}</div>
+                                        <div className="flex h-10 items-center px-3 border rounded-md bg-muted/50">{selectedService.fecha ? new Date(selectedService.fecha).toLocaleDateString() : '-'}</div>
                                     )}
                                 </div>
-                                <div className="grid grid-cols-1 gap-2">
-                                    <Label className="text-base font-semibold">Hora:</Label>
+                                <div className="col-span-2 sm:col-span-1">
+                                    <Label className="font-bold block mb-1">Hora:</Label>
                                     {isEditing ? (
                                         <Input
                                             type="time"
                                             value={selectedService.hora}
                                             onChange={(e) => setSelectedService({ ...selectedService, hora: e.target.value })}
-                                            className="h-12 text-base bg-white"
+                                            className="h-10 text-sm bg-white"
                                         />
                                     ) : (
-                                        <div className="h-12 flex items-center px-3 border rounded-md bg-muted/50">{selectedService.hora}</div>
+                                        <div className="flex h-10 items-center px-3 border rounded-md bg-muted/50">{selectedService.hora}</div>
                                     )}
                                 </div>
-                            </div>
-                            <div className="grid grid-cols-1 gap-2">
-                                <Label className="text-base font-semibold">Dirección:</Label>
-                                <div className="h-12 flex items-center px-3 border rounded-md bg-muted/50">{selectedService.direccion}</div>
-                            </div>
-                            <div className="grid md:grid-cols-2 gap-4">
-                                <div className="grid grid-cols-1 gap-2">
-                                    <Label className="text-base font-semibold">Personal:</Label>
+                                <div className="col-span-2">
+                                    <Label className="font-bold block mb-1">Dirección:</Label>
+                                    <div className="flex h-10 items-center px-3 border rounded-md bg-muted/50">{selectedService.direccion}</div>
+                                </div>
+                                <div className="col-span-2 sm:col-span-1">
+                                    <Label className="font-bold block mb-1">Personal:</Label>
                                     {isEditing ? (
-                                        <div className="h-12 flex items-center px-3 border rounded-md text-muted-foreground italic bg-muted/50">No asignable</div>
+                                        <div className="flex h-10 items-center px-3 border rounded-md text-muted-foreground italic bg-muted/50">No asignable</div>
                                     ) : (
-                                        <div className="h-12 flex items-center px-3 border rounded-md bg-muted/50">N/A</div>
+                                        <div className="flex h-10 items-center px-3 border rounded-md bg-muted/50">N/A</div>
                                     )}
                                 </div>
-                                <div className="grid grid-cols-1 gap-2">
-                                    <Label className="text-base font-semibold">Estado:</Label>
-                                    <div className="h-12 flex items-center px-3 gap-2">
+                                <div className="col-span-2 sm:col-span-1">
+                                    <Label className="font-bold block mb-1">Estado:</Label>
+                                    <div className="flex h-10 items-center gap-2">
                                         {isEditing ? (
                                             <select
-                                                className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base"
+                                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
                                                 value={selectedService.estado}
                                                 onChange={(e) => setSelectedService({ ...selectedService, estado: e.target.value })}
                                             >
@@ -429,16 +427,16 @@ export const LimpiezaPage = () => {
                                 </div>
                             </div>
 
-                            <div className="pt-6 grid grid-cols-2 gap-4">
+                            <div className="pt-4 flex justify-end gap-2 mt-4">
                                 {isEditing ? (
                                     <>
-                                        <Button variant="outline" size="lg" className="h-14 text-base" onClick={() => setIsEditing(false)}>Cancelar</Button>
-                                        <Button size="lg" className="h-14 text-base" onClick={handleUpdateService}>Guardar Cambios</Button>
+                                        <Button variant="outline" onClick={() => setIsEditing(false)}>Cancelar</Button>
+                                        <Button onClick={handleUpdateService}>Guardar Cambios</Button>
                                     </>
                                 ) : (
                                     <>
-                                        <Button variant="outline" size="lg" className="h-14 text-base" onClick={handleCloseDetails}>Cerrar</Button>
-                                        <Button variant="secondary" size="lg" className="h-14 text-base" onClick={() => setIsEditing(true)}>Editar / Reagendar</Button>
+                                        <Button variant="outline" onClick={handleCloseDetails}>Cerrar</Button>
+                                        <Button variant="secondary" onClick={() => setIsEditing(true)}>Editar / Reagendar</Button>
                                     </>
                                 )}
                             </div>

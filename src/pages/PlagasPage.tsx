@@ -683,40 +683,38 @@ export const PlagasPage = () => {
                 description={`ID: ${selectedService?.id}`}
             >
                 {selectedService && (
-                    <div className="space-y-6 pt-2 pb-12">
-                        <div className="grid grid-cols-1 gap-2">
-                            <Label className="text-base font-semibold">👤 Cliente</Label>
-                            <div className="h-12 flex items-center px-3 border rounded-md bg-muted/50 text-base">{selectedService.cliente_nombre}</div>
-                        </div>
-                        <div className="grid md:grid-cols-2 gap-4">
-                            <div className="grid grid-cols-1 gap-2">
-                                <Label className="text-base font-semibold">📞 Teléfono</Label>
-                                <div className="h-12 flex items-center px-3 border rounded-md bg-muted/50 text-base">{selectedService.cliente_telefono || '–'}</div>
+                    <div className="space-y-4 pt-2">
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div className="col-span-2 sm:col-span-1">
+                                <Label className="font-bold block mb-1">👤 Cliente</Label>
+                                <div className="flex h-10 items-center px-3 border rounded-md bg-muted/50">{selectedService.cliente_nombre}</div>
                             </div>
-                            <div className="grid grid-cols-1 gap-2">
-                                <Label className="text-base font-semibold">🗺️ Sector</Label>
-                                <div className="h-12 flex items-center px-3 border rounded-md bg-muted/50 text-base">{selectedService.sector}</div>
+                            <div className="col-span-2 sm:col-span-1">
+                                <Label className="font-bold block mb-1">📞 Teléfono</Label>
+                                <div className="flex h-10 items-center px-3 border rounded-md bg-muted/50">{selectedService.cliente_telefono || '–'}</div>
                             </div>
-                        </div>
-                        <div className="grid grid-cols-1 gap-2">
-                            <Label className="text-base font-semibold">📍 Dirección</Label>
-                            <div className="h-12 flex items-center px-3 border rounded-md bg-muted/50 text-base">{selectedService.direccion || '–'}</div>
-                        </div>
-                        <div className="grid grid-cols-1 gap-2">
-                            <Label className="text-base font-semibold">🛡️ Tipo</Label>
-                            <div className="min-h-12 flex items-center px-3 border rounded-md bg-muted/50 text-base py-2">{Array.isArray(selectedService.tipos_servicio) ? selectedService.tipos_servicio.join(', ') : selectedService.tipo_servicio}</div>
-                        </div>
-                        <div className="grid md:grid-cols-2 gap-4">
-                            <div className="grid grid-cols-1 gap-2">
-                                <Label className="text-base font-semibold">👷 Técnico</Label>
-                                <div className="h-12 flex items-center px-3 border rounded-md bg-muted/50 text-base">{selectedService.tecnico_asignado || '–'}</div>
+                            <div className="col-span-2 sm:col-span-1">
+                                <Label className="font-bold block mb-1">🗺️ Sector</Label>
+                                <div className="flex h-10 items-center px-3 border rounded-md bg-muted/50">{selectedService.sector}</div>
                             </div>
-                            <div className="grid grid-cols-1 gap-2">
-                                <Label className="text-base font-semibold">📋 Estado</Label>
-                                <div className="h-12 flex items-center px-3 gap-2 text-base">
+                            <div className="col-span-2 sm:col-span-1">
+                                <Label className="font-bold block mb-1">📍 Dirección</Label>
+                                <div className="flex h-10 items-center px-3 border rounded-md bg-muted/50">{selectedService.direccion || '–'}</div>
+                            </div>
+                            <div className="col-span-2">
+                                <Label className="font-bold block mb-1">🛡️ Tipo</Label>
+                                <div className="min-h-10 flex items-center px-3 py-2 border rounded-md bg-muted/50">{Array.isArray(selectedService.tipos_servicio) ? selectedService.tipos_servicio.join(', ') : selectedService.tipo_servicio}</div>
+                            </div>
+                            <div className="col-span-2 sm:col-span-1">
+                                <Label className="font-bold block mb-1">👷 Técnico</Label>
+                                <div className="flex h-10 items-center px-3 border rounded-md bg-muted/50">{selectedService.tecnico_asignado || '–'}</div>
+                            </div>
+                            <div className="col-span-2 sm:col-span-1">
+                                <Label className="font-bold block mb-1">📋 Estado</Label>
+                                <div className="flex items-center gap-2">
                                     {isEditing ? (
                                         <select
-                                            className="flex h-12 flex-1 rounded-md border border-input bg-background px-3 py-1 text-base"
+                                            className="flex h-10 flex-1 rounded-md border border-input bg-background px-3 py-1 text-sm"
                                             value={selectedService.estado}
                                             onChange={e => setSelectedService({ ...selectedService, estado: e.target.value })}
                                         >
@@ -727,60 +725,58 @@ export const PlagasPage = () => {
                                     ) : getStatusBadge(selectedService.estado)}
                                 </div>
                             </div>
-                        </div>
-                        <div className="grid md:grid-cols-2 gap-4">
-                            <div className="grid grid-cols-1 gap-2">
-                                <Label className="text-base font-semibold">🔁 Renovación</Label>
-                                <div className="h-12 flex items-center px-3 text-base">
+                            <div className="col-span-2 sm:col-span-1">
+                                <Label className="font-bold block mb-1">🔁 Renovación</Label>
+                                <div className="flex items-center text-sm">
                                     {isEditing ? (
-                                        <Input type="date" className="flex-1 h-12"
+                                        <Input type="date" className="flex-1 h-10"
                                             value={selectedService.proxima_renovacion?.split('T')[0] || ''}
                                             onChange={e => setSelectedService({ ...selectedService, proxima_renovacion: e.target.value })}
                                         />
                                     ) : (
-                                        <span className={`px-4 py-1 rounded-full text-base font-semibold border ${getTrafficLight(selectedService.proxima_renovacion)}`}>
+                                        <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getTrafficLight(selectedService.proxima_renovacion)}`}>
                                             {selectedService.proxima_renovacion ? new Date(selectedService.proxima_renovacion).toLocaleDateString('es-CL') : 'Sin periodicidad'}
                                         </span>
                                     )}
                                 </div>
                             </div>
-                            <div className="grid grid-cols-1 gap-2">
-                                <Label className="text-base font-semibold">📄 Certificado</Label>
-                                <div className="h-12 flex items-center px-3 text-base">
+                            <div className="col-span-2 sm:col-span-1">
+                                <Label className="font-bold block mb-1">📄 Certificado</Label>
+                                <div className="flex h-10 items-center">
                                     {isEditing ? (
-                                        <Input className="flex-1 h-12"
+                                        <Input className="flex-1 h-10"
                                             value={selectedService.numero_certificado || ''}
                                             onChange={e => setSelectedService({ ...selectedService, numero_certificado: e.target.value })}
                                         />
                                     ) : (
                                         selectedService.numero_certificado
-                                            ? <code className="bg-muted px-2 py-1 rounded text-base">{selectedService.numero_certificado}</code>
-                                            : <span className="text-base text-muted-foreground">–</span>
+                                            ? <code className="bg-muted px-2 py-1 rounded">{selectedService.numero_certificado}</code>
+                                            : <span className="text-muted-foreground">–</span>
                                     )}
                                 </div>
                             </div>
+                            <div className="col-span-2">
+                                <Label className="font-bold block mb-1">📝 Notas</Label>
+                                <div className="min-h-16 flex items-start px-3 py-2 border rounded-md bg-muted/50">{selectedService.observaciones || '–'}</div>
+                            </div>
                         </div>
-                        <div className="grid grid-cols-1 gap-2 mt-4">
-                            <Label className="text-base font-semibold">📝 Notas</Label>
-                            <div className="min-h-16 flex items-start px-3 py-2 border rounded-md bg-muted/50 text-base">{selectedService.observaciones || '–'}</div>
-                        </div>
-                        <div className="pt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="pt-4 flex justify-end gap-2 flex-wrap">
                             {isEditing ? (
                                 <>
-                                    <Button variant="outline" size="lg" className="h-14 text-base" onClick={() => setIsEditing(false)}>Cancelar</Button>
-                                    <Button size="lg" className="h-14 text-base sm:col-span-2" onClick={handleUpdateService}>Guardar Cambios</Button>
+                                    <Button variant="outline" onClick={() => setIsEditing(false)}>Cancelar</Button>
+                                    <Button onClick={handleUpdateService}>Guardar Cambios</Button>
                                 </>
                             ) : (
                                 <>
-                                    <Button variant="secondary" size="lg" className="h-14 text-base" onClick={() => setIsEditing(true)}>✏️ Editar</Button>
+                                    <Button variant="outline" onClick={() => { setSelectedService(null); setIsEditing(false); }}>Cerrar</Button>
                                     {selectedService?.estado === 'completado' && (
-                                        <Button variant="outline" size="lg" className="h-14 text-base" onClick={() => {
+                                        <Button variant="outline" className="border-blue-200 text-blue-700 hover:bg-blue-50" onClick={() => {
                                             setCertificateService(selectedService);
                                             setIsCertificateOpen(true);
                                             setSelectedService(null);
                                         }}>📄 Ver Certificado</Button>
                                     )}
-                                    <Button variant="outline" size="lg" className="h-14 text-base" onClick={() => { setSelectedService(null); setIsEditing(false); }}>Cerrar</Button>
+                                    <Button variant="secondary" onClick={() => setIsEditing(true)}>✏️ Editar</Button>
                                 </>
                             )}
                         </div>
@@ -793,24 +789,27 @@ export const PlagasPage = () => {
                 <FullScreenDialog
                     open={isCertificateOpen}
                     onOpenChange={setIsCertificateOpen}
-                    title=""
-                    description=""
+                    hideHeader
+                    className="bg-gray-100"
+                    contentClassName="max-w-5xl mx-auto p-4 sm:p-6 print:p-0 print:max-w-full"
                 >
-                    <div className="print:hidden mb-6 flex justify-between items-center bg-gray-50 p-4 border rounded-lg">
+                    <div className="print:hidden mb-6 flex justify-between items-center bg-white shadow-sm p-4 border rounded-lg">
                         <h2 className="flex items-center gap-2 text-lg font-bold">
                             <FileText className="w-5 h-5 text-blue-600" />
                             Visor de Certificado
                         </h2>
-                        <div className="space-x-3">
+                        <div className="space-x-2">
                             <Button variant="outline" onClick={() => setIsCertificateOpen(false)}>Volver</Button>
                             <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold" onClick={() => window.print()}>🖨️ Imprimir PDF</Button>
                         </div>
                     </div>
-                    <CertificateGenerator
-                        service={certificateService as any}
-                        traps={[]}
-                        serviceTraps={[]}
-                    />
+                    <div className="bg-white shadow-lg print:shadow-none print:bg-transparent">
+                        <CertificateGenerator
+                            service={certificateService as any}
+                            traps={[]}
+                            serviceTraps={[]}
+                        />
+                    </div>
                 </FullScreenDialog>
             )}
         </div>

@@ -35,6 +35,9 @@ import {
     TableRow,
 } from '../components/ui/table';
 
+import { GestorTrampas } from '../components/GestorTrampas';
+import type { Trampa } from '../components/GestorTrampas';
+
 export interface ServicioControlPlagasReal {
     id: string;
     cliente_id: string;
@@ -43,6 +46,7 @@ export interface ServicioControlPlagasReal {
     sector: string;
     tipo_servicio: string;
     tipos_servicio?: string[];
+    trampas?: Trampa[];
     numero_certificado: string;
     tecnico_asignado: string;
     fecha_ejecucion: string;
@@ -146,6 +150,7 @@ export const PlagasPage = () => {
         // Certificado (solo si completado)
         generarCertificado: false, numeroCertificado: '',
         observaciones: '',
+        trampas: [] as Trampa[],
     };
     const [form, setForm] = useState(emptyForm);
 
@@ -182,6 +187,7 @@ export const PlagasPage = () => {
             direccion: form.clienteDireccion,
             estado: form.estado,
             observaciones: form.observaciones,
+            trampas: form.trampas,
         };
         if (proxima) {
             insertData.proxima_renovacion = proxima;
@@ -228,6 +234,7 @@ export const PlagasPage = () => {
                 proxima_renovacion: selectedService.proxima_renovacion,
                 tipo_servicio: selectedService.tipo_servicio,
                 observaciones: selectedService.observaciones,
+                trampas: selectedService.trampas,
             })
             .eq('id', selectedService.id);
 
@@ -760,6 +767,16 @@ export const PlagasPage = () => {
                                 <div className="min-h-16 flex items-start px-3 py-2 border rounded-md bg-muted/50">{selectedService.observaciones || '–'}</div>
                             </div>
                         </div>
+
+                        {/* PANEL DE GESTIÓN DE TRAMPAS */}
+                        <div className="pt-2 border-t mt-6">
+                            <GestorTrampas
+                                trampas={selectedService.trampas || []}
+                                onChange={(nuevasTrampas) => setSelectedService({ ...selectedService, trampas: nuevasTrampas })}
+                                isEditing={isEditing}
+                            />
+                        </div>
+
                         <div className="pt-4 flex justify-end gap-2 flex-wrap">
                             {isEditing ? (
                                 <>

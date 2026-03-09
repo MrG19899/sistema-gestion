@@ -4,14 +4,7 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from './ui/dialog';
+import { FullScreenDialog } from './ui/FullScreenDialog';
 import {
     Table,
     TableBody,
@@ -252,137 +245,137 @@ export const TrapList = ({
             )}
 
             {/* Dialog para agregar trampa */}
-            <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Instalar Nueva Trampa</DialogTitle>
-                        <DialogDescription>
-                            Registra una nueva trampa para {clientName}
-                        </DialogDescription>
-                    </DialogHeader>
-                    <form onSubmit={handleAddTrap} className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="add-numero">Número de Trampa</Label>
-                                <Input
-                                    id="add-numero"
-                                    value={formData.numeroTrampa}
-                                    onChange={(e) => setFormData({ ...formData, numeroTrampa: e.target.value })}
-                                    placeholder={`Auto: ${getNextTrapNumber()}`}
-                                />
-                                <p className="text-xs text-muted-foreground">
-                                    Dejar vacío para auto-generar
-                                </p>
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="add-tipo">Tipo</Label>
-                                <select
-                                    id="add-tipo"
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                    value={formData.tipo}
-                                    onChange={(e) => setFormData({ ...formData, tipo: e.target.value as Trampa['tipo'] })}
-                                >
-                                    <option value="raton">Ratón</option>
-                                    <option value="cucaracha">Cucaracha</option>
-                                    <option value="mosca">Mosca</option>
-                                    <option value="volador">Volador</option>
-                                    <option value="otro">Otro</option>
-                                </select>
-                            </div>
+            <FullScreenDialog
+                open={isAddOpen}
+                onOpenChange={setIsAddOpen}
+                title="Instalar Nueva Trampa"
+                description={`Registra una nueva trampa para ${clientName}`}
+            >
+                <form onSubmit={handleAddTrap} className="space-y-6 pt-2 pb-12">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="add-numero" className="text-base font-semibold">Número de Trampa</Label>
+                            <Input
+                                id="add-numero"
+                                className="h-12 text-base"
+                                value={formData.numeroTrampa}
+                                onChange={(e) => setFormData({ ...formData, numeroTrampa: e.target.value })}
+                                placeholder={`Auto: ${getNextTrapNumber()}`}
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                Dejar vacío para auto-generar
+                            </p>
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="add-ubicacion">
-                                Ubicación <span className="text-red-500">*</span>
-                            </Label>
-                            <Input
-                                id="add-ubicacion"
-                                value={formData.ubicacion}
-                                onChange={(e) => setFormData({ ...formData, ubicacion: e.target.value })}
-                                placeholder="Ej: Cocina Principal, Bodega Norte"
-                                required
-                            />
+                            <Label htmlFor="add-tipo" className="text-base font-semibold">Tipo</Label>
+                            <select
+                                id="add-tipo"
+                                className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base"
+                                value={formData.tipo}
+                                onChange={(e) => setFormData({ ...formData, tipo: e.target.value as Trampa['tipo'] })}
+                            >
+                                <option value="raton">Ratón</option>
+                                <option value="cucaracha">Cucaracha</option>
+                                <option value="mosca">Mosca</option>
+                                <option value="volador">Volador</option>
+                                <option value="otro">Otro</option>
+                            </select>
                         </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="add-observaciones">Observaciones</Label>
-                            <Input
-                                id="add-observaciones"
-                                value={formData.observaciones}
-                                onChange={(e) => setFormData({ ...formData, observaciones: e.target.value })}
-                                placeholder="Notas adicionales (opcional)"
-                            />
-                        </div>
-                        <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => { setIsAddOpen(false); resetForm(); }}>
-                                Cancelar
-                            </Button>
-                            <Button type="submit">Instalar Trampa</Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="add-ubicacion" className="text-base font-semibold">
+                            Ubicación <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                            id="add-ubicacion"
+                            className="h-12 text-base"
+                            value={formData.ubicacion}
+                            onChange={(e) => setFormData({ ...formData, ubicacion: e.target.value })}
+                            placeholder="Ej: Cocina Principal, Bodega Norte"
+                            required
+                        />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="add-observaciones" className="text-base font-semibold">Observaciones</Label>
+                        <Input
+                            id="add-observaciones"
+                            className="h-12 text-base"
+                            value={formData.observaciones}
+                            onChange={(e) => setFormData({ ...formData, observaciones: e.target.value })}
+                            placeholder="Notas adicionales (opcional)"
+                        />
+                    </div>
+                    <div className="pt-6 grid grid-cols-2 gap-4">
+                        <Button type="button" variant="outline" size="lg" className="h-14 text-base" onClick={() => { setIsAddOpen(false); resetForm(); }}>
+                            Cancelar
+                        </Button>
+                        <Button type="submit" size="lg" className="h-14 text-base">Instalar Trampa</Button>
+                    </div>
+                </form>
+            </FullScreenDialog>
 
             {/* Dialog para editar trampa */}
-            <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Editar Trampa</DialogTitle>
-                        <DialogDescription>
-                            Modifica la información de la trampa
-                        </DialogDescription>
-                    </DialogHeader>
-                    <form onSubmit={handleUpdateTrap} className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="edit-numero">Número de Trampa</Label>
-                                <Input
-                                    id="edit-numero"
-                                    value={formData.numeroTrampa}
-                                    onChange={(e) => setFormData({ ...formData, numeroTrampa: e.target.value })}
-                                    required
-                                />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="edit-tipo">Tipo</Label>
-                                <select
-                                    id="edit-tipo"
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                    value={formData.tipo}
-                                    onChange={(e) => setFormData({ ...formData, tipo: e.target.value as Trampa['tipo'] })}
-                                >
-                                    <option value="raton">Ratón</option>
-                                    <option value="cucaracha">Cucaracha</option>
-                                    <option value="mosca">Mosca</option>
-                                    <option value="volador">Volador</option>
-                                    <option value="otro">Otro</option>
-                                </select>
-                            </div>
-                        </div>
+            <FullScreenDialog
+                open={isEditOpen}
+                onOpenChange={setIsEditOpen}
+                title="Editar Trampa"
+                description="Modifica la información de la trampa."
+            >
+                <form onSubmit={handleUpdateTrap} className="space-y-6 pt-2 pb-12">
+                    <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="edit-ubicacion">Ubicación</Label>
+                            <Label htmlFor="edit-numero" className="text-base font-semibold">Número de Trampa</Label>
                             <Input
-                                id="edit-ubicacion"
-                                value={formData.ubicacion}
-                                onChange={(e) => setFormData({ ...formData, ubicacion: e.target.value })}
+                                id="edit-numero"
+                                className="h-12 text-base"
+                                value={formData.numeroTrampa}
+                                onChange={(e) => setFormData({ ...formData, numeroTrampa: e.target.value })}
                                 required
                             />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="edit-observaciones">Observaciones</Label>
-                            <Input
-                                id="edit-observaciones"
-                                value={formData.observaciones}
-                                onChange={(e) => setFormData({ ...formData, observaciones: e.target.value })}
-                            />
+                            <Label htmlFor="edit-tipo" className="text-base font-semibold">Tipo</Label>
+                            <select
+                                id="edit-tipo"
+                                className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base"
+                                value={formData.tipo}
+                                onChange={(e) => setFormData({ ...formData, tipo: e.target.value as Trampa['tipo'] })}
+                            >
+                                <option value="raton">Ratón</option>
+                                <option value="cucaracha">Cucaracha</option>
+                                <option value="mosca">Mosca</option>
+                                <option value="volador">Volador</option>
+                                <option value="otro">Otro</option>
+                            </select>
                         </div>
-                        <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => { setIsEditOpen(false); resetForm(); setSelectedTrap(null); }}>
-                                Cancelar
-                            </Button>
-                            <Button type="submit">Guardar Cambios</Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="edit-ubicacion" className="text-base font-semibold">Ubicación</Label>
+                        <Input
+                            id="edit-ubicacion"
+                            className="h-12 text-base"
+                            value={formData.ubicacion}
+                            onChange={(e) => setFormData({ ...formData, ubicacion: e.target.value })}
+                            required
+                        />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="edit-observaciones" className="text-base font-semibold">Observaciones</Label>
+                        <Input
+                            id="edit-observaciones"
+                            className="h-12 text-base"
+                            value={formData.observaciones}
+                            onChange={(e) => setFormData({ ...formData, observaciones: e.target.value })}
+                        />
+                    </div>
+                    <div className="pt-6 grid grid-cols-2 gap-4">
+                        <Button type="button" variant="outline" size="lg" className="h-14 text-base" onClick={() => { setIsEditOpen(false); resetForm(); setSelectedTrap(null); }}>
+                            Cancelar
+                        </Button>
+                        <Button type="submit" size="lg" className="h-14 text-base">Guardar Cambios</Button>
+                    </div>
+                </form>
+            </FullScreenDialog>
         </div>
     );
 };

@@ -348,68 +348,69 @@ export const LimpiezaPage = () => {
                     </form>
                 </FullScreenDialog>
 
-                <Dialog open={!!selectedService} onOpenChange={(open) => !open && handleCloseDetails()}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Detalles del Servicio</DialogTitle>
-                            <DialogDescription>
-                                Información completa de la orden de servicio #{selectedService?.id}
-                            </DialogDescription>
-                        </DialogHeader>
-                        {selectedService && (
-                            <div className="grid gap-4 py-4">
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label className="text-right font-bold">Cliente:</Label>
-                                    <span className="col-span-3">{selectedService.cliente_nombre}</span>
-                                </div>
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label className="text-right font-bold">Servicio:</Label>
-                                    <span className="col-span-3">{selectedService.tipo_servicio}</span>
-                                </div>
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label className="text-right font-bold">Fecha:</Label>
+                <FullScreenDialog
+                    open={!!selectedService}
+                    onOpenChange={(open) => !open && handleCloseDetails()}
+                    title="Detalles del Servicio"
+                    description={`Información completa de la orden de servicio #${selectedService?.id}`}
+                >
+                    {selectedService && (
+                        <div className="space-y-6 pt-2 pb-12">
+                            <div className="grid grid-cols-1 gap-2">
+                                <Label className="text-base font-semibold">Cliente:</Label>
+                                <div className="h-12 flex items-center px-3 border rounded-md bg-muted/50">{selectedService.cliente_nombre}</div>
+                            </div>
+                            <div className="grid grid-cols-1 gap-2">
+                                <Label className="text-base font-semibold">Servicio:</Label>
+                                <div className="h-12 flex items-center px-3 border rounded-md bg-muted/50">{selectedService.tipo_servicio}</div>
+                            </div>
+                            <div className="grid md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 gap-2">
+                                    <Label className="text-base font-semibold">Fecha:</Label>
                                     {isEditing ? (
                                         <Input
                                             type="date"
                                             value={selectedService.fecha}
                                             onChange={(e) => setSelectedService({ ...selectedService, fecha: e.target.value })}
-                                            className="col-span-3"
+                                            className="h-12 text-base bg-white"
                                         />
                                     ) : (
-                                        <span className="col-span-3">{selectedService.fecha ? new Date(selectedService.fecha).toLocaleDateString() : '-'}</span>
+                                        <div className="h-12 flex items-center px-3 border rounded-md bg-muted/50">{selectedService.fecha ? new Date(selectedService.fecha).toLocaleDateString() : '-'}</div>
                                     )}
                                 </div>
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label className="text-right font-bold">Hora:</Label>
+                                <div className="grid grid-cols-1 gap-2">
+                                    <Label className="text-base font-semibold">Hora:</Label>
                                     {isEditing ? (
                                         <Input
                                             type="time"
                                             value={selectedService.hora}
                                             onChange={(e) => setSelectedService({ ...selectedService, hora: e.target.value })}
-                                            className="col-span-3"
+                                            className="h-12 text-base bg-white"
                                         />
                                     ) : (
-                                        <span className="col-span-3">{selectedService.hora}</span>
+                                        <div className="h-12 flex items-center px-3 border rounded-md bg-muted/50">{selectedService.hora}</div>
                                     )}
                                 </div>
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label className="text-right font-bold">Dirección:</Label>
-                                    <span className="col-span-3">{selectedService.direccion}</span>
-                                </div>
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label className="text-right font-bold">Personal:</Label>
+                            </div>
+                            <div className="grid grid-cols-1 gap-2">
+                                <Label className="text-base font-semibold">Dirección:</Label>
+                                <div className="h-12 flex items-center px-3 border rounded-md bg-muted/50">{selectedService.direccion}</div>
+                            </div>
+                            <div className="grid md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 gap-2">
+                                    <Label className="text-base font-semibold">Personal:</Label>
                                     {isEditing ? (
-                                        <span className="col-span-3 text-muted-foreground italic">No asignable</span>
+                                        <div className="h-12 flex items-center px-3 border rounded-md text-muted-foreground italic bg-muted/50">No asignable</div>
                                     ) : (
-                                        <span className="col-span-3">N/A</span>
+                                        <div className="h-12 flex items-center px-3 border rounded-md bg-muted/50">N/A</div>
                                     )}
                                 </div>
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label className="text-right font-bold">Estado:</Label>
-                                    <div className="col-span-3 flex items-center gap-2">
+                                <div className="grid grid-cols-1 gap-2">
+                                    <Label className="text-base font-semibold">Estado:</Label>
+                                    <div className="h-12 flex items-center px-3 gap-2">
                                         {isEditing ? (
                                             <select
-                                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                                className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base"
                                                 value={selectedService.estado}
                                                 onChange={(e) => setSelectedService({ ...selectedService, estado: e.target.value })}
                                             >
@@ -427,22 +428,23 @@ export const LimpiezaPage = () => {
                                     </div>
                                 </div>
                             </div>
-                        )}
-                        <DialogFooter>
-                            {isEditing ? (
-                                <>
-                                    <Button variant="outline" onClick={() => setIsEditing(false)}>Cancelar</Button>
-                                    <Button onClick={handleUpdateService}>Guardar Cambios</Button>
-                                </>
-                            ) : (
-                                <>
-                                    <Button variant="secondary" onClick={() => setIsEditing(true)}>Editar / Reagendar</Button>
-                                    <Button variant="outline" onClick={handleCloseDetails}>Cerrar</Button>
-                                </>
-                            )}
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
+
+                            <div className="pt-6 grid grid-cols-2 gap-4">
+                                {isEditing ? (
+                                    <>
+                                        <Button variant="outline" size="lg" className="h-14 text-base" onClick={() => setIsEditing(false)}>Cancelar</Button>
+                                        <Button size="lg" className="h-14 text-base" onClick={handleUpdateService}>Guardar Cambios</Button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Button variant="outline" size="lg" className="h-14 text-base" onClick={handleCloseDetails}>Cerrar</Button>
+                                        <Button variant="secondary" size="lg" className="h-14 text-base" onClick={() => setIsEditing(true)}>Editar / Reagendar</Button>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </FullScreenDialog>
             </div>
 
             <Card>

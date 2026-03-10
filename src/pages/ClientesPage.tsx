@@ -127,7 +127,11 @@ export const ClientesPage = () => {
         e.preventDefault();
 
         try {
-            const finalAddress = newClient.addressDepto ? `${newClient.address}, ${newClient.addressDepto}` : newClient.address;
+            // Guardamos con un separador invisible (Zero-width space) + espacio normal
+            // para que los mapas (Waze/Google Maps) lo lean perfecto sin comas y nosotros
+            // podamos volver a separarlo en el botón de "Editar".
+            const SEPARATOR = '\u200B ';
+            const finalAddress = newClient.addressDepto ? `${newClient.address.trim()}${SEPARATOR}${newClient.addressDepto.trim()}` : newClient.address.trim();
             const newClientData = {
                 name: newClient.name,
                 type: newClient.type,
@@ -171,7 +175,8 @@ export const ClientesPage = () => {
         if (!selectedClient) return;
 
         try {
-            const finalAddress = newClient.addressDepto ? `${newClient.address}, ${newClient.addressDepto}` : newClient.address;
+            const SEPARATOR = '\u200B ';
+            const finalAddress = newClient.addressDepto ? `${newClient.address.trim()}${SEPARATOR}${newClient.addressDepto.trim()}` : newClient.address.trim();
             const updateData = {
                 name: newClient.name,
                 type: newClient.type,
@@ -216,13 +221,28 @@ export const ClientesPage = () => {
         // Let's ensure selectedClient is set if passed
         if (client) setSelectedClient(client);
 
+        const SEPARATOR = '\u200B ';
+        let addr = client.address;
+        let depto = '';
+
+        if (client.address?.includes(SEPARATOR)) {
+            const parts = client.address.split(SEPARATOR);
+            addr = parts[0];
+            depto = parts[1] || '';
+        } else if (client.address?.includes(', ')) {
+            // Retrocompatibilidad con el formato viejo de comas, para cuentas creadas ayer
+            const parts = client.address.split(', ');
+            addr = parts[0];
+            depto = parts[1] || '';
+        }
+
         setNewClient({
             name: client.name,
             contact: client.contact || '',
             email: client.email || '',
             phone: client.phone,
-            address: client.address,
-            addressDepto: '',
+            address: addr,
+            addressDepto: depto,
             type: client.type,
             sector: client.sector || ''
         });
@@ -613,9 +633,9 @@ export const ClientesPage = () => {
                                 <Label htmlFor="address" className="text-base font-semibold">Dirección (Calle)</Label>
                                 <Input id="address" name="address" className="h-12 text-base" placeholder="Ej: Las Magnolias 123" value={newClient.address} onChange={handleInputChange} required />
                             </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="addressDepto" className="text-base font-semibold">N°/Depto</Label>
-                                <Input id="addressDepto" name="addressDepto" className="h-12 text-base" placeholder="Ej: Depto 4B" value={newClient.addressDepto || ''} onChange={handleInputChange} />
+                            <div className="grid gap-2 w-1/3">
+                                <Label htmlFor="addressDepto" className="text-base font-semibold">N°/Depto o Casa</Label>
+                                <Input id="addressDepto" name="addressDepto" className="h-12 text-base" placeholder="Ej: 474" value={newClient.addressDepto || ''} onChange={handleInputChange} />
                             </div>
                         </div>
                         <div className="grid gap-2">
@@ -689,9 +709,9 @@ export const ClientesPage = () => {
                                 <Label htmlFor="edit-address" className="text-base font-semibold">Dirección (Calle)</Label>
                                 <Input id="edit-address" name="address" className="h-12 text-base" value={newClient.address} onChange={handleInputChange} required />
                             </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="edit-addressDepto" className="text-base font-semibold">N°/Depto</Label>
-                                <Input id="edit-addressDepto" name="addressDepto" className="h-12 text-base" placeholder="Ej: Depto 5" value={newClient.addressDepto || ''} onChange={handleInputChange} />
+                            <div className="grid gap-2 w-1/3">
+                                <Label htmlFor="edit-addressDepto" className="text-base font-semibold">N°/Depto o Casa</Label>
+                                <Input id="edit-addressDepto" name="addressDepto" className="h-12 text-base" placeholder="Ej: 474" value={newClient.addressDepto || ''} onChange={handleInputChange} />
                             </div>
                         </div>
                         <div className="grid gap-2">

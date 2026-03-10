@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
 import type { InternalNote, NoteCategory, NotePriority, NoteStatus } from '../types';
 // import { Plus, CheckCircle2, StickyNote, Trash2 } from 'lucide-react';
 const Plus = ({ className }: { className?: string }) => <span className={className}>+</span>;
@@ -14,9 +15,7 @@ const PRIORITY_COLORS = {
 };
 
 export const InternalBoardPage = () => {
-    const { user } = useAuth();
-
-    // Mock initial data - Replace with Firebase logic later
+    const { profile } = useAuth();
     const [notes, setNotes] = useState<InternalNote[]>([]);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -26,33 +25,88 @@ export const InternalBoardPage = () => {
         priority: 'media' as NotePriority
     });
 
-    const handleAddNote = (e: React.FormEvent) => {
-        e.preventDefault();
-        const note: InternalNote = {
-            id: Date.now().toString(),
-            content: newNote.content,
-            category: newNote.category,
-            priority: newNote.priority,
-            status: 'pendiente',
-            // createdAt: Timestamp.now(), 
-            createdAt: { seconds: Date.now() / 1000, nanoseconds: 0 } as any, // Mock for now
-            createdBy: user?.email?.split('@')[0] || 'Usuario', // Fallback name
-            createdById: user?.id || 'temp-uid'
-        };
+    useEffect(() => {
+        fetchNotes();
+        const channel = supabase
+            .channel('public:notas_muro')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'notas_muro' }, () => {
+                fetchNotes();
+            })
+            .subscribe();
 
-        setNotes([note, ...notes]);
-        setIsModalOpen(false);
-        setNewNote({ content: '', category: 'general', priority: 'media' });
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, []);
+
+    const fetchNotes = async () => {
+        const { data, error } = await supabase
+            .from('notas_muro')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (!error && data) {
+            const mapped = data.map(n => {
+                let cat = 'general';
+                let pri = 'media';
+                try {
+                    const parsed = JSON.parse(n.tipo);
+                    cat = parsed.category || 'general';
+                    pri = parsed.priority || 'media';
+                } catch {
+                    // ignore
+                }
+
+                return {
+                    id: n.id,
+                    content: n.texto,
+                    category: cat as NoteCategory,
+                    priority: pri as NotePriority,
+                    status: (n.fijada ? 'pendiente' : 'solucionado') as NoteStatus,
+                    createdAt: { seconds: new Date(n.created_at).getTime() / 1000 } as any,
+                    createdBy: n.autor,
+                    createdById: n.creador_id
+                };
+            });
+            setNotes(mapped);
+        }
     };
 
-    const handleStatusChange = (id: string, newStatus: NoteStatus) => {
+    const handleAddNote = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        const payload = {
+            texto: newNote.content,
+            autor: profile?.nombre || profile?.email?.split('@')[0] || 'Desconocido',
+            creador_id: profile?.id || 'temp',
+            fijada: true, // Fixada = Pendiente, False = Solucionado
+            tipo: JSON.stringify({ category: newNote.category, priority: newNote.priority })
+        };
+
+        const { error } = await supabase.from('notas_muro').insert([payload]);
+
+        if (!error) {
+            setIsModalOpen(false);
+            setNewNote({ content: '', category: 'general', priority: 'media' });
+            fetchNotes(); // Fetch immediately or rely on realtime
+        }
+    };
+
+    const handleStatusChange = async (id: string, newStatus: NoteStatus) => {
+        await supabase
+            .from('notas_muro')
+            .update({ fijada: newStatus === 'pendiente' })
+            .eq('id', id);
+
+        // Optimistic update
         setNotes(notes.map(note =>
             note.id === id ? { ...note, status: newStatus } : note
         ));
     };
 
-    const handleDelete = (id: string) => {
+    const handleDelete = async (id: string) => {
         if (confirm('¿Estás seguro de eliminar esta nota?')) {
+            await supabase.from('notas_muro').delete().eq('id', id);
             setNotes(notes.filter(n => n.id !== id));
         }
     };

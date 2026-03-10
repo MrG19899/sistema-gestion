@@ -48,7 +48,7 @@ export const Dashboard: React.FC = () => {
             const { count, error } = await supabase
                 .from('notas_muro')
                 .select('*', { count: 'exact', head: true })
-                .eq('completada', false);
+                .eq('fijada', true);
 
             if (!error && count !== null) {
                 setPendingNotesCount(count);

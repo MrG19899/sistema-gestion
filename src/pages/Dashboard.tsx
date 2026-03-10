@@ -375,17 +375,40 @@ export const Dashboard: React.FC = () => {
                                                         </span>
                                                     )}
                                                 </div>
-                                                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
+                                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
                                                     <span className="text-xs font-semibold text-slate-700">👤 {item.cliente}</span>
                                                     {item.telefono ? (
-                                                        <a
-                                                            href={`https://wa.me/${item.telefono.replace(/\+/g, '').replace(/\s/g, '')}`}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="text-green-700 text-xs font-bold hover:underline"
-                                                            onClick={e => e.stopPropagation()}
-                                                            title="Enviar WhatsApp"
-                                                        >📞 {item.telefono}</a>
+                                                        <div className="flex items-center gap-1.5 overflow-hidden">
+                                                            <span className="text-xs font-medium text-slate-600 mr-1">{item.telefono}</span>
+                                                            <a
+                                                                href={(() => {
+                                                                    let p = item.telefono.replace(/\D/g, '');
+                                                                    if (p.length === 8) p = '569' + p;
+                                                                    else if (p.length === 9) p = '56' + p;
+                                                                    return `https://wa.me/${p}`;
+                                                                })()}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="flex items-center gap-1 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 px-2 py-0.5 rounded border border-green-200 text-[10px] font-bold transition-colors"
+                                                                onClick={e => e.stopPropagation()}
+                                                                title="Abrir WhatsApp"
+                                                            >
+                                                                💬 WhatsApp
+                                                            </a>
+                                                            <a
+                                                                href={(() => {
+                                                                    let p = item.telefono.replace(/\D/g, '');
+                                                                    if (p.length === 8) p = '569' + p;
+                                                                    else if (p.length === 9) p = '56' + p;
+                                                                    return `tel:+${p}`;
+                                                                })()}
+                                                                className="flex items-center gap-1 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 px-2 py-0.5 rounded border border-blue-200 text-[10px] font-bold transition-colors"
+                                                                onClick={e => e.stopPropagation()}
+                                                                title="Llamar al cliente"
+                                                            >
+                                                                📞 Llamar
+                                                            </a>
+                                                        </div>
                                                     ) : null}
                                                 </div>
                                                 <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-500">

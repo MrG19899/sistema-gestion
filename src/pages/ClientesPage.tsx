@@ -480,13 +480,19 @@ export const ClientesPage = () => {
                                 placeholder="Buscar clientes..."
                                 className="pl-8 w-full"
                                 value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onChange={(e) => {
+                                    setSearchTerm(e.target.value);
+                                    setCurrentPage(1);
+                                }}
                             />
                         </div>
                         <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-2">
                             <Button
                                 variant="outline"
-                                onClick={() => setShowInactive(!showInactive)}
+                                onClick={() => {
+                                    setShowInactive(!showInactive);
+                                    setCurrentPage(1);
+                                }}
                                 className="w-full sm:w-auto"
                             >
                                 {showInactive ? 'Ocultar Inactivos' : 'Mostrar Inactivos'}
@@ -527,8 +533,40 @@ export const ClientesPage = () => {
                                             <div className="text-xs text-muted-foreground">{client.address}</div>
                                         </TableCell>
                                         <TableCell>
-                                            <div className="text-sm">{client.contact}</div>
-                                            <div className="text-xs text-muted-foreground">{client.email}</div>
+                                            <div className="flex flex-col gap-1">
+                                                <div className="text-sm font-medium">{client.contact}</div>
+                                                {client.email && <div className="text-xs text-muted-foreground">{client.email}</div>}
+                                                {client.phone && (
+                                                    <div className="flex items-center gap-1.5 mt-1">
+                                                        <a
+                                                            href={(() => {
+                                                                let p = client.phone.replace(/\D/g, '');
+                                                                if (p.length === 8) p = '569' + p;
+                                                                else if (p.length === 9) p = '56' + p;
+                                                                return `https://wa.me/${p}`;
+                                                            })()}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="flex items-center gap-1 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 px-2 py-0.5 rounded border border-green-200 text-[10px] font-bold transition-colors"
+                                                            title="Enviar WhatsApp"
+                                                        >
+                                                            💬 WhatsApp
+                                                        </a>
+                                                        <a
+                                                            href={(() => {
+                                                                let p = client.phone.replace(/\D/g, '');
+                                                                if (p.length === 8) p = '569' + p;
+                                                                else if (p.length === 9) p = '56' + p;
+                                                                return `tel:+${p}`;
+                                                            })()}
+                                                            className="flex items-center gap-1 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 px-2 py-0.5 rounded border border-blue-200 text-[10px] font-bold transition-colors"
+                                                            title="Llamar al cliente"
+                                                        >
+                                                            📞 Llamar
+                                                        </a>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </TableCell>
                                         <TableCell>{client.type}</TableCell>
                                         <TableCell>

@@ -457,12 +457,18 @@ export const LimpiezaPage = () => {
                                 placeholder="Buscar por cliente o ID..."
                                 className="w-full sm:w-64"
                                 value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onChange={(e) => {
+                                    setSearchTerm(e.target.value);
+                                    setCurrentPage(1);
+                                }}
                             />
                             <select
                                 className="h-10 w-full sm:w-auto rounded-md border border-input bg-background px-3 py-2 text-sm"
                                 value={statusFilter}
-                                onChange={(e) => setStatusFilter(e.target.value)}
+                                onChange={(e) => {
+                                    setStatusFilter(e.target.value);
+                                    setCurrentPage(1);
+                                }}
                             >
                                 <option value="all">Todos los Estados</option>
                                 <option value="scheduled">Programado</option>
@@ -472,7 +478,10 @@ export const LimpiezaPage = () => {
                             <select
                                 className="h-10 w-full sm:w-auto rounded-md border border-input bg-background px-3 py-2 text-sm"
                                 value={sectorFilter}
-                                onChange={(e) => setSectorFilter(e.target.value)}
+                                onChange={(e) => {
+                                    setSectorFilter(e.target.value);
+                                    setCurrentPage(1);
+                                }}
                             >
                                 <option value="all">Todos los Sectores</option>
                                 {SECTORS.map(s => <option key={s} value={s}>{s}</option>)}

@@ -322,12 +322,18 @@ export const PlagasPage = () => {
                                 placeholder="Buscar cliente, ID o certificado..."
                                 className="w-full sm:w-64"
                                 value={searchTerm}
-                                onChange={e => setSearchTerm(e.target.value)}
+                                onChange={e => {
+                                    setSearchTerm(e.target.value);
+                                    setCurrentPage(1);
+                                }}
                             />
                             <select
                                 className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
                                 value={statusFilter}
-                                onChange={e => setStatusFilter(e.target.value)}
+                                onChange={e => {
+                                    setStatusFilter(e.target.value);
+                                    setCurrentPage(1);
+                                }}
                             >
                                 <option value="all">Todos los Estados</option>
                                 <option value="programado">Programado</option>
@@ -337,7 +343,10 @@ export const PlagasPage = () => {
                             <select
                                 className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
                                 value={sectorFilter}
-                                onChange={e => setSectorFilter(e.target.value)}
+                                onChange={e => {
+                                    setSectorFilter(e.target.value);
+                                    setCurrentPage(1);
+                                }}
                             >
                                 <option value="all">Todos los Sectores</option>
                                 {SECTORS.map(s => <option key={s} value={s}>{s}</option>)}
@@ -373,13 +382,37 @@ export const PlagasPage = () => {
                                         <div className="flex flex-col">
                                             <span className="font-medium">{service.cliente_nombre}</span>
                                             {service.cliente_telefono && (
-                                                <a href={`https://wa.me/${service.cliente_telefono.replace(/\+/g, '').replace(/\s/g, '')}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    title="Enviar WhatsApp"
-                                                    className="text-green-700 text-xs font-bold hover:underline mt-0.5 flex items-center">
-                                                    <span className="mr-1">📞</span> {service.cliente_telefono}
-                                                </a>
+                                                <div className="flex flex-col gap-1 mt-1">
+                                                    <span className="text-xs font-medium text-slate-600 dark:text-slate-400">{service.cliente_telefono}</span>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <a
+                                                            href={(() => {
+                                                                let p = service.cliente_telefono.replace(/\D/g, '');
+                                                                if (p.length === 8) p = '569' + p;
+                                                                else if (p.length === 9) p = '56' + p;
+                                                                return `https://wa.me/${p}`;
+                                                            })()}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="flex items-center gap-1 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 px-2 py-0.5 rounded border border-green-200 text-[10px] font-bold transition-colors"
+                                                            title="Enviar WhatsApp"
+                                                        >
+                                                            💬 WhatsApp
+                                                        </a>
+                                                        <a
+                                                            href={(() => {
+                                                                let p = service.cliente_telefono.replace(/\D/g, '');
+                                                                if (p.length === 8) p = '569' + p;
+                                                                else if (p.length === 9) p = '56' + p;
+                                                                return `tel:+${p}`;
+                                                            })()}
+                                                            className="flex items-center gap-1 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 px-2 py-0.5 rounded border border-blue-200 text-[10px] font-bold transition-colors"
+                                                            title="Llamar al cliente"
+                                                        >
+                                                            📞 Llamar
+                                                        </a>
+                                                    </div>
+                                                </div>
                                             )}
                                         </div>
                                     </TableCell>

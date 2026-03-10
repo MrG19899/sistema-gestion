@@ -54,6 +54,7 @@ export interface ServicioAlfombra {
 
 const getStatusBadge = (status: string) => {
     switch (status) {
+        case 'recepcionada':
         case 'received':
             return <Badge variant="secondary">En Recepción</Badge>;
         case 'in_process':
@@ -136,7 +137,9 @@ export const AlfombrasPage = () => {
     const filteredRugs = rugs.filter(rug => {
         const matchesSearch = (rug.cliente_nombre || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
             rug.id.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = statusFilter === 'all' || rug.estado === statusFilter;
+        const matchesStatus = statusFilter === 'all' ||
+            rug.estado === statusFilter ||
+            (statusFilter === 'recepcionada' && rug.estado === 'received');
         const matchesSector = sectorFilter === 'all' || (rug.sector && rug.sector === sectorFilter);
 
         return matchesSearch && matchesStatus && matchesSector;
@@ -801,17 +804,23 @@ export const AlfombrasPage = () => {
                                 placeholder="Buscar por cliente o ID..."
                                 className="w-full md:w-64"
                                 value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onChange={(e) => {
+                                    setSearchTerm(e.target.value);
+                                    setCurrentPage(1);
+                                }}
                             />
                             <div className="flex flex-wrap gap-2 w-full md:w-auto">
                                 <select
                                     className="flex-1 md:flex-none h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
                                     value={statusFilter}
-                                    onChange={(e) => setStatusFilter(e.target.value)}
+                                    onChange={(e) => {
+                                        setStatusFilter(e.target.value);
+                                        setCurrentPage(1);
+                                    }}
                                 >
                                     <option value="all">Todos los Estados</option>
                                     <option value="scheduled_pickup">Por Retirar</option>
-                                    <option value="received">En Recepción</option>
+                                    <option value="recepcionada">En Recepción</option>
                                     <option value="in_process">En Proceso</option>
                                     <option value="ready">Listas</option>
                                     <option value="delivered">Entregadas</option>
@@ -819,7 +828,10 @@ export const AlfombrasPage = () => {
                                 <select
                                     className="flex-1 md:flex-none h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
                                     value={sectorFilter}
-                                    onChange={(e) => setSectorFilter(e.target.value)}
+                                    onChange={(e) => {
+                                        setSectorFilter(e.target.value);
+                                        setCurrentPage(1);
+                                    }}
                                 >
                                     <option value="all">Todos los Sectores</option>
                                     {SECTORS.map(s => <option key={s} value={s}>{s}</option>)}
@@ -867,15 +879,40 @@ export const AlfombrasPage = () => {
                                     <TableCell className="font-medium">
                                         <div className="flex flex-col">
                                             <span>{item.cliente_nombre}</span>
-                                            {item.cliente_telefono && (
-                                                <a href={`https://wa.me/${item.cliente_telefono.replace(/\+/g, '').replace(/\s/g, '')}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-green-700 text-xs font-bold hover:underline mt-0.5 flex items-center"
-                                                    title="Enviar WhatsApp"
-                                                >
-                                                    <span className="mr-1">📞</span> {item.cliente_telefono}
-                                                </a>
+                                            {item.cliente_telefono ? (
+                                                <div className="flex flex-col gap-1 mt-1">
+                                                    <span className="text-xs font-medium text-slate-600 dark:text-slate-400">{item.cliente_telefono}</span>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <a
+                                                            href={(() => {
+                                                                let p = item.cliente_telefono.replace(/\D/g, '');
+                                                                if (p.length === 8) p = '569' + p;
+                                                                else if (p.length === 9) p = '56' + p;
+                                                                return `https://wa.me/${p}`;
+                                                            })()}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="flex items-center gap-1 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 px-2 py-0.5 rounded border border-green-200 text-[10px] font-bold transition-colors"
+                                                            title="Enviar WhatsApp"
+                                                        >
+                                                            💬 WhatsApp
+                                                        </a>
+                                                        <a
+                                                            href={(() => {
+                                                                let p = item.cliente_telefono.replace(/\D/g, '');
+                                                                if (p.length === 8) p = '569' + p;
+                                                                else if (p.length === 9) p = '56' + p;
+                                                                return `tel:+${p}`;
+                                                            })()}
+                                                            className="flex items-center gap-1 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 px-2 py-0.5 rounded border border-blue-200 text-[10px] font-bold transition-colors"
+                                                            title="Llamar al cliente"
+                                                        >
+                                                            📞 Llamar
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <span className="text-xs text-muted-foreground mt-1">Sin teléfono</span>
                                             )}
                                         </div>
                                     </TableCell>

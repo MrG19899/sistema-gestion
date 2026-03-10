@@ -602,7 +602,7 @@ export const AlfombrasPage = () => {
                             {selectedRug.photo_url || isEditing ? (
                                 <div className="h-40 w-full bg-muted rounded-md overflow-hidden mt-2 relative border border-dashed border-gray-300 group">
                                     {(photoPreview || selectedRug.photo_url) ? (
-                                        <img src={photoPreview || selectedRug.photo_url} alt="Evidencia" className="w-full h-full object-cover bg-black/5" />
+                                        <img src={photoPreview || selectedRug.photo_url || undefined} alt="Evidencia" className="w-full h-full object-cover bg-black/5" />
                                     ) : (
                                         <div className="flex flex-col items-center justify-center h-full">
                                             <Camera className="h-8 w-8 text-muted-foreground mb-2" />

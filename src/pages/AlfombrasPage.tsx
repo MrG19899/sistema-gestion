@@ -535,6 +535,7 @@ export const AlfombrasPage = () => {
                                             <option value="Pelo Corto">Pelo corto</option>
                                             <option value="Pelo Largo">Pelo largo</option>
                                             <option value="Lana">Lana</option>
+                                            <option value="Estandar">Estandar</option>
                                         </select>
                                     ) : (
                                         <div className="flex h-10 items-center px-3 border rounded-md bg-muted/50">{selectedRug.tipo_servicio}</div>
@@ -553,6 +554,35 @@ export const AlfombrasPage = () => {
                                         <div className="flex h-10 items-center px-3 border rounded-md bg-muted/50">{selectedRug.fecha_recepcion ? new Date(selectedRug.fecha_recepcion).toLocaleDateString() : '-'}</div>
                                     )}
                                 </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label className="font-bold block mb-1">Tipo de Servicio:</Label>
+                                        {isEditing ? (
+                                            <Input
+                                                type="text"
+                                                className="h-10 text-sm"
+                                                value={selectedRug.tipo_servicio}
+                                                onChange={(e) => setSelectedRug({ ...selectedRug, tipo_servicio: e.target.value })}
+                                            />
+                                        ) : (
+                                            <div className="flex h-10 items-center px-3 border rounded-md bg-muted/50 text-sm font-medium">{selectedRug.tipo_servicio}</div>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <Label className="font-bold block mb-1">📏 Dimensiones:</Label>
+                                        {isEditing ? (
+                                            <Input
+                                                type="text"
+                                                className="h-10 text-sm"
+                                                placeholder="Ej: 1.60x230"
+                                                value={selectedRug.dimensiones || ''}
+                                                onChange={(e) => setSelectedRug({ ...selectedRug, dimensiones: e.target.value })}
+                                            />
+                                        ) : (
+                                            <div className="flex h-10 items-center px-3 border rounded-md bg-muted/50 text-sm text-muted-foreground">{selectedRug.dimensiones || 'Sin registrar'}</div>
+                                        )}
+                                    </div>
+                                </div>
                                 <div className="col-span-2">
                                     <Label className="font-bold block mb-1">📍 Dirección de Entrega:</Label>
                                     <p className="text-xs text-muted-foreground mb-1">Pre-cargada desde el cliente. Modificable si la entrega es en otro domicilio.</p>
@@ -569,11 +599,30 @@ export const AlfombrasPage = () => {
                                     )}
                                 </div>
                             </div>
-                            {selectedRug.photo_url && (
-                                <div className="h-40 w-full bg-muted rounded-md overflow-hidden mt-2">
-                                    <img src={selectedRug.photo_url} alt="Evidencia" className="w-full h-full object-cover bg-black/5" />
+                            {selectedRug.photo_url || isEditing ? (
+                                <div className="h-40 w-full bg-muted rounded-md overflow-hidden mt-2 relative border border-dashed border-gray-300 group">
+                                    {(photoPreview || selectedRug.photo_url) ? (
+                                        <img src={photoPreview || selectedRug.photo_url} alt="Evidencia" className="w-full h-full object-cover bg-black/5" />
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center h-full">
+                                            <Camera className="h-8 w-8 text-muted-foreground mb-2" />
+                                            <span className="text-sm text-muted-foreground">Agregar Foto</span>
+                                        </div>
+                                    )}
+                                    {isEditing && (
+                                        <div className={`absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity ${(!photoPreview && !selectedRug.photo_url) ? 'opacity-100 bg-transparent' : ''}`}>
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                capture="environment"
+                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                onChange={handlePhotoChange}
+                                            />
+                                            {(photoPreview || selectedRug.photo_url) && <span className="text-white font-medium drop-shadow-md bg-black/50 px-3 py-1 rounded-md cursor-pointer pointer-events-none">Subir nueva foto</span>}
+                                        </div>
+                                    )}
                                 </div>
-                            )}
+                            ) : null}
                             <div className="pt-4 border-t mt-4">
                                 <Label className="mb-2 block font-bold">Estado Operativo:</Label>
                                 {isEditing ? (
@@ -698,40 +747,42 @@ export const AlfombrasPage = () => {
 
             <Card>
                 <CardHeader>
-                    <div className="flex justify-between items-center">
+                    <div className="flex flex-col xl:flex-row justify-between xl:items-center gap-4">
                         <div>
                             <CardTitle>Inventario Activo</CardTitle>
                             <CardDescription>
                                 Alfombras actualmente en proceso o espera.
                             </CardDescription>
                         </div>
-                        <div className="flex gap-2 items-center">
+                        <div className="flex flex-wrap gap-2 items-center w-full xl:w-auto">
                             <Input
                                 placeholder="Buscar por cliente o ID..."
-                                className="w-64"
+                                className="w-full md:w-64"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
-                            <select
-                                className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                value={statusFilter}
-                                onChange={(e) => setStatusFilter(e.target.value)}
-                            >
-                                <option value="all">Todos los Estados</option>
-                                <option value="scheduled_pickup">Por Retirar</option>
-                                <option value="received">En Recepción</option>
-                                <option value="in_process">En Proceso</option>
-                                <option value="ready">Listas</option>
-                                <option value="delivered">Entregadas</option>
-                            </select>
-                            <select
-                                className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                value={sectorFilter}
-                                onChange={(e) => setSectorFilter(e.target.value)}
-                            >
-                                <option value="all">Todos los Sectores</option>
-                                {SECTORS.map(s => <option key={s} value={s}>{s}</option>)}
-                            </select>
+                            <div className="flex flex-wrap gap-2 w-full md:w-auto">
+                                <select
+                                    className="flex-1 md:flex-none h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                    value={statusFilter}
+                                    onChange={(e) => setStatusFilter(e.target.value)}
+                                >
+                                    <option value="all">Todos los Estados</option>
+                                    <option value="scheduled_pickup">Por Retirar</option>
+                                    <option value="received">En Recepción</option>
+                                    <option value="in_process">En Proceso</option>
+                                    <option value="ready">Listas</option>
+                                    <option value="delivered">Entregadas</option>
+                                </select>
+                                <select
+                                    className="flex-1 md:flex-none h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                    value={sectorFilter}
+                                    onChange={(e) => setSectorFilter(e.target.value)}
+                                >
+                                    <option value="all">Todos los Sectores</option>
+                                    {SECTORS.map(s => <option key={s} value={s}>{s}</option>)}
+                                </select>
+                            </div>
                         </div>
                     </div>
                 </CardHeader>
@@ -795,7 +846,7 @@ export const AlfombrasPage = () => {
                                                 className="hover:text-blue-600 hover:underline flex items-center gap-1"
                                                 title="Abrir en Maps"
                                             >
-                                                {item.is_pickup ? (item.ubicacion === 'Domicilio Cliente' ? 'Domicilio s/d' : item.ubicacion) : 'Local Taller'}
+                                                {item.is_pickup ? (item.ubicacion === 'Domicilio Cliente' ? 'Domicilio s/d' : item.ubicacion) : item.ubicacion || 'Recepción'}
                                             </a>
                                             <span className="text-muted-foreground text-xs">{item.sector || ''}</span>
                                         </div>

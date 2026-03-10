@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-// import { Menu, Bell, LogOut, User } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
 const Menu = ({ className }: { className?: string }) => <span className={className}>☰</span>;
 const Bell = ({ className }: { className?: string }) => <span className={className}>🔔</span>;
 const LogOut = ({ className }: { className?: string }) => <span className={className}>🚪</span>;
@@ -12,7 +12,34 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
     const { profile, logout } = useAuth();
-    const [showUserMenu, setShowUserMenu] = React.useState(false);
+    const [showUserMenu, setShowUserMenu] = useState(false);
+    const [pendingNotesCount, setPendingNotesCount] = useState(0);
+
+    useEffect(() => {
+        const fetchPendingCount = async () => {
+            const { count, error } = await supabase
+                .from('notas_muro')
+                .select('*', { count: 'exact', head: true })
+                .eq('completada', false);
+
+            if (!error && count !== null) {
+                setPendingNotesCount(count);
+            }
+        };
+
+        fetchPendingCount();
+
+        const channel = supabase
+            .channel('public:notas_muro')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'notas_muro' }, () => {
+                fetchPendingCount();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, []);
 
     const handleLogout = async () => {
         try {
@@ -47,9 +74,15 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
                 {/* Right side */}
                 <div className="flex items-center gap-1 sm:gap-3">
                     {/* Notificaciones */}
-                    <button className="relative p-3 hover:bg-black/5 rounded-xl transition-all group active:scale-95">
+                    <button className="relative p-3 hover:bg-black/5 rounded-xl transition-all group active:scale-95" title="Boletín de Suministros">
                         <Bell className="h-6 w-6 sm:h-5 sm:w-5 text-foreground/70 group-hover:text-primary transition-colors" />
-                        <span className="absolute top-3 right-3 sm:top-2 sm:right-2 w-2 h-2 bg-accent rounded-full ring-2 ring-background"></span>
+                        {pendingNotesCount > 0 ? (
+                            <span className="absolute top-1 right-1 sm:top-0 sm:right-0 bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full ring-2 ring-background shadow-sm animate-pulse">
+                                {pendingNotesCount}
+                            </span>
+                        ) : (
+                            <span className="absolute top-3 right-3 sm:top-2 sm:right-2 w-2 h-2 bg-accent/50 rounded-full ring-2 ring-background"></span>
+                        )}
                     </button>
 
                     {/* User menu */}

@@ -140,7 +140,7 @@ export const PlagasPage = () => {
     // ─── FORMULARIO UNIFICADO ───────────────────────────────────────────────
     const [isFormOpen, setIsFormOpen] = useState(false);
     const emptyForm = {
-        clienteId: '', clienteNombre: '', clienteTelefono: '', clienteDireccion: '',
+        clienteId: '', clienteNombre: '', clienteTelefono: '', clienteDireccion: '', clienteDepto: '',
         sector: '', tiposServicio: [] as string[], tecnico: '',
         fecha: new Date().toISOString().split('T')[0],
         hora: '09:00',
@@ -177,6 +177,8 @@ export const PlagasPage = () => {
         if (form.tiposServicio.length === 0) { alert('Seleccione al menos un tipo de servicio.'); return; }
 
         const proxima = calcProximaRenovacion();
+        const finalAddress = form.clienteDepto ? `${form.clienteDireccion}, ${form.clienteDepto}` : form.clienteDireccion;
+
         const insertData: any = {
             cliente_id: form.clienteId,
             cliente_nombre: form.clienteNombre,
@@ -184,7 +186,7 @@ export const PlagasPage = () => {
             tipos_servicio: form.tiposServicio,
             tecnico_asignado: form.tecnico,
             fecha_ejecucion: form.fecha,
-            direccion: form.clienteDireccion,
+            direccion: finalAddress,
             estado: form.estado,
             observaciones: form.observaciones,
             trampas: form.trampas,
@@ -487,23 +489,32 @@ export const PlagasPage = () => {
 
                     {/* DIRECCIÓN + SECTOR */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 border rounded-xl">
-                        <div className="space-y-2">
-                            <Label className="text-sm font-semibold">📍 Dirección del Servicio</Label>
-                            <Input
-                                placeholder="Ej: Las Rosas 123"
-                                className="h-12 bg-white"
-                                value={form.clienteDireccion}
-                                onChange={e => setForm(p => ({ ...p, clienteDireccion: e.target.value }))}
-                                required
-                            />
+                        <div className="grid grid-cols-[2fr_1fr] gap-2">
+                            <div className="space-y-2">
+                                <Label className="text-sm font-semibold">📍 Dirección (Calle) <span className="text-muted-foreground font-normal text-xs">(opcional)</span></Label>
+                                <Input
+                                    placeholder="Ej: Las Rosas 123"
+                                    className="h-12 bg-white"
+                                    value={form.clienteDireccion}
+                                    onChange={e => setForm(p => ({ ...p, clienteDireccion: e.target.value }))}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-sm font-semibold">N°/Depto</Label>
+                                <Input
+                                    placeholder="Ej: 4B"
+                                    className="h-12 bg-white"
+                                    value={form.clienteDepto || ''}
+                                    onChange={e => setForm(p => ({ ...p, clienteDepto: e.target.value }))}
+                                />
+                            </div>
                         </div>
                         <div className="space-y-2">
-                            <Label className="text-sm font-semibold">🗺️ Sector</Label>
+                            <Label className="text-sm font-semibold">🗺️ Sector <span className="text-muted-foreground font-normal text-xs">(opcional)</span></Label>
                             <select
                                 className="flex h-12 w-full rounded-md border border-input bg-white px-3 py-2 text-base"
                                 value={form.sector}
                                 onChange={e => setForm(p => ({ ...p, sector: e.target.value }))}
-                                required
                             >
                                 <option value="">Seleccionar sector...</option>
                                 {SECTORS.map(s => <option key={s} value={s}>{s}</option>)}

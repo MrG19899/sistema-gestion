@@ -83,6 +83,7 @@ export const ClientesPage = () => {
         email: string;
         phone: string;
         address: string;
+        addressDepto?: string;
         type: ClienteType;
         sector: string;
     }>({
@@ -91,6 +92,7 @@ export const ClientesPage = () => {
         email: '',
         phone: '',
         address: '',
+        addressDepto: '',
         type: 'Comercial',
         sector: ''
     });
@@ -125,13 +127,14 @@ export const ClientesPage = () => {
         e.preventDefault();
 
         try {
+            const finalAddress = newClient.addressDepto ? `${newClient.address}, ${newClient.addressDepto}` : newClient.address;
             const newClientData = {
                 name: newClient.name,
                 type: newClient.type,
                 contact: newClient.contact,
                 email: newClient.email,
                 phone: newClient.phone,
-                address: newClient.address,
+                address: finalAddress,
                 sector: newClient.sector,
                 status: 'active'
             };
@@ -152,6 +155,7 @@ export const ClientesPage = () => {
                     email: '',
                     phone: '',
                     address: '',
+                    addressDepto: '',
                     type: 'Comercial',
                     sector: ''
                 });
@@ -167,13 +171,14 @@ export const ClientesPage = () => {
         if (!selectedClient) return;
 
         try {
+            const finalAddress = newClient.addressDepto ? `${newClient.address}, ${newClient.addressDepto}` : newClient.address;
             const updateData = {
                 name: newClient.name,
                 type: newClient.type,
                 contact: newClient.contact,
                 email: newClient.email,
                 phone: newClient.phone,
-                address: newClient.address,
+                address: finalAddress,
                 sector: newClient.sector
             };
 
@@ -217,6 +222,7 @@ export const ClientesPage = () => {
             email: client.email || '',
             phone: client.phone,
             address: client.address,
+            addressDepto: '',
             type: client.type,
             sector: client.sector || ''
         });
@@ -573,8 +579,8 @@ export const ClientesPage = () => {
                     </div>
                     <div className="grid md:grid-cols-2 gap-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="contact" className="text-base font-semibold">Nombre Contacto</Label>
-                            <Input id="contact" name="contact" className="h-12 text-base" value={newClient.contact} onChange={handleInputChange} required />
+                            <Label htmlFor="contact" className="text-base font-semibold">Nombre Contacto <span className="text-muted-foreground font-normal text-sm">(opcional)</span></Label>
+                            <Input id="contact" name="contact" className="h-12 text-base" value={newClient.contact} onChange={handleInputChange} />
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="type" className="text-base font-semibold">Tipo Cliente</Label>
@@ -593,8 +599,8 @@ export const ClientesPage = () => {
                     </div>
                     <div className="grid md:grid-cols-2 gap-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="email" className="text-base font-semibold">Email</Label>
-                            <Input id="email" name="email" type="email" className="h-12 text-base" value={newClient.email} onChange={handleInputChange} required />
+                            <Label htmlFor="email" className="text-base font-semibold">Email <span className="text-muted-foreground font-normal text-sm">(opcional)</span></Label>
+                            <Input id="email" name="email" type="email" className="h-12 text-base" value={newClient.email} onChange={handleInputChange} />
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="phone" className="text-base font-semibold">Teléfono</Label>
@@ -602,19 +608,24 @@ export const ClientesPage = () => {
                         </div>
                     </div>
                     <div className="grid md:grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="address" className="text-base font-semibold">Dirección</Label>
-                            <Input id="address" name="address" className="h-12 text-base" value={newClient.address} onChange={handleInputChange} required />
+                        <div className="grid grid-cols-[2fr_1fr] gap-2">
+                            <div className="grid gap-2">
+                                <Label htmlFor="address" className="text-base font-semibold">Dirección (Calle)</Label>
+                                <Input id="address" name="address" className="h-12 text-base" placeholder="Ej: Las Magnolias 123" value={newClient.address} onChange={handleInputChange} required />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="addressDepto" className="text-base font-semibold">N°/Depto</Label>
+                                <Input id="addressDepto" name="addressDepto" className="h-12 text-base" placeholder="Ej: Depto 4B" value={newClient.addressDepto || ''} onChange={handleInputChange} />
+                            </div>
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="sector" className="text-base font-semibold">Sector</Label>
+                            <Label htmlFor="sector" className="text-base font-semibold">Sector <span className="text-muted-foreground font-normal text-sm">(opcional)</span></Label>
                             <select
                                 id="sector"
                                 name="sector"
                                 className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base"
                                 value={newClient.sector}
                                 onChange={handleInputChange}
-                                required
                             >
                                 <option value="">Seleccionar...</option>
                                 {SECTORS.map((sector) => (
@@ -644,8 +655,8 @@ export const ClientesPage = () => {
                     </div>
                     <div className="grid md:grid-cols-2 gap-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="edit-contact" className="text-base font-semibold">Nombre Contacto</Label>
-                            <Input id="edit-contact" name="contact" className="h-12 text-base" value={newClient.contact} onChange={handleInputChange} required />
+                            <Label htmlFor="edit-contact" className="text-base font-semibold">Nombre Contacto <span className="text-muted-foreground font-normal text-sm">(opcional)</span></Label>
+                            <Input id="edit-contact" name="contact" className="h-12 text-base" value={newClient.contact} onChange={handleInputChange} />
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="edit-type" className="text-base font-semibold">Tipo Cliente</Label>
@@ -664,8 +675,8 @@ export const ClientesPage = () => {
                     </div>
                     <div className="grid md:grid-cols-2 gap-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="edit-email" className="text-base font-semibold">Email</Label>
-                            <Input id="edit-email" name="email" type="email" className="h-12 text-base" value={newClient.email} onChange={handleInputChange} required />
+                            <Label htmlFor="edit-email" className="text-base font-semibold">Email <span className="text-muted-foreground font-normal text-sm">(opcional)</span></Label>
+                            <Input id="edit-email" name="email" type="email" className="h-12 text-base" value={newClient.email} onChange={handleInputChange} />
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="edit-phone" className="text-base font-semibold">Teléfono</Label>
@@ -673,19 +684,24 @@ export const ClientesPage = () => {
                         </div>
                     </div>
                     <div className="grid md:grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="edit-address" className="text-base font-semibold">Dirección</Label>
-                            <Input id="edit-address" name="address" className="h-12 text-base" value={newClient.address} onChange={handleInputChange} required />
+                        <div className="grid grid-cols-[2fr_1fr] gap-2">
+                            <div className="grid gap-2">
+                                <Label htmlFor="edit-address" className="text-base font-semibold">Dirección (Calle)</Label>
+                                <Input id="edit-address" name="address" className="h-12 text-base" value={newClient.address} onChange={handleInputChange} required />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="edit-addressDepto" className="text-base font-semibold">N°/Depto</Label>
+                                <Input id="edit-addressDepto" name="addressDepto" className="h-12 text-base" placeholder="Ej: Depto 5" value={newClient.addressDepto || ''} onChange={handleInputChange} />
+                            </div>
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="edit-sector" className="text-base font-semibold">Sector</Label>
+                            <Label htmlFor="edit-sector" className="text-base font-semibold">Sector <span className="text-muted-foreground font-normal text-sm">(opcional)</span></Label>
                             <select
                                 id="edit-sector"
                                 name="sector"
                                 className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base"
                                 value={newClient.sector}
                                 onChange={handleInputChange}
-                                required
                             >
                                 <option value="">Seleccionar...</option>
                                 {SECTORS.map((sector) => (

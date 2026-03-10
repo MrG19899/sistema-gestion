@@ -142,6 +142,7 @@ export const LimpiezaPage = () => {
         fecha: '',
         hora: '',
         direccion: '',
+        direccionDepto: '',
         sector: ''
     });
 
@@ -158,13 +159,14 @@ export const LimpiezaPage = () => {
             return;
         }
 
+        const finalAddress = newService.direccionDepto ? `${newService.direccion}, ${newService.direccionDepto}` : newService.direccion;
         const insertData = {
             cliente_id: newService.cliente_id,
             cliente_nombre: newService.cliente_nombre,
             tipo_servicio: newService.servicio,
             fecha: newService.fecha,
             hora: newService.hora,
-            direccion: newService.direccion,
+            direccion: finalAddress,
             sector: newService.sector,
             estado: 'scheduled'
         };
@@ -184,7 +186,7 @@ export const LimpiezaPage = () => {
             setIsScheduleOpen(false);
             setNewService({
                 cliente_id: '', cliente_nombre: '', servicio: '',
-                fecha: '', hora: '', direccion: '', sector: ''
+                fecha: '', hora: '', direccion: '', direccionDepto: '', sector: ''
             });
         }
     };
@@ -275,14 +277,13 @@ export const LimpiezaPage = () => {
 
                         <div className="bg-slate-50 border p-4 rounded-xl space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="service" className="text-base font-semibold">Tipo de Servicio *</Label>
+                                <Label htmlFor="service" className="text-base font-semibold">Tipo de Servicio <span className="text-muted-foreground font-normal text-xs">(opcional)</span></Label>
                                 <select
                                     id="service"
                                     name="servicio"
                                     className="flex h-12 w-full rounded-md border border-input bg-white px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                                     value={newService.servicio}
                                     onChange={handleInputChange}
-                                    required
                                 >
                                     <option value="">Selecciónar servicio...</option>
                                     <option value="Aseo General">Aseo General</option>
@@ -300,27 +301,32 @@ export const LimpiezaPage = () => {
                                     <Input id="date" name="fecha" type="date" className="h-12 text-base bg-white" value={newService.fecha} onChange={handleInputChange} required />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="time" className="text-base font-medium">Hora</Label>
-                                    <Input id="time" name="hora" type="time" className="h-12 text-base bg-white" value={newService.hora} onChange={handleInputChange} required />
+                                    <Label htmlFor="time" className="text-base font-medium">Hora <span className="text-muted-foreground font-normal text-xs">(opcional)</span></Label>
+                                    <Input id="time" name="hora" type="time" className="h-12 text-base bg-white" value={newService.hora} onChange={handleInputChange} />
                                 </div>
                             </div>
                         </div>
 
-                        <div className="space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="address" className="text-base font-semibold">Dirección Exacta</Label>
-                                <Input id="address" name="direccion" className="h-12 text-base" value={newService.direccion} onChange={handleInputChange} required />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 border rounded-xl">
+                            <div className="grid grid-cols-[2fr_1fr] gap-2">
+                                <div className="space-y-2">
+                                    <Label htmlFor="address" className="text-sm font-semibold">Dirección (Calle) <span className="text-muted-foreground font-normal text-xs">(opcional)</span></Label>
+                                    <Input id="address" name="direccion" className="h-12 text-base bg-white" placeholder="Ej: Las Magnolias 123" value={newService.direccion} onChange={handleInputChange} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="direccionDepto" className="text-sm font-semibold">N°/Depto</Label>
+                                    <Input id="direccionDepto" name="direccionDepto" className="h-12 text-base bg-white" placeholder="Ej: Depto 5" value={newService.direccionDepto || ''} onChange={handleInputChange} />
+                                </div>
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="sector" className="text-base font-semibold">Sector Logístico</Label>
+                                <Label htmlFor="sector" className="text-sm font-semibold">Sector <span className="text-muted-foreground font-normal text-xs">(opcional)</span></Label>
                                 <select
                                     id="sector"
                                     name="sector"
-                                    className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                    className="flex h-12 w-full rounded-md border border-input bg-white px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                                     value={newService.sector}
                                     onChange={handleInputChange}
-                                    required
                                 >
                                     <option value="">Seleccionar sector...</option>
                                     {SECTORS.map((sector) => (

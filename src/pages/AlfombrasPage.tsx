@@ -554,34 +554,19 @@ export const AlfombrasPage = () => {
                                         <div className="flex h-10 items-center px-3 border rounded-md bg-muted/50">{selectedRug.fecha_recepcion ? new Date(selectedRug.fecha_recepcion).toLocaleDateString() : '-'}</div>
                                     )}
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <Label className="font-bold block mb-1">Tipo de Servicio:</Label>
-                                        {isEditing ? (
-                                            <Input
-                                                type="text"
-                                                className="h-10 text-sm"
-                                                value={selectedRug.tipo_servicio}
-                                                onChange={(e) => setSelectedRug({ ...selectedRug, tipo_servicio: e.target.value })}
-                                            />
-                                        ) : (
-                                            <div className="flex h-10 items-center px-3 border rounded-md bg-muted/50 text-sm font-medium">{selectedRug.tipo_servicio}</div>
-                                        )}
-                                    </div>
-                                    <div>
-                                        <Label className="font-bold block mb-1">📏 Dimensiones:</Label>
-                                        {isEditing ? (
-                                            <Input
-                                                type="text"
-                                                className="h-10 text-sm"
-                                                placeholder="Ej: 1.60x230"
-                                                value={selectedRug.dimensiones || ''}
-                                                onChange={(e) => setSelectedRug({ ...selectedRug, dimensiones: e.target.value })}
-                                            />
-                                        ) : (
-                                            <div className="flex h-10 items-center px-3 border rounded-md bg-muted/50 text-sm text-muted-foreground">{selectedRug.dimensiones || 'Sin registrar'}</div>
-                                        )}
-                                    </div>
+                                <div>
+                                    <Label className="font-bold block mb-1">📏 Dimensiones:</Label>
+                                    {isEditing ? (
+                                        <Input
+                                            type="text"
+                                            className="h-10 text-sm"
+                                            placeholder="Ej: 1.60x230"
+                                            value={selectedRug.dimensiones || ''}
+                                            onChange={(e) => setSelectedRug({ ...selectedRug, dimensiones: e.target.value })}
+                                        />
+                                    ) : (
+                                        <div className="flex h-10 items-center px-3 border rounded-md bg-muted/50 text-sm text-muted-foreground">{selectedRug.dimensiones || 'Sin registrar'}</div>
+                                    )}
                                 </div>
                                 <div className="col-span-2">
                                     <Label className="font-bold block mb-1">📍 Dirección de Entrega:</Label>
@@ -614,7 +599,6 @@ export const AlfombrasPage = () => {
                                             <input
                                                 type="file"
                                                 accept="image/*"
-                                                capture="environment"
                                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                                                 onChange={handlePhotoChange}
                                             />

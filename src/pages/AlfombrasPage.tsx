@@ -48,6 +48,7 @@ export interface ServicioAlfombra {
     is_pickup?: boolean;
     sector?: string;
     cliente_telefono?: string;
+    cliente_direccion?: string;
     pickup_date?: string;
 }
 
@@ -110,11 +111,18 @@ export const AlfombrasPage = () => {
             if (ids.length > 0) {
                 const { data: clientesData } = await supabase
                     .from('clientes')
-                    .select('id, phone')
+                    .select('id, phone, address')
                     .in('id', ids);
                 const phoneMap: Record<string, string> = {};
-                clientesData?.forEach((c: any) => { phoneMap[c.id] = c.phone || ''; });
-                mappedData.forEach(r => { r.cliente_telefono = phoneMap[r.cliente_id] || ''; });
+                const addressMap: Record<string, string> = {};
+                clientesData?.forEach((c: any) => {
+                    phoneMap[c.id] = c.phone || '';
+                    addressMap[c.id] = c.address || '';
+                });
+                mappedData.forEach(r => {
+                    r.cliente_telefono = phoneMap[r.cliente_id] || '';
+                    r.cliente_direccion = addressMap[r.cliente_id] || '';
+                });
             }
             setRugs(mappedData);
         }
@@ -342,22 +350,48 @@ export const AlfombrasPage = () => {
                     description="Ingresa los detalles. La fecha de entrega se calculará automáticamente (5 días hábiles)."
                 >
                     <form onSubmit={handleReceiveRug} className="space-y-6 pb-12">
-                        <div className="flex justify-center mb-4">
-                            <div className="relative w-full h-40 bg-muted rounded-xl flex flex-col items-center justify-center border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors">
+                        <div className="flex flex-col space-y-2 mb-4">
+                            <div className="relative w-full h-40 bg-muted rounded-xl flex flex-col items-center justify-center border-2 border-dashed border-muted-foreground/25">
                                 {photoPreview ? (
                                     <img src={photoPreview} alt="Preview" className="w-full h-full object-cover rounded-xl" />
                                 ) : (
                                     <div className="text-center p-4">
-                                        <Camera className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-                                        <p className="text-sm text-muted-foreground">Tocar para tomar foto</p>
+                                        <ImageIcon className="mx-auto h-8 w-8 text-muted-foreground mb-2 opacity-30" />
+                                        <p className="text-sm text-muted-foreground">Opcional: Adjunte foto de recepción</p>
                                     </div>
                                 )}
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                    onChange={handlePhotoChange}
-                                />
+                            </div>
+
+                            <div className="flex gap-2 w-full">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="flex-1 flex gap-2 h-12 relative overflow-hidden bg-blue-50/50 hover:bg-blue-100 border-blue-200 text-blue-700"
+                                >
+                                    <Camera className="w-4 h-4" />
+                                    <span className="font-bold">Cámara</span>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        capture="environment"
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                        onChange={handlePhotoChange}
+                                    />
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="flex-1 flex gap-2 h-12 relative overflow-hidden bg-purple-50/50 hover:bg-purple-100 border-purple-200 text-purple-700"
+                                >
+                                    <ImageIcon className="w-4 h-4" />
+                                    <span className="font-bold">Galería</span>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                        onChange={handlePhotoChange}
+                                    />
+                                </Button>
                             </div>
                         </div>
 
@@ -585,25 +619,48 @@ export const AlfombrasPage = () => {
                                 </div>
                             </div>
                             {selectedRug.photo_url || isEditing ? (
-                                <div className="h-40 w-full bg-muted rounded-md overflow-hidden mt-2 relative border border-dashed border-gray-300 group">
-                                    {(photoPreview || selectedRug.photo_url) ? (
-                                        <img src={photoPreview || selectedRug.photo_url || undefined} alt="Evidencia" className="w-full h-full object-cover bg-black/5" />
-                                    ) : (
-                                        <div className="flex flex-col items-center justify-center h-full">
-                                            <Camera className="h-8 w-8 text-muted-foreground mb-2" />
-                                            <span className="text-sm text-muted-foreground">Agregar Foto</span>
-                                        </div>
-                                    )}
+                                <div className="space-y-2 mt-2">
+                                    <div className="h-40 w-full bg-muted rounded-md overflow-hidden relative border border-dashed border-gray-300">
+                                        {(photoPreview || selectedRug.photo_url) ? (
+                                            <img src={photoPreview || selectedRug.photo_url || undefined} alt="Evidencia" className="w-full h-full object-cover bg-black/5" />
+                                        ) : (
+                                            <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-4 text-center">
+                                                <ImageIcon className="h-8 w-8 mb-2 opacity-50" />
+                                                <span className="text-sm">Sin evidencia fotográfica</span>
+                                            </div>
+                                        )}
+                                    </div>
                                     {isEditing && (
-                                        <div className={`absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity ${(!photoPreview && !selectedRug.photo_url) ? 'opacity-100 bg-transparent' : ''}`}>
-                                            <input
-                                                type="file"
-                                                accept="image/*"
-                                                capture="environment"
-                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                                onChange={handlePhotoChange}
-                                            />
-                                            {(photoPreview || selectedRug.photo_url) && <span className="text-white font-medium drop-shadow-md bg-black/50 px-3 py-1 rounded-md cursor-pointer pointer-events-none">Subir nueva foto</span>}
+                                        <div className="flex flex-row gap-2 w-full">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                className="flex-1 flex gap-2 h-10 relative overflow-hidden bg-blue-50/50 hover:bg-blue-100 border-blue-200 text-blue-700"
+                                            >
+                                                <Camera className="w-4 h-4" />
+                                                <span className="text-xs font-bold">Tomar Foto</span>
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    capture="environment"
+                                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                    onChange={handlePhotoChange}
+                                                />
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                className="flex-1 flex gap-2 h-10 relative overflow-hidden bg-purple-50/50 hover:bg-purple-100 border-purple-200 text-purple-700"
+                                            >
+                                                <ImageIcon className="w-4 h-4" />
+                                                <span className="text-xs font-bold">Galería</span>
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                    onChange={handlePhotoChange}
+                                                />
+                                            </Button>
                                         </div>
                                     )}
                                 </div>
@@ -825,13 +882,13 @@ export const AlfombrasPage = () => {
                                     <TableCell>
                                         <div className="flex flex-col text-sm">
                                             <a
-                                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${item.ubicacion} ${item.sector || ''}`)}`}
+                                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${item.cliente_direccion || item.ubicacion} ${item.sector || ''}`)}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="hover:text-blue-600 hover:underline flex items-center gap-1"
+                                                className="hover:text-blue-600 hover:underline flex items-center gap-1 leading-tight"
                                                 title="Abrir en Maps"
                                             >
-                                                {item.is_pickup ? (item.ubicacion === 'Domicilio Cliente' ? 'Domicilio s/d' : item.ubicacion) : item.ubicacion || 'Recepción'}
+                                                {item.cliente_direccion || 'Sin dirección registrada'}
                                             </a>
                                             <span className="text-muted-foreground text-xs">{item.sector || ''}</span>
                                         </div>

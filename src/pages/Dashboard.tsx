@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { BellRing } from 'lucide-react';
 const MapPin = ({ className }: { className?: string }) => <span className={className}>📍</span>;
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -30,6 +31,7 @@ export const Dashboard: React.FC = () => {
     const [sectorFilter, setSectorFilter] = useState('all');
     const [itinerario, setItinerario] = useState<AgendaItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const [pendingNotesCount, setPendingNotesCount] = useState(0);
 
     const getRouteForService = (servicio: AgendaItem['servicio']) => {
         switch (servicio) {
@@ -41,6 +43,30 @@ export const Dashboard: React.FC = () => {
 
     useEffect(() => {
         fetchDashboardData();
+
+        const fetchPendingCount = async () => {
+            const { count, error } = await supabase
+                .from('notas_muro')
+                .select('*', { count: 'exact', head: true })
+                .eq('completada', false);
+
+            if (!error && count !== null) {
+                setPendingNotesCount(count);
+            }
+        };
+
+        fetchPendingCount();
+
+        const channel = supabase
+            .channel('dashboard_notas')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'notas_muro' }, () => {
+                fetchPendingCount();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, [periodFilter, customDate, sectorFilter]);
 
     const fetchDashboardData = async () => {
@@ -216,6 +242,21 @@ export const Dashboard: React.FC = () => {
                 <h1 className="text-3xl font-black text-foreground tracking-tight">Dashboard</h1>
                 <p className="text-muted-foreground mt-1">Panel operativo del equipo</p>
             </div>
+
+            {pendingNotesCount > 0 && (
+                <div onClick={() => navigate('/internal-board')} className="bg-red-50 hover:bg-red-100 transition-colors border-2 border-red-200 rounded-xl p-4 flex items-start gap-4 cursor-pointer shadow-sm relative overflow-hidden group">
+                    <div className="absolute top-0 left-0 w-1.5 h-full bg-red-600"></div>
+                    <div className="bg-red-100 p-2 rounded-full text-red-600 group-hover:scale-110 transition-transform">
+                        <BellRing className="w-6 h-6 animate-pulse" />
+                    </div>
+                    <div className="flex-1">
+                        <h3 className="text-lg font-bold text-red-800">¡Nuevos avisos en Boletín de Suministros!</h3>
+                        <p className="text-red-700/80 text-sm mt-0.5 font-medium border-b border-transparent group-hover:border-red-700/30 inline-block transition-colors">
+                            Tienes {pendingNotesCount} tarea{pendingNotesCount !== 1 ? 's' : ''} pendiente{pendingNotesCount !== 1 ? 's' : ''}. Toca aquí para ver.
+                        </p>
+                    </div>
+                </div>
+            )}
 
             {/* Stats (Oculto a petición del usuario por ahora)
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

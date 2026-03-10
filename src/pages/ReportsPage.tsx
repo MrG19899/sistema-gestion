@@ -123,16 +123,40 @@ export const ReportsPage: React.FC = () => {
     const addTodo = async () => {
         if (!newTodo.trim()) return;
 
+        const tmpId = Date.now().toString(); // ID temporal para UI rápida
+        const newText = newTodo.trim();
+
+        // Optimistic Update
+        const optimisticTodo: Todo = {
+            id: tmpId,
+            text: newText,
+            completed: false
+        };
+        setTodos([optimisticTodo, ...todos]);
+        setNewTodo('');
+
         const payload = {
-            texto: newTodo,
+            texto: newText,
             autor: profile?.nombre || profile?.email?.split('@')[0] || 'Desconocido',
             creador_id: profile?.id || 'temp',
             fijada: true,
             tipo: JSON.stringify({ category: 'general', priority: 'media' })
         };
 
-        setNewTodo('');
-        await supabase.from('notas_muro').insert([payload]);
+        const { data, error } = await supabase.from('notas_muro').insert([payload]).select();
+
+        // Si hay error, removemos el optimista
+        if (error) {
+            setTodos(prev => prev.filter(t => t.id !== tmpId));
+            return;
+        }
+
+        // Si fue exitoso, sustituimos el id temporal por el real de base de datos
+        if (data && data[0]) {
+            setTodos(prev => prev.map(t =>
+                t.id === tmpId ? { ...t, id: data[0].id } : t
+            ));
+        }
     };
 
     const deleteTodo = async (id: string) => {

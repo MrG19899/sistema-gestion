@@ -11,6 +11,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { supabase } from '../lib/supabase';
 import { subMonths, startOfMonth } from 'date-fns';
+import { useAuth } from '../contexts/AuthContext';
 
 interface Todo {
     id: string;
@@ -18,25 +19,44 @@ interface Todo {
     completed: boolean;
 }
 
-
 export const ReportsPage: React.FC = () => {
+    const { profile } = useAuth();
     const [period, setPeriod] = useState('6m');
     const [serviceTypeData, setServiceTypeData] = useState<{ name: string, value: number, color: string }[]>([]);
 
-    // Todos
-    const [todos, setTodos] = useState<Todo[]>(() => {
-        const saved = localStorage.getItem('telolimpio_todos');
-        if (saved) return JSON.parse(saved);
-        return [
-            { id: '1', text: 'Comprar líquido limpiador de alfombras', completed: false },
-            { id: '2', text: 'Revisar stock de raticida / químicos', completed: false }
-        ];
-    });
+    // Todos en línea (Supabase notas_muro)
+    const [todos, setTodos] = useState<Todo[]>([]);
     const [newTodo, setNewTodo] = useState('');
 
     useEffect(() => {
-        localStorage.setItem('telolimpio_todos', JSON.stringify(todos));
-    }, [todos]);
+        fetchTodos();
+
+        const channel = supabase
+            .channel('reportes_notas')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'notas_muro' }, () => {
+                fetchTodos();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, []);
+
+    const fetchTodos = async () => {
+        const { data, error } = await supabase
+            .from('notas_muro')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (!error && data) {
+            setTodos(data.map(n => ({
+                id: n.id,
+                text: n.texto,
+                completed: !n.fijada
+            })));
+        }
+    };
 
     // Variables estadísticas abolidas
     useEffect(() => {
@@ -87,18 +107,39 @@ export const ReportsPage: React.FC = () => {
 
     // (Sección de stats removida por decisión UI/UX, para enfocar el dashboard en operativas)
 
-    const toggleTodo = (id: string) => {
+    const toggleTodo = async (id: string) => {
+        const todo = todos.find(t => t.id === id);
+        if (!todo) return;
+
+        // Optimistic update
         setTodos(todos.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
+
+        await supabase
+            .from('notas_muro')
+            .update({ fijada: todo.completed }) // Si estaba "completo" (fijada=false), al togglearlo queda "incompleto" (fijada=true)
+            .eq('id', id);
     };
 
-    const addTodo = () => {
+    const addTodo = async () => {
         if (!newTodo.trim()) return;
-        setTodos([...todos, { id: Date.now().toString(), text: newTodo, completed: false }]);
+
+        const payload = {
+            texto: newTodo,
+            autor: profile?.nombre || profile?.email?.split('@')[0] || 'Desconocido',
+            creador_id: profile?.id || 'temp',
+            fijada: true,
+            tipo: JSON.stringify({ category: 'general', priority: 'media' })
+        };
+
         setNewTodo('');
+        await supabase.from('notas_muro').insert([payload]);
     };
 
-    const deleteTodo = (id: string) => {
-        setTodos(todos.filter(t => t.id !== id));
+    const deleteTodo = async (id: string) => {
+        if (confirm('¿Eliminar esta tarea permanente?')) {
+            setTodos(todos.filter(t => t.id !== id));
+            await supabase.from('notas_muro').delete().eq('id', id);
+        }
     };
 
     const exportToCSV = () => {

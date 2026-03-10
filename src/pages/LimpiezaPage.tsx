@@ -117,7 +117,8 @@ export const LimpiezaPage = () => {
     const [sectorFilter, setSectorFilter] = useState('all');
 
     const filteredServices = services.filter(service => {
-        const matchesSearch = (service.cliente_nombre || '').toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesSearch = (service.cliente_nombre || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (service.direccion || '').toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = statusFilter === 'all' || service.estado === statusFilter;
         const matchesSector = sectorFilter === 'all' || service.sector === sectorFilter;
 

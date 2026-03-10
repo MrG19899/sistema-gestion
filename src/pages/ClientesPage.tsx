@@ -101,7 +101,8 @@ export const ClientesPage = () => {
         if (client.deleted) return false;
 
         const matchesSearch = client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (client.contact || '').toLowerCase().includes(searchTerm.toLowerCase());
+            (client.contact || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (client.address || '').toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = showInactive || client.status === 'active';
 
         // Service Filtering Logic (To be implemented with Supabase Views in future phases)

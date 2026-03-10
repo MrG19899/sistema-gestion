@@ -136,7 +136,9 @@ export const AlfombrasPage = () => {
 
     const filteredRugs = rugs.filter(rug => {
         const matchesSearch = (rug.cliente_nombre || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            rug.id.toLowerCase().includes(searchTerm.toLowerCase());
+            rug.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (rug.ubicacion || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (rug.cliente_direccion || '').toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = statusFilter === 'all' ||
             rug.estado === statusFilter ||
             (statusFilter === 'recepcionada' && rug.estado === 'received');

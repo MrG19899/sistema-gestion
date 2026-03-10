@@ -244,7 +244,7 @@ export const Dashboard: React.FC = () => {
             </div>
 
             {pendingNotesCount > 0 && (
-                <div onClick={() => navigate('/internal-board')} className="bg-red-50 hover:bg-red-100 transition-colors border-2 border-red-200 rounded-xl p-4 flex items-start gap-4 cursor-pointer shadow-sm relative overflow-hidden group">
+                <div onClick={() => navigate('/reportes')} className="bg-red-50 hover:bg-red-100 transition-colors border-2 border-red-200 rounded-xl p-4 flex items-start gap-4 cursor-pointer shadow-sm relative overflow-hidden group">
                     <div className="absolute top-0 left-0 w-1.5 h-full bg-red-600"></div>
                     <div className="bg-red-100 p-2 rounded-full text-red-600 group-hover:scale-110 transition-transform">
                         <BellRing className="w-6 h-6 animate-pulse" />
@@ -412,6 +412,7 @@ export const Dashboard: React.FC = () => {
                                                     ) : null}
                                                 </div>
                                                 <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-500">
+                                                    <span className="flex-1 truncate text-slate-600 font-medium" title={item.lugar}>📌 {item.lugar}</span>
                                                     <a
                                                         href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.lugar)}`}
                                                         target="_blank"

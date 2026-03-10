@@ -125,7 +125,8 @@ export const PlagasPage = () => {
     const filteredServices = services.filter(s => {
         const matchSearch = (s.cliente_nombre || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
             s.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (s.numero_certificado || '').toLowerCase().includes(searchTerm.toLowerCase());
+            (s.numero_certificado || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (s.direccion || '').toLowerCase().includes(searchTerm.toLowerCase());
         const matchStatus = statusFilter === 'all' || s.estado === statusFilter;
         const matchSector = sectorFilter === 'all' || s.sector === sectorFilter;
         return matchSearch && matchStatus && matchSector;

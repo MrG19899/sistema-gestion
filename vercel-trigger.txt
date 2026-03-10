@@ -1,2 +1,3 @@
 Este es un archivo temporal creado para forzar a GitHub Desktop a detectar un cambio.
 Esto permitirá hacer el primer 'Push' hacia Vercel e iniciar la construcción automática de la aplicación web.
+Timestamp de hoy: 2026-03-09T23:55:00

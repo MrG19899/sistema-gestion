@@ -599,6 +599,7 @@ export const AlfombrasPage = () => {
                                             <input
                                                 type="file"
                                                 accept="image/*"
+                                                capture="environment"
                                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                                                 onChange={handlePhotoChange}
                                             />

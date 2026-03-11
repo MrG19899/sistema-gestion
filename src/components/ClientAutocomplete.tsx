@@ -77,26 +77,27 @@ export const ClientAutocomplete = ({ onSelect, selectedClientName, onClientCreat
 
     return (
         <>
-            <div className="relative w-full">
-                <div className="relative">
-                    <Input
-                        type="text"
-                        placeholder="Buscar cliente por nombre o dirección..."
-                        value={searchTerm}
-                        onChange={(e) => {
-                            setSearchTerm(e.target.value);
-                            setIsOpen(true);
-                            // Si el usuario edita a mano, ya no hay un cliente válido de la lista seleccionado
-                            onSelect({ id: '', name: e.target.value, address: '', phone: '', type: 'Comercial' } as any);
-                        }}
-                        onFocus={() => setIsOpen(true)}
-                        className="pl-10"
-                    />
-                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                </div>
+            <div className="flex gap-2 w-full">
+                <div className="relative flex-1">
+                    <div className="relative">
+                        <Input
+                            type="text"
+                            placeholder="Buscar cliente por nombre o dirección..."
+                            value={searchTerm}
+                            onChange={(e) => {
+                                setSearchTerm(e.target.value);
+                                setIsOpen(true);
+                                // Si el usuario edita a mano, ya no hay un cliente válido de la lista seleccionado
+                                onSelect({ id: '', name: e.target.value, address: '', phone: '', type: 'Comercial' } as any);
+                            }}
+                            onFocus={() => setIsOpen(true)}
+                            className="pl-10"
+                        />
+                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                    </div>
 
-                {isOpen && searchTerm.length > 0 && (
-                    <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    {isOpen && searchTerm.length > 0 && (
+                        <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto">
                         {filteredClients.length > 0 ? (
                             <>
                                 {filteredClients.map((client) => (
@@ -142,6 +143,18 @@ export const ClientAutocomplete = ({ onSelect, selectedClientName, onClientCreat
                         ) : null}
                     </div>
                 )}
+                </div>
+                
+                <Button 
+                    type="button" 
+                    onClick={handleCreateClick} 
+                    className="bg-blue-600 hover:bg-blue-700 text-white shrink-0 px-3 md:px-4"
+                    title="Crear un nuevo cliente"
+                >
+                    <Plus className="h-4 w-4 md:mr-2" />
+                    <span className="hidden md:inline">Nuevo Cliente</span>
+                    <span className="md:hidden">Nuevo</span>
+                </Button>
             </div>
 
             <QuickClientCreateModal

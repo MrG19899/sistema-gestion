@@ -1,5 +1,5 @@
-﻿import React, { useState } from 'react';
-import { Plus, Ruler, Truck, Inbox, CheckCircle, Tag, Camera, Image as ImageIcon, Trash2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus, Ruler, Truck, Inbox, CheckCircle, Camera, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { ClientAutocomplete } from '../components/ClientAutocomplete';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -169,21 +169,42 @@ export const AlfombrasPage = () => {
         pickupTime: '',
         sector: '',
         direccion: '',
-        telefono: ''
+        telefono: '',
+        cantidad: 1
     });
-    const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+    const [photosPreview, setPhotosPreview] = useState<(string | null)[]>([null]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setNewRug(prev => ({ ...prev, [name]: value }));
+        if (name === 'cantidad') {
+            const val = parseInt(value, 10);
+            if (!isNaN(val) && val > 0 && val <= 50) {
+                setNewRug(prev => ({ ...prev, cantidad: val }));
+                setPhotosPreview(prev => {
+                    const newArr = [...prev];
+                    if (val > prev.length) {
+                        for (let i = prev.length; i < val; i++) newArr.push(null);
+                    } else if (val < prev.length) {
+                        newArr.length = val;
+                    }
+                    return newArr;
+                });
+            }
+        } else {
+            setNewRug(prev => ({ ...prev, [name]: value }));
+        }
     };
 
-    const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handlePhotoChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
             const reader = new FileReader();
             reader.onloadend = () => {
-                setPhotoPreview(reader.result as string);
+                setPhotosPreview(prev => {
+                    const newArr = [...prev];
+                    newArr[index] = reader.result as string;
+                    return newArr;
+                });
             };
             reader.readAsDataURL(file);
         }
@@ -205,27 +226,33 @@ export const AlfombrasPage = () => {
             recepcionFinal = new Date(`${newRug.pickupDate}T${timeStr}:00`).toISOString();
         }
 
-        // Carga de archivo a Storage no implementada, simulamos o dejamos en null la foto_url
-        // En una app real, foto se subiría a Supabase Storage y retornaríamos su URL pública.
+        const pedido_id = crypto.randomUUID();
+        const numItems = newRug.cantidad || 1;
+        const insertDataArray = [];
 
-        const insertData = {
-            cliente_id: newRug.cliente_id,
-            cliente_nombre: newRug.cliente_nombre, // Se envía a DB ahora
-            tipo_servicio: newRug.type || 'Estandar',
-            dimensiones: newRug.dims,
-            fecha_recepcion: recepcionFinal,
-            fecha_entrega: newRug.isPickup ? null : deliveryDate.toISOString(),
-            estado: newRug.isPickup ? 'scheduled_pickup' : 'recepcionada',
-            ubicacion: newRug.isPickup ? (newRug.direccion || 'Domicilio (Sin detallar)') : 'Recepción',
-            sector: newRug.sector,
-            is_pickup: newRug.isPickup,
-            pickup_date: newRug.pickupDate || null,
-            photo_url: photoPreview
-        };
+        for (let i = 0; i < numItems; i++) {
+            insertDataArray.push({
+                cliente_id: newRug.cliente_id,
+                cliente_nombre: newRug.cliente_nombre,
+                tipo_servicio: newRug.type || 'Estandar',
+                dimensiones: newRug.dims,
+                fecha_recepcion: recepcionFinal,
+                fecha_entrega: newRug.isPickup ? null : deliveryDate.toISOString(),
+                estado: newRug.isPickup ? 'scheduled_pickup' : 'recepcionada',
+                ubicacion: newRug.isPickup ? (newRug.direccion || 'Domicilio (Sin detallar)') : 'Recepción',
+                sector: newRug.sector,
+                is_pickup: newRug.isPickup,
+                pickup_date: newRug.pickupDate || null,
+                photo_url: photosPreview[i] || null,
+                pedido_id: pedido_id,
+                numero_item: i + 1,
+                total_items: numItems
+            });
+        }
 
         const { data, error } = await supabase
             .from('servicios_alfombras')
-            .insert([insertData])
+            .insert(insertDataArray)
             .select('*');
 
         if (error) {
@@ -234,10 +261,10 @@ export const AlfombrasPage = () => {
         }
 
         if (data && data.length > 0) {
-            setRugs([data[0], ...rugs]);
+            setRugs([...data, ...rugs]);
             setIsReceiveOpen(false);
-            setNewRug({ cliente_id: '', cliente_nombre: '', dims: '', type: '', notes: '', isPickup: false, pickupDate: '', pickupTime: '', sector: '', direccion: '', telefono: '' });
-            setPhotoPreview(null);
+            setNewRug({ cliente_id: '', cliente_nombre: '', dims: '', type: '', notes: '', isPickup: false, pickupDate: '', pickupTime: '', sector: '', direccion: '', telefono: '', cantidad: 1 });
+            setPhotosPreview([null]);
         }
     };
 
@@ -287,6 +314,25 @@ export const AlfombrasPage = () => {
         }
     };
 
+    const handleLightboxUpdateStatus = async (status: string) => {
+        if (viewPhotoIndex === null) return;
+        const rug = rugsWithPhotos[viewPhotoIndex];
+
+        const { error } = await supabase
+            .from('servicios_alfombras')
+            .update({ estado: status })
+            .eq('id', rug.id);
+
+        if (!error) {
+            const updatedRugs = rugs.map(r =>
+                r.id === rug.id ? { ...r, estado: status } : r
+            );
+            setRugs(updatedRugs);
+        } else {
+            alert('Error al actualizar: ' + error.message);
+        }
+    };
+
     const handleUpdateRug = async () => {
         if (!selectedRug) return;
 
@@ -298,15 +344,15 @@ export const AlfombrasPage = () => {
                 tipo_servicio: selectedRug.tipo_servicio,
                 fecha_recepcion: selectedRug.fecha_recepcion,
                 fecha_entrega: selectedRug.fecha_entrega,
-                estado: selectedRug.estado, photo_url: photoPreview || selectedRug.photo_url
+                estado: selectedRug.estado, photo_url: photosPreview[0] || selectedRug.photo_url
             })
             .eq('id', selectedRug.id);
 
         if (!error) {
-            setRugs(rugs.map(r => r.id === selectedRug.id ? { ...selectedRug, photo_url: photoPreview || selectedRug.photo_url } : r));
+            setRugs(rugs.map(r => r.id === selectedRug.id ? { ...selectedRug, photo_url: photosPreview[0] || selectedRug.photo_url } : r));
             setIsEditing(false);
             setSelectedRug(null);
-            setPhotoPreview(null);
+            setPhotosPreview([null]);
         }
     };
 
@@ -355,48 +401,72 @@ export const AlfombrasPage = () => {
                     description="Ingresa los detalles. La fecha de entrega se calculará automáticamente (5 días hábiles)."
                 >
                     <form onSubmit={handleReceiveRug} className="space-y-6 pb-12">
-                        <div className="flex flex-col space-y-2 mb-4">
-                            <div className="relative w-full h-40 bg-muted rounded-xl flex flex-col items-center justify-center border-2 border-dashed border-muted-foreground/25">
-                                {photoPreview ? (
-                                    <img src={photoPreview} alt="Preview" className="w-full h-full object-cover rounded-xl" />
-                                ) : (
-                                    <div className="text-center p-4">
-                                        <ImageIcon className="mx-auto h-8 w-8 text-muted-foreground mb-2 opacity-30" />
-                                        <p className="text-sm text-muted-foreground">Opcional: Adjunte foto de recepción</p>
-                                    </div>
-                                )}
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="cantidad" className="text-base font-semibold">Cantidad de Alfombras a Recepcionar</Label>
+                                <Input
+                                    type="number"
+                                    id="cantidad"
+                                    name="cantidad"
+                                    min="1"
+                                    max="50"
+                                    className="h-12 bg-white text-lg font-bold"
+                                    value={newRug.cantidad}
+                                    onChange={handleInputChange}
+                                />
                             </div>
 
-                            <div className="flex gap-2 w-full">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="flex-1 flex gap-2 h-12 relative overflow-hidden bg-blue-50/50 hover:bg-blue-100 border-blue-200 text-blue-700"
-                                >
-                                    <Camera className="w-4 h-4" />
-                                    <span className="font-bold">Cámara</span>
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        capture="environment"
-                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                        onChange={handlePhotoChange}
-                                    />
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="flex-1 flex gap-2 h-12 relative overflow-hidden bg-purple-50/50 hover:bg-purple-100 border-purple-200 text-purple-700"
-                                >
-                                    <ImageIcon className="w-4 h-4" />
-                                    <span className="font-bold">Galería</span>
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                        onChange={handlePhotoChange}
-                                    />
-                                </Button>
+                            <div className="flex flex-col gap-4">
+                                <Label className="text-base font-semibold">Fotografías ({newRug.cantidad})</Label>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {Array.from({ length: newRug.cantidad }).map((_, idx) => (
+                                        <div key={idx} className="flex flex-col gap-2">
+                                            <div className="relative w-full h-40 bg-muted rounded-xl flex flex-col items-center justify-center border-2 border-dashed border-muted-foreground/25">
+                                                {photosPreview[idx] ? (
+                                                    <img src={photosPreview[idx]!} alt={`Preview ${idx + 1}`} className="w-full h-full object-cover rounded-xl" />
+                                                ) : (
+                                                    <div className="text-center p-4">
+                                                        <ImageIcon className="mx-auto h-8 w-8 text-muted-foreground mb-2 opacity-30" />
+                                                        <p className="text-sm font-bold text-muted-foreground">Foto ({idx + 1}/{newRug.cantidad})</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex gap-2 w-full">
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="flex-1 flex gap-2 relative overflow-hidden bg-blue-50/50 hover:bg-blue-100 border-blue-200 text-blue-700"
+                                                >
+                                                    <Camera className="w-4 h-4" />
+                                                    <span className="font-bold">Cámara</span>
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        capture="environment"
+                                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                        onChange={(e) => handlePhotoChange(idx, e)}
+                                                    />
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="flex-1 flex gap-2 relative overflow-hidden bg-purple-50/50 hover:bg-purple-100 border-purple-200 text-purple-700"
+                                                >
+                                                    <ImageIcon className="w-4 h-4" />
+                                                    <span className="font-bold">Galería</span>
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                        onChange={(e) => handlePhotoChange(idx, e)}
+                                                    />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         </div>
 
@@ -490,40 +560,6 @@ export const AlfombrasPage = () => {
                                     ))}
                                 </select>
                             </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="type" className="text-base font-semibold">Tipo</Label>
-                                    <select
-                                        id="type"
-                                        name="type"
-                                        className="flex h-12 w-full rounded-md border border-input bg-white px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                                        value={newRug.type}
-                                        onChange={handleInputChange}
-                                    >
-                                        <option value="Pelo Corto">Pelo corto</option>
-                                        <option value="Pelo Largo">Pelo largo</option>
-                                        <option value="Lana">Lana</option>
-                                    </select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="dims" className="text-base font-semibold">Dimensiones</Label>
-                                    <Input
-                                        id="dims"
-                                        name="dims"
-                                        className="h-12 bg-white"
-                                        placeholder="Ej: 1.60x230"
-                                        value={newRug.dims}
-                                        onChange={handleInputChange}
-                                        list="common-dims"
-                                    />
-                                    <datalist id="common-dims">
-                                        <option value="1.60x230" />
-                                        <option value="2.30x2.90" />
-                                        <option value="2.20x1.50" />
-                                    </datalist>
-                                </div>
-                            </div>
                         </div>
 
                         <div className="rounded-xl bg-blue-50 p-4 border border-blue-100 flex flex-col items-center justify-center text-center">
@@ -564,23 +600,6 @@ export const AlfombrasPage = () => {
                                     )}
                                 </div>
                                 <div>
-                                    <Label className="font-bold block mb-1">Tipo:</Label>
-                                    {isEditing ? (
-                                        <select
-                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                            value={selectedRug.tipo_servicio}
-                                            onChange={(e) => setSelectedRug({ ...selectedRug, tipo_servicio: e.target.value })}
-                                        >
-                                            <option value="Pelo Corto">Pelo corto</option>
-                                            <option value="Pelo Largo">Pelo largo</option>
-                                            <option value="Lana">Lana</option>
-                                            <option value="Estandar">Estandar</option>
-                                        </select>
-                                    ) : (
-                                        <div className="flex h-10 items-center px-3 border rounded-md bg-muted/50">{selectedRug.tipo_servicio}</div>
-                                    )}
-                                </div>
-                                <div>
                                     <Label className="font-bold block mb-1">Ingreso:</Label>
                                     {isEditing ? (
                                         <Input
@@ -591,20 +610,6 @@ export const AlfombrasPage = () => {
                                         />
                                     ) : (
                                         <div className="flex h-10 items-center px-3 border rounded-md bg-muted/50">{selectedRug.fecha_recepcion ? new Date(selectedRug.fecha_recepcion).toLocaleDateString() : '-'}</div>
-                                    )}
-                                </div>
-                                <div>
-                                    <Label className="font-bold block mb-1">📏 Dimensiones:</Label>
-                                    {isEditing ? (
-                                        <Input
-                                            type="text"
-                                            className="h-10 text-sm"
-                                            placeholder="Ej: 1.60x230"
-                                            value={selectedRug.dimensiones || ''}
-                                            onChange={(e) => setSelectedRug({ ...selectedRug, dimensiones: e.target.value })}
-                                        />
-                                    ) : (
-                                        <div className="flex h-10 items-center px-3 border rounded-md bg-muted/50 text-sm text-muted-foreground">{selectedRug.dimensiones || 'Sin registrar'}</div>
                                     )}
                                 </div>
                                 <div className="col-span-2">
@@ -626,8 +631,8 @@ export const AlfombrasPage = () => {
                             {selectedRug.photo_url || isEditing ? (
                                 <div className="space-y-2 mt-2">
                                     <div className="h-40 w-full bg-muted rounded-md overflow-hidden relative border border-dashed border-gray-300">
-                                        {(photoPreview || selectedRug.photo_url) ? (
-                                            <img src={photoPreview || selectedRug.photo_url || undefined} alt="Evidencia" className="w-full h-full object-cover bg-black/5" />
+                                        {(photosPreview[0] || selectedRug.photo_url) ? (
+                                            <img src={photosPreview[0] || selectedRug.photo_url || undefined} alt="Evidencia" className="w-full h-full object-cover bg-black/5" />
                                         ) : (
                                             <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-4 text-center">
                                                 <ImageIcon className="h-8 w-8 mb-2 opacity-50" />
@@ -649,7 +654,7 @@ export const AlfombrasPage = () => {
                                                     accept="image/*"
                                                     capture="environment"
                                                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                                    onChange={handlePhotoChange}
+                                                    onChange={(e) => handlePhotoChange(0, e)}
                                                 />
                                             </Button>
                                             <Button
@@ -663,7 +668,7 @@ export const AlfombrasPage = () => {
                                                     type="file"
                                                     accept="image/*"
                                                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                                    onChange={handlePhotoChange}
+                                                    onChange={(e) => handlePhotoChange(0, e)}
                                                 />
                                             </Button>
                                         </div>
@@ -749,45 +754,83 @@ export const AlfombrasPage = () => {
                 contentClassName="max-w-4xl mx-auto p-0 flex items-center justify-center relative w-full h-[100dvh]"
             >
                 {viewPhotoIndex !== null && rugsWithPhotos[viewPhotoIndex] && (
-                    <div className="relative w-full h-full flex flex-col items-center justify-center p-4">
-                        <div className="relative flex items-center justify-center w-full h-full max-h-[80vh]">
+                    <div className="relative w-full h-[100dvh] bg-black flex flex-col items-center overflow-hidden pt-12 pb-24">
+                        
+                        {/* Botón Cerrar (Arriba Derecha Fija) */}
+                        <Button
+                            className="absolute z-50 top-4 right-4 bg-red-600 hover:bg-red-700 text-white rounded-full p-2 h-10 w-10 flex items-center justify-center shadow-lg transition-transform"
+                            onClick={(e) => { e.stopPropagation(); setViewPhotoIndex(null); }}
+                        >
+                            <span className="text-xl font-bold">✕</span>
+                        </Button>
+
+                        {/* Contenedor Central Imagen con Flechas */}
+                        <div className="relative flex-1 w-full flex items-center justify-center overflow-hidden px-2">
                             {viewPhotoIndex > 0 && (
                                 <Button
-                                    className="absolute left-2 md:-left-12 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 h-12 w-12 z-10 flex items-center justify-center"
-                                    onClick={() => setViewPhotoIndex(viewPhotoIndex - 1)}
+                                    className="absolute left-2 z-40 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/90 text-white rounded-full p-2 h-12 w-12 flex items-center justify-center border border-white/20 backdrop-blur-sm shadow-xl"
+                                    onClick={(e) => { e.stopPropagation(); setViewPhotoIndex(viewPhotoIndex - 1); }}
                                 >
                                     <span className="text-xl font-bold">{"<"}</span>
                                 </Button>
                             )}
+                            
                             <img
                                 src={rugsWithPhotos[viewPhotoIndex].photo_url || ''}
                                 alt="Vista Ampliada"
-                                className="max-w-full max-h-full object-contain rounded-md shadow-2xl"
+                                className="max-w-full max-h-[85vh] object-contain rounded drop-shadow-2xl"
                             />
+                            
                             {viewPhotoIndex < rugsWithPhotos.length - 1 && (
                                 <Button
-                                    className="absolute right-2 md:-right-12 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 h-12 w-12 z-10 flex items-center justify-center"
-                                    onClick={() => setViewPhotoIndex(viewPhotoIndex + 1)}
+                                    className="absolute right-2 z-40 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/90 text-white rounded-full p-2 h-12 w-12 flex items-center justify-center border border-white/20 backdrop-blur-sm shadow-xl"
+                                    onClick={(e) => { e.stopPropagation(); setViewPhotoIndex(viewPhotoIndex + 1); }}
                                 >
                                     <span className="text-xl font-bold">{">"}</span>
                                 </Button>
                             )}
                         </div>
 
-                        <div className="absolute bottom-6 bg-black/80 text-white px-6 py-2 rounded-full text-sm font-medium shadow-lg flex items-center gap-3">
-                            <span>{rugsWithPhotos[viewPhotoIndex].cliente_nombre}</span>
-                            <span className="opacity-50">|</span>
-                            <span className="opacity-75">ID: {rugsWithPhotos[viewPhotoIndex].id.substring(0, 8)}</span>
-                            <span className="opacity-50">|</span>
-                            <span className="text-blue-300 font-bold">{viewPhotoIndex + 1} de {rugsWithPhotos.length}</span>
+                        {/* Panel de Control de Estados (Abajo Fijo) */}
+                        <div className="absolute bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black via-black/90 to-transparent p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div className="flex flex-col text-white">
+                                <span className="font-bold text-lg leading-tight">{rugsWithPhotos[viewPhotoIndex].cliente_nombre}</span>
+                                <div className="flex items-center gap-2 text-xs text-gray-400">
+                                    <span>ID: {rugsWithPhotos[viewPhotoIndex].id.substring(0, 8)}</span>
+                                    <span>•</span>
+                                    <span className="text-blue-400 font-bold">Foto {viewPhotoIndex + 1} de {rugsWithPhotos.length}</span>
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-2 bg-black/60 backdrop-blur-md border border-white/10 p-2 rounded-xl">
+                                <span className="text-xs text-gray-400 font-bold hidden sm:inline mr-2">NUEVO ESTADO:</span>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className={`text-xs font-bold transition-all px-2 md:px-3 ${rugsWithPhotos[viewPhotoIndex].estado === 'recepcionada' ? 'bg-blue-600 border-blue-500 text-white shadow-[0_0_10px_rgba(37,99,235,0.7)] scale-105' : 'bg-transparent border-gray-600 hover:bg-gray-800 text-gray-300'}`}
+                                    onClick={(e) => { e.stopPropagation(); handleLightboxUpdateStatus('recepcionada'); }}
+                                >
+                                    Recepción
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className={`text-xs font-bold transition-all px-2 md:px-3 ${rugsWithPhotos[viewPhotoIndex].estado === 'in_process' ? 'bg-orange-600 border-orange-500 text-white shadow-[0_0_10px_rgba(234,88,12,0.7)] scale-105' : 'bg-transparent border-gray-600 hover:bg-gray-800 text-gray-300'}`}
+                                    onClick={(e) => { e.stopPropagation(); handleLightboxUpdateStatus('in_process'); }}
+                                >
+                                    Proceso
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className={`text-xs font-bold transition-all px-2 md:px-3 ${rugsWithPhotos[viewPhotoIndex].estado === 'ready' ? 'bg-green-600 border-green-500 text-white shadow-[0_0_10px_rgba(22,163,74,0.7)] scale-105' : 'bg-transparent border-gray-600 hover:bg-gray-800 text-gray-300'}`}
+                                    onClick={(e) => { e.stopPropagation(); handleLightboxUpdateStatus('ready'); }}
+                                >
+                                    Lista
+                                </Button>
+                            </div>
                         </div>
 
-                        <Button
-                            className="absolute top-4 right-4 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 h-10 w-10 flex items-center justify-center"
-                            onClick={() => setViewPhotoIndex(null)}
-                        >
-                            ✕
-                        </Button>
                     </div>
                 )}
             </FullScreenDialog>
@@ -848,12 +891,11 @@ export const AlfombrasPage = () => {
                             <TableRow>
                                 <TableHead>ID</TableHead>
                                 <TableHead>Cliente</TableHead>
-                                <TableHead>Dirección / Sector</TableHead>
-                                <TableHead>Tipo / Dimensiones</TableHead>
-                                <TableHead>Fecha / Hora</TableHead>
+                                <TableHead className="hidden lg:table-cell">Dirección / Sector</TableHead>
                                 <TableHead>Estado Tiempo</TableHead>
-                                <TableHead>Ubicación</TableHead>
+                                <TableHead>Fecha / Hora</TableHead>
                                 <TableHead>Estado</TableHead>
+                                <TableHead>Ubicación</TableHead>
                                 <TableHead className="text-right min-w-[120px]">Acciones</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -933,10 +975,15 @@ export const AlfombrasPage = () => {
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        <div className="flex flex-col text-sm">
-                                            <span>{item.tipo_servicio}</span>
-                                            <span className="text-muted-foreground text-xs">{item.dimensiones || '-'}</span>
-                                        </div>
+                                        {item.estado === 'scheduled_pickup' ? (
+                                            <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                                                Programado
+                                            </span>
+                                        ) : (
+                                            <span className={`px-2 py-1 rounded-full text-xs font-semibold border ${item.fecha_recepcion ? getTrafficLightColor(item.fecha_recepcion) : ''}`}>
+                                                {item.fecha_recepcion ? `${Math.floor((new Date().getTime() - new Date(item.fecha_recepcion).getTime()) / (1000 * 3600 * 24))} días` : '-'}
+                                            </span>
+                                        )}
                                     </TableCell>
                                     <TableCell>
                                         {item.estado === 'scheduled_pickup' ? (
@@ -953,23 +1000,6 @@ export const AlfombrasPage = () => {
                                                 </span>
                                             </div>
                                         )}
-                                    </TableCell>
-                                    <TableCell>
-                                        {item.estado === 'scheduled_pickup' ? (
-                                            <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                                                Programado
-                                            </span>
-                                        ) : (
-                                            <span className={`px-2 py-1 rounded-full text-xs font-semibold border ${item.fecha_recepcion ? getTrafficLightColor(item.fecha_recepcion) : ''}`}>
-                                                {item.fecha_recepcion ? `${Math.floor((new Date().getTime() - new Date(item.fecha_recepcion).getTime()) / (1000 * 3600 * 24))} días` : '-'}
-                                            </span>
-                                        )}
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center text-sm text-muted-foreground">
-                                            <Tag className="mr-1 h-3 w-3" />
-                                            {item.ubicacion}
-                                        </div>
                                     </TableCell>
                                     <TableCell>
                                         {getStatusBadge(item.estado)}

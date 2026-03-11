@@ -211,7 +211,11 @@ export const LimpiezaPage = () => {
             .update({
                 estado: selectedService.estado,
                 fecha: selectedService.fecha,
-                hora: selectedService.hora
+                hora: selectedService.hora,
+                cliente_id: selectedService.cliente_id,
+                cliente_nombre: selectedService.cliente_nombre,
+                tipo_servicio: selectedService.tipo_servicio,
+                direccion: selectedService.direccion
             })
             .eq('id', selectedService.id);
 
@@ -358,11 +362,26 @@ export const LimpiezaPage = () => {
                             <div className="grid grid-cols-2 gap-4 text-sm">
                                 <div className="col-span-2 sm:col-span-1">
                                     <Label className="font-bold block mb-1">Cliente:</Label>
-                                    <div className="flex h-10 items-center px-3 border rounded-md bg-muted/50">{selectedService.cliente_nombre}</div>
+                                    {isEditing ? (
+                                        <ClientAutocomplete 
+                                            onSelect={(c) => setSelectedService({...selectedService, cliente_id: c.id, cliente_nombre: c.name, direccion: c.address || ''})} 
+                                            selectedClientName={selectedService.cliente_nombre || ''} 
+                                        />
+                                    ) : (
+                                        <div className="flex h-10 items-center px-3 border rounded-md bg-muted/50">{selectedService.cliente_nombre}</div>
+                                    )}
                                 </div>
                                 <div className="col-span-2 sm:col-span-1">
                                     <Label className="font-bold block mb-1">Servicio:</Label>
-                                    <div className="flex h-10 items-center px-3 border rounded-md bg-muted/50">{selectedService.tipo_servicio}</div>
+                                    {isEditing ? (
+                                        <Input
+                                            value={selectedService.tipo_servicio || ''}
+                                            onChange={(e) => setSelectedService({ ...selectedService, tipo_servicio: e.target.value })}
+                                            className="h-10 text-sm bg-white"
+                                        />
+                                    ) : (
+                                        <div className="flex h-10 items-center px-3 border rounded-md bg-muted/50">{selectedService.tipo_servicio}</div>
+                                    )}
                                 </div>
                                 <div className="col-span-2 sm:col-span-1">
                                     <Label className="font-bold block mb-1">Fecha:</Label>
@@ -392,7 +411,15 @@ export const LimpiezaPage = () => {
                                 </div>
                                 <div className="col-span-2">
                                     <Label className="font-bold block mb-1">Dirección:</Label>
-                                    <div className="flex h-10 items-center px-3 border rounded-md bg-muted/50">{selectedService.direccion}</div>
+                                    {isEditing ? (
+                                        <Input
+                                            value={selectedService.direccion || ''}
+                                            onChange={(e) => setSelectedService({ ...selectedService, direccion: e.target.value })}
+                                            className="h-10 text-sm bg-white"
+                                        />
+                                    ) : (
+                                        <div className="flex h-10 items-center px-3 border rounded-md bg-muted/50">{selectedService.direccion}</div>
+                                    )}
                                 </div>
                                 <div className="col-span-2 sm:col-span-1">
                                     <Label className="font-bold block mb-1">Personal:</Label>

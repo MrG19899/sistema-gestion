@@ -1,17 +1,13 @@
 export const SECTORS = [
     'Centro',
-    'Concepción Sur',
-    'Barrio Universitario',
-    'Pedro de Valdivia',
     'Collao',
-    'Lomas de San Andrés',
-    'Brisas del Sol',
-    'San Pedro de la Paz',
+    'PDV', // Equivalente a Pedro de Valdivia
     'Chiguayante',
-    'Talcahuano Centro',
+    'Lomas', // Abarca Lomas en general
     'Hualpén',
-    'Penco',
-    'Coronel',
-    'Lota',
-    'Otro'
+    'Brisas del sol',
+    'Talcahuano',
+    'San Pedro de La Paz',
+    'Lomas coloradas',
+    'Penco'
 ];

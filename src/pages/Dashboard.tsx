@@ -154,7 +154,11 @@ export const Dashboard: React.FC = () => {
                 'ready': '✅ Lista para Entrega',
             };
 
-            alfombras?.forEach(item => {
+            // Agrupar alfombras por pedido_id para las que están "ready" (Listas para Entrega)
+            const alfombrasListasPorPedido: Record<string, any[]> = {};
+
+            alfombras?.forEach((rawItem: any) => {
+                const item = rawItem as any;
                 const estado = item.estado || '';
                 const titulo = tituloMap[estado] || 'Alfombra';
 
@@ -166,7 +170,7 @@ export const Dashboard: React.FC = () => {
 
                     allItems.push({
                         id: `A-${item.id}`,
-                        titulo,
+                        titulo: titulo + (item.total_items > 1 ? ` (${item.numero_item}/${item.total_items})` : ''),
                         servicio: 'ALFOMBRAS',
                         estado: 'scheduled_pickup',
                         fechaRaw: dateNorm,
@@ -180,11 +184,16 @@ export const Dashboard: React.FC = () => {
                         bg: 'bg-purple-600',
                         sector: item.sector
                     });
+                } else if (estado === 'ready') {
+                    // Agrupar las listas para entrega
+                    const pid = item.pedido_id || item.id; // Fallback al id propio si es antigua
+                    if (!alfombrasListasPorPedido[pid]) alfombrasListasPorPedido[pid] = [];
+                    alfombrasListasPorPedido[pid].push(item);
                 } else {
-                    // Items activos en taller: siempre aparecen, no aplica filtro de fecha
+                    // Items activos en taller (in_process, recepcionada, etc)
                     allItems.push({
                         id: `A-${item.id}`,
-                        titulo,
+                        titulo: titulo + (item.total_items > 1 ? ` (${item.numero_item}/${item.total_items})` : ''),
                         servicio: 'ALFOMBRAS',
                         estado: estado,
                         fechaRaw: item.created_at || new Date().toISOString(),
@@ -199,23 +208,68 @@ export const Dashboard: React.FC = () => {
                 }
             });
 
+            // Procesar los grupos de alfombras listas
+            Object.values(alfombrasListasPorPedido).forEach(grupo => {
+                // Si el grupo tiene alfombras, verificamos si todas las del pedido están ready
+                // Asumimos que si llegaron aquí es porque están en array de las Activas (no entregadas aún).
+                // Pero para simplificar y dado que el backend de inventario activo ya las filtró:
+                const primerItem = grupo[0];
+                const tituloBase = tituloMap['ready'];
+                const tituloFinal = primerItem.total_items > 1 
+                    ? `✅ Entrega de Alfombras (${grupo.length}/${primerItem.total_items} Listas)`
+                    : tituloBase;
+
+                allItems.push({
+                    id: `A-Pedido-${primerItem.pedido_id || primerItem.id}`,
+                    titulo: tituloFinal,
+                    servicio: 'ALFOMBRAS',
+                    estado: 'ready',
+                    fechaRaw: primerItem.created_at || new Date().toISOString(),
+                    lugar: primerItem.ubicacion && primerItem.ubicacion !== 'Planta' && primerItem.ubicacion !== 'Recepción' && primerItem.ubicacion !== 'Taller'
+                        ? primerItem.ubicacion
+                        : (primerItem.sector ? `Domicilio – ${primerItem.sector}` : 'Contactar Cliente (Sin dirección)'),
+                    clienteId: primerItem.cliente_id || '',
+                    cliente: primerItem.cliente_nombre || 'Sin nombre',
+                    telefono: '',
+                    color: 'text-purple-600',
+                    bg: 'bg-purple-600',
+                    sector: primerItem.sector
+                });
+            });
+
             // Ordenar cronológicamente
             allItems.sort((a, b) => new Date(a.fechaRaw).getTime() - new Date(b.fechaRaw).getTime());
 
-            // Batch-query de teléfonos desde la tabla clientes
+            // Batch-query de teléfonos y direcciones desde la tabla clientes
             const clienteIds = [...new Set(allItems.map(i => i.clienteId).filter(Boolean))];
             if (clienteIds.length > 0) {
                 const { data: clientesData } = await supabase
                     .from('clientes')
-                    .select('id, phone')
+                    .select('id, phone, address')
                     .in('id', clienteIds);
+                
                 const phoneMap: Record<string, string> = {};
-                clientesData?.forEach((c: any) => { phoneMap[c.id] = c.phone || ''; });
-                allItems.forEach(item => { item.telefono = phoneMap[item.clienteId] || ''; });
+                const addressMap: Record<string, string> = {};
+                
+                clientesData?.forEach((c: any) => { 
+                    phoneMap[c.id] = c.phone || ''; 
+                    addressMap[c.id] = c.address || '';
+                });
+                
+                allItems.forEach(item => { 
+                    item.telefono = phoneMap[item.clienteId] || ''; 
+                    
+                    // Asegurar que exista una dirección real para Google Maps si es Domicilio
+                    if (item.servicio === 'ALFOMBRAS' && (item.estado === 'ready' || item.estado === 'scheduled_pickup')) {
+                        const realAddress = addressMap[item.clienteId];
+                        if (realAddress && (!item.lugar || item.lugar.includes('Domicilio') || item.lugar.includes('Contactar Cliente'))) {
+                             item.lugar = item.sector ? `${realAddress}, ${item.sector}` : realAddress;
+                        }
+                    }
+                });
             }
 
             setItinerario(allItems);
-
         } catch (error) {
             console.error('Error Itinerario:', error);
         } finally {

@@ -51,21 +51,6 @@ export const QuickClientCreateModal = ({
             return false;
         }
 
-        if (!formData.contact.trim()) {
-            setError('El nombre de contacto es obligatorio');
-            return false;
-        }
-
-        if (!formData.phone.trim()) {
-            setError('El teléfono es obligatorio');
-            return false;
-        }
-
-        if (!formData.sector) {
-            setError('Debe seleccionar un sector');
-            return false;
-        }
-
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (formData.email && !emailRegex.test(formData.email)) {
             setError('Email no válido');
@@ -147,7 +132,7 @@ export const QuickClientCreateModal = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border p-4 bg-slate-50/50 rounded-xl">
                     <div className="space-y-2">
                         <Label htmlFor="quick-contact">
-                            Nombre Contacto <span className="text-red-500">*</span>
+                            Nombre Contacto (Opcional)
                         </Label>
                         <Input
                             id="quick-contact"
@@ -156,7 +141,6 @@ export const QuickClientCreateModal = ({
                             onChange={handleInputChange}
                             placeholder="Ej: Juan Pérez"
                             className="h-12 text-base bg-white"
-                            required
                         />
                     </div>
                     <div className="space-y-2">
@@ -178,7 +162,7 @@ export const QuickClientCreateModal = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border p-4 bg-slate-50/50 rounded-xl">
                     <div className="space-y-2">
                         <Label htmlFor="quick-phone">
-                            Teléfono <span className="text-red-500">*</span>
+                            Teléfono (Opcional)
                         </Label>
                         <Input
                             id="quick-phone"
@@ -188,18 +172,16 @@ export const QuickClientCreateModal = ({
                             onChange={handleInputChange}
                             placeholder="+56 9 1234 5678"
                             className="h-12 text-base bg-white"
-                            required
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="quick-sector">Sector Logístico <span className="text-red-500">*</span></Label>
+                        <Label htmlFor="quick-sector">Sector Logístico (Opcional)</Label>
                         <select
                             id="quick-sector"
                             name="sector"
                             className="flex h-12 w-full rounded-md border border-input bg-white px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                             value={formData.sector}
                             onChange={handleInputChange}
-                            required
                         >
                             <option value="">Seleccionar...</option>
                             {SECTORS.map((sector) => (

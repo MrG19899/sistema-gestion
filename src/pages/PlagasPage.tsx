@@ -87,6 +87,24 @@ const getTrafficLight = (proxima: string) => {
     return 'bg-green-100 border-green-400 text-green-700';
 };
 
+// Sanitiza el campo JSONB trampas desde Supabase para evitar arrays anidados o duplicados
+const parseTrampas = (raw: any): any[] => {
+    if (!raw) return [];
+    // Si viene como string (edge case), parsearlo
+    let arr = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    if (!Array.isArray(arr)) return [];
+    // Aplanar arrays anidados (puede pasar si se guardó mal)
+    arr = arr.flat(Infinity);
+    // Deduplicar por ID
+    const seen = new Set<string>();
+    return arr.filter((t: any) => {
+        if (!t || typeof t !== 'object' || !t.id) return false;
+        if (seen.has(t.id)) return false;
+        seen.add(t.id);
+        return true;
+    });
+};
+
 export const PlagasPage = () => {
     const { profile } = useAuth();
     const isWorker = profile?.rol === 'worker';
@@ -463,7 +481,8 @@ export const PlagasPage = () => {
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-1 flex-wrap">
                                             <Button variant="outline" size="sm"
-                                                onClick={() => setSelectedService(service)}>Ver</Button>
+                                                onClick={() => setSelectedService({ ...service, trampas: parseTrampas(service.trampas) })
+                                }>Ver</Button>
                                             {service.estado === 'completado' && (
                                                 <Button variant="secondary" size="sm"
                                                     onClick={() => { setCertificateService(service); setIsCertificateOpen(true); }}>
@@ -816,7 +835,7 @@ export const PlagasPage = () => {
                         {/* PANEL DE GESTIÓN DE TRAMPAS */}
                         <div className="pt-2 border-t mt-6">
                             <GestorTrampas
-                                trampas={selectedService.trampas || []}
+                                trampas={parseTrampas(selectedService.trampas)}
                                 onChange={(nuevasTrampas) => setSelectedService({ ...selectedService, trampas: nuevasTrampas })}
                                 isEditing={isEditing}
                             />

@@ -4,13 +4,13 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Badge } from '../components/ui/badge';
 import { Card, CardContent } from '../components/ui/card';
-import { Trash2, PlusCircle, AlertCircle, CheckCircle2, RotateCw, MapPin } from 'lucide-react';
+import { Trash2, PlusCircle, AlertCircle, CheckCircle2, MapPin } from 'lucide-react';
 
 export interface Trampa {
     id: string;
     tipo: 'cebo' | 'pegajosa' | 'mecanica' | 'jaula';
     ubicacion: string;
-    estado: 'activa' | 'revision' | 'retirada' | 'consumida';
+    estado: 'activa' | 'retirada' | 'consumida';
     fecha_instalacion: string;
     fecha_ultima_revision: string;
 }
@@ -30,9 +30,8 @@ const tiposDisponibles = [
 
 const estadosInfo = {
     activa: { label: 'Activa', color: 'bg-green-100 text-green-800 border-green-200', icon: CheckCircle2 },
-    revision: { label: 'En Revisión', color: 'bg-yellow-100 text-yellow-800 border-yellow-200', icon: RotateCw },
     retirada: { label: 'Retirada', color: 'bg-gray-100 text-gray-800 border-gray-200', icon: Trash2 },
-    consumida: { label: 'Consumida/Activada', color: 'bg-red-100 text-red-800 border-red-200', icon: AlertCircle },
+    consumida: { label: 'Consumida y Repuesta', color: 'bg-orange-100 text-orange-800 border-orange-200', icon: AlertCircle },
 };
 
 export const GestorTrampas: React.FC<GestorTrampasProps> = ({ trampas = [], onChange, isEditing = true }) => {
@@ -124,8 +123,7 @@ export const GestorTrampas: React.FC<GestorTrampasProps> = ({ trampas = [], onCh
                     const StateIcon = estadosInfo[trampa.estado].icon;
                     return (
                         <Card key={trampa.id} className={`overflow-hidden border-l-4 ${trampa.estado === 'activa' ? 'border-l-green-500' :
-                            trampa.estado === 'consumida' ? 'border-l-red-500' :
-                                trampa.estado === 'retirada' ? 'border-l-gray-400' : 'border-l-yellow-500'
+                            trampa.estado === 'consumida' ? 'border-l-orange-500' : 'border-l-gray-400'
                             }`}>
                             <CardContent className="p-3">
                                 <div className="flex justify-between items-start mb-2">
@@ -156,8 +154,7 @@ export const GestorTrampas: React.FC<GestorTrampasProps> = ({ trampas = [], onCh
                                             onChange={(e) => handleActualizarEstado(trampa.id, e.target.value as Trampa['estado'])}
                                         >
                                             <option value="activa">Activa / OK</option>
-                                            <option value="revision">En Revisión</option>
-                                            <option value="consumida">Consumida!</option>
+                                            <option value="consumida">Consumida y Repuesta</option>
                                             <option value="retirada">Retirada</option>
                                         </select>
                                     </div>

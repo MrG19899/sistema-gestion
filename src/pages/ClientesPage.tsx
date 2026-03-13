@@ -662,8 +662,8 @@ export const ClientesPage = () => {
                             <Input id="email" name="email" type="email" className="h-12 text-base" value={newClient.email} onChange={handleInputChange} />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="phone" className="text-base font-semibold">Teléfono</Label>
-                            <Input id="phone" name="phone" className="h-12 text-base" value={newClient.phone} onChange={handleInputChange} required />
+                            <Label htmlFor="phone" className="text-base font-semibold">Teléfono <span className="text-muted-foreground font-normal text-sm">(opcional)</span></Label>
+                            <Input id="phone" name="phone" className="h-12 text-base" value={newClient.phone} onChange={handleInputChange} />
                         </div>
                     </div>
                     <div className="grid md:grid-cols-2 gap-4">

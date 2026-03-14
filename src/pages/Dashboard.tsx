@@ -268,7 +268,7 @@ export const Dashboard: React.FC = () => {
                             }
                         } else {
                             // En Alfombras
-                        if (!item.lugar || item.lugar.includes('Domicilio') || item.lugar.includes('Contactar Cliente') || SECTORS.includes(item.lugar)) {
+                        if (!item.lugar || item.lugar.includes('Domicilio') || item.lugar.includes('Contactar Cliente') || SECTORS.includes(item.lugar) || item.lugar === 'Recepción' || item.lugar === 'Planta') {
                              item.lugar = item.sector ? `${realAddress}, ${item.sector}` : realAddress;
                         }
                         }

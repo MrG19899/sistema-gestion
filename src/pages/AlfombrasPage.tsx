@@ -23,6 +23,7 @@ import {
     TableRow,
 } from '../components/ui/table';
 
+import { compressImage } from '../utils/imageCompression';
 import { supabase } from '../lib/supabase';
 import { Pagination } from '../components/ui/pagination';
 import { SECTORS } from '../lib/constants';
@@ -195,9 +196,11 @@ export const AlfombrasPage = () => {
         }
     };
 
-    const handlePhotoChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const handlePhotoChange = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
+            const rawFile = e.target.files[0];
+            // Comprimir antes de guardar en estado (evita timeouts por imágenes pesadas de celular)
+            const compressed = await compressImage(rawFile);
             const reader = new FileReader();
             reader.onloadend = () => {
                 setPhotosPreview(prev => {
@@ -206,7 +209,7 @@ export const AlfombrasPage = () => {
                     return newArr;
                 });
             };
-            reader.readAsDataURL(file);
+            reader.readAsDataURL(compressed);
         }
     };
 

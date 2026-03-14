@@ -186,15 +186,12 @@ export const Dashboard: React.FC = () => {
                     ? item.pedido_id
                     : null;
 
-                if (pid) {
-                    if (!pedidosMap[pid]) pedidosMap[pid] = [];
-                    pedidosMap[pid].push(item);
-                } else {
-                    // Alfombra sin agrupar: se agrupa por (cliente_id + fecha) si tienen la misma
-                    const key = `${item.cliente_id}_${item.fecha_recepcion || item.created_at?.substring(0, 10)}`;
-                    if (!pedidosMap[key]) pedidosMap[key] = [];
-                    pedidosMap[key].push(item);
-                }
+                const key = pid
+                    ? pid
+                    : `${item.cliente_id}_${item.fecha_recepcion || item.created_at?.substring(0, 10)}`;
+
+                if (!pedidosMap[key]) pedidosMap[key] = [];
+                pedidosMap[key].push(item);
             });
 
             // Procesar cada grupo de pedido
@@ -204,14 +201,15 @@ export const Dashboard: React.FC = () => {
                 const primerItem = grupo[0];
                 const totalEnGrupo = grupo.length;
                 const readyCount = grupo.filter((a: any) => a.estado === 'ready').length;
+
+                // Solo lanzar al Dashboard si TODAS las alfombras del grupo están ready
                 const allReady = readyCount === totalEnGrupo;
 
-                // Solo lanzar al Dashboard si TODAS las alfombras del pedido están ready
                 if (allReady) {
                     allItems.push({
                         id: `A-Pedido-${primerItem.pedido_id || primerItem.cliente_id}`,
                         titulo: totalEnGrupo > 1
-                            ? `✅ Entrega de Alfombras (${totalEnGrupo}/${totalEnGrupo} Listas)`
+                            ? `✅ Entrega de Alfombras (${totalEnGrupo} Listas)`
                             : '✅ Lista para Entrega',
                         servicio: 'ALFOMBRAS',
                         estado: 'ready',
@@ -225,7 +223,7 @@ export const Dashboard: React.FC = () => {
                         sector: primerItem.sector
                     });
                 }
-                // Si NO están todas ready, NO aparece en Dashboard => están en taller
+                // Si NO están todas ready, no se muestra en Dashboard (están en taller)
             });
 
             // Ordenar cronológicamente

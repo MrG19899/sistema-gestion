@@ -2,10 +2,11 @@ import React, { useRef } from 'react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { Button } from './ui/button';
+import { Badge } from './ui/badge';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { SignaturePad } from './SignaturePad';
 
-// Usamos el tipo real de PlagasPage para evitar discrepancias
 interface AreaServicio {
     area: string;
     servicios: string[];
@@ -36,7 +37,6 @@ interface CertPropsReal {
         trampas?: Trampa[];
         areas_servicio?: AreaServicio[];
     };
-    // Mantenemos compatibilidad con la firma anterior — no se usan
     traps?: unknown[];
     serviceTraps?: unknown[];
 }
@@ -59,30 +59,8 @@ const SERVICIO_LABELS: Record<string, string> = {
 export const CertificateGenerator: React.FC<CertPropsReal> = ({ service }) => {
     const certificateRef = useRef<HTMLDivElement>(null);
     const [isGenerating, setIsGenerating] = React.useState(false);
-
-    const generatePDF = async () => {
-        if (!certificateRef.current) return;
-        try {
-            setIsGenerating(true);
-            const canvas = await html2canvas(certificateRef.current, {
-                scale: 2,
-                logging: false,
-                useCORS: true,
-                backgroundColor: '#ffffff',
-            });
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-            const imgWidth = 210;
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-            pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-            const filename = `Certificado_${service.numero_certificado || 'SN'}_${format(new Date(), 'yyyyMMdd')}.pdf`;
-            pdf.save(filename);
-        } catch (error) {
-            console.error('Error generating PDF:', error);
-        } finally {
-            setIsGenerating(false);
-        }
-    };
+    const [signature, setSignature] = React.useState<string | null>(null);
+    const [showSignaturePad, setShowSignaturePad] = React.useState(false);
 
     const trampas: Trampa[] = Array.isArray(service.trampas) ? service.trampas : [];
     const areasServicio: AreaServicio[] = Array.isArray(service.areas_servicio) ? service.areas_servicio : [];
@@ -100,17 +78,86 @@ export const CertificateGenerator: React.FC<CertPropsReal> = ({ service }) => {
         ? format(new Date(service.proxima_renovacion.includes('T') ? service.proxima_renovacion : `${service.proxima_renovacion}T12:00:00`), 'dd/MM/yyyy', { locale: es })
         : 'N/A';
 
+    const generatePDF = async () => {
+        if (!certificateRef.current) return;
+        try {
+            const defaultFilename = `Certificado_${service.numero_certificado || 'SN'}_${format(new Date(), 'yyyyMMdd')}`;
+            const userFilename = window.prompt('Introduce el nombre para el archivo PDF:', defaultFilename);
+            
+            if (userFilename === null) return; // Usuario canceló
+
+            setIsGenerating(true);
+            const canvas = await html2canvas(certificateRef.current, {
+                scale: 2,
+                logging: false,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+            });
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+            const imgWidth = 210;
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+            
+            const finalFilename = userFilename.toLowerCase().endsWith('.pdf') 
+                ? userFilename 
+                : `${userFilename}.pdf`;
+                
+            pdf.save(finalFilename);
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+            alert('Error al generar el PDF. Por favor, inténtalo de nuevo.');
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
+    // ... (helpers de lógica se mantienen igual)
+
     return (
-        <div>
-            <div className="mb-4">
+        <div className="space-y-4">
+            <div className="flex flex-wrap gap-2 items-center justify-center sm:justify-start">
+                {!signature ? (
+                    <Button
+                        onClick={() => setShowSignaturePad(true)}
+                        className="gap-2 bg-orange-600 hover:bg-orange-700 text-white font-bold"
+                    >
+                        🖋️ Firmar Certificado
+                    </Button>
+                ) : (
+                    <div className="flex items-center gap-2">
+                        <Badge variant="success" className="bg-green-100 text-green-800">✅ Firmado</Badge>
+                        <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => { setSignature(null); setShowSignaturePad(true); }}
+                            className="text-xs text-slate-500 hover:text-red-500"
+                        >
+                            Refirmar
+                        </Button>
+                    </div>
+                )}
+
                 <Button
                     onClick={generatePDF}
-                    disabled={isGenerating}
-                    className="gap-2 bg-green-600 hover:bg-green-700 text-white"
+                    disabled={isGenerating || (!signature && !window.confirm('¿Descargar sin firma del cliente?'))}
+                    className="gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold"
                 >
-                    {isGenerating ? '⏳ Generando...' : '📄 Descargar Certificado PDF'}
+                    {isGenerating ? '⏳ Generando...' : '📄 Descargar PDF'}
                 </Button>
             </div>
+
+            {showSignaturePad && (
+                <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+                    <SignaturePad 
+                        onSave={(dataUrl) => {
+                            setSignature(dataUrl);
+                            setShowSignaturePad(false);
+                        }}
+                        onCancel={() => setShowSignaturePad(false)}
+                    />
+                </div>
+            )}
 
             {/* Plantilla del certificado */}
             <div
@@ -257,9 +304,14 @@ export const CertificateGenerator: React.FC<CertPropsReal> = ({ service }) => {
                         <p className="font-semibold text-sm">{service.tecnico_asignado || 'Técnico'}</p>
                         <p className="text-xs text-gray-500">Firma Técnico</p>
                     </div>
-                    <div className="border-t pt-2">
+                    <div className="border-t pt-2 flex flex-col items-center">
+                        {signature ? (
+                            <img src={signature} alt="Firma Cliente" className="h-16 mb-1 object-contain" />
+                        ) : (
+                            <div className="h-16 mb-1"></div>
+                        )}
                         <p className="font-semibold text-sm">Cliente / Responsable</p>
-                        <p className="text-xs text-gray-500 text-red-400">Firma Cliente</p>
+                        <p className="text-[10px] text-gray-400">Firma Digital Capturada en Dispositivo</p>
                     </div>
                 </div>
 

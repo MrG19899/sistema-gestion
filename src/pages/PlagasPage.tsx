@@ -207,12 +207,14 @@ export const PlagasPage = () => {
             cliente_nombre: form.clienteNombre,
             sector: form.sector,
             tipos_servicio: form.tiposServicio,
+            tipo_servicio: form.tiposServicio.join(', '), // Fallback para compatibilidad
             tecnico_asignado: form.tecnico,
             fecha_ejecucion: form.fecha,
             direccion: finalAddress,
             estado: form.estado,
             observaciones: form.observaciones,
             trampas: form.trampas,
+            areas_servicio: [], // Inicialmente vacío en el form de creación
         };
         if (proxima) {
             insertData.proxima_renovacion = proxima;
@@ -268,6 +270,10 @@ export const PlagasPage = () => {
             setServices(services.map(s => s.id === selectedService.id ? selectedService : s));
             setIsEditing(false);
             setSelectedService(null);
+            alert('Cambios guardados correctamente en la base de datos.');
+        } else {
+            console.error('Error al actualizar:', error);
+            alert('Error al guardar cambios: ' + error.message);
         }
     };
 

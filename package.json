@@ -16,6 +16,7 @@
     "@radix-ui/react-tabs": "^1.1.13",
     "@supabase/supabase-js": "^2.98.0",
     "@tailwindcss/postcss": "^4.1.18",
+    "@types/react-signature-canvas": "^1.0.7",
     "browser-image-compression": "^2.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -29,6 +30,7 @@
     "react-dom": "^19.2.0",
     "react-hook-form": "^7.71.1",
     "react-router-dom": "^7.13.0",
+    "react-signature-canvas": "^1.1.0-alpha.2",
     "recharts": "^3.7.0",
     "tailwind-merge": "^3.4.0",
     "vaul": "^1.1.2"

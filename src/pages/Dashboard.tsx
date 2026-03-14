@@ -17,8 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Badge } from '../components/ui/badge';
 import { supabase } from '../lib/supabase';
 import { SECTORS } from '../lib/constants';
-import { isToday, isThisWeek, formatDistanceToNow, differenceInDays, startOfDay } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { isToday, isThisWeek } from 'date-fns';
 
 export interface AgendaItem {
     id: string;
@@ -259,12 +258,21 @@ export const Dashboard: React.FC = () => {
                 
                 allItems.forEach(item => { 
                     item.telefono = phoneMap[item.clienteId] || ''; 
-                    
-                    // Asegurar que exista una dirección real para Google Maps si es Domicilio
-                    if (item.servicio === 'ALFOMBRAS' && (item.estado === 'ready' || item.estado === 'scheduled_pickup')) {
-                        const realAddress = addressMap[item.clienteId];
-                        if (realAddress && (!item.lugar || item.lugar.includes('Domicilio') || item.lugar.includes('Contactar Cliente'))) {
-                             item.lugar = item.sector ? `${realAddress}, ${item.sector}` : realAddress;
+                    const realAddress = addressMap[item.clienteId];
+
+                    if (realAddress) {
+                        // En Limpieza y Plagas, si el lugar es genérico o vacío, usar la del cliente
+                        if (item.servicio !== 'ALFOMBRAS') {
+                            if (!item.lugar || item.lugar === 'Sin dirección' || item.lugar.toLowerCase().includes('domicilio')) {
+                                item.lugar = realAddress;
+                            }
+                        } else {
+                            // En Alfombras
+                            if (item.estado === 'ready' || item.estado === 'scheduled_pickup') {
+                                if (!item.lugar || item.lugar.includes('Domicilio') || item.lugar.includes('Contactar Cliente')) {
+                                     item.lugar = item.sector ? `${realAddress}, ${item.sector}` : realAddress;
+                                }
+                            }
                         }
                     }
                 });
@@ -412,7 +420,6 @@ export const Dashboard: React.FC = () => {
                                     <TableHeader className="bg-slate-50/50">
                                         <TableRow>
                                             <TableHead className="font-bold text-slate-600">ID / Estado</TableHead>
-                                            <TableHead className="font-bold text-slate-600">Estado Tiempo</TableHead>
                                             <TableHead className="font-bold text-slate-600">Dirección / Sector</TableHead>
                                             <TableHead className="font-bold text-slate-600">Fecha / Hora</TableHead>
                                             <TableHead className="font-bold text-slate-600">Cliente</TableHead>
@@ -423,28 +430,9 @@ export const Dashboard: React.FC = () => {
                                         {filteredItems.map(item => {
                                             const isDone = ['recepcionada', 'in_process', 'ready'].includes(item.estado);
                                             const itemDate = new Date(item.fechaRaw);
-                                            const daysDiff = differenceInDays(startOfDay(itemDate), startOfDay(new Date()));
                                             
-                                            // Lógica para "Estado Tiempo"
-                                            let timeStatus = "";
-                                            let timeColor = "text-slate-500";
-                                            if (item.servicio === 'ALFOMBRAS' && isDone) {
-                                                timeStatus = `En taller (${formatDistanceToNow(itemDate, { locale: es, addSuffix: false })})`;
-                                                timeColor = "text-blue-600 font-semibold";
-                                            } else {
-                                                if (isToday(itemDate)) {
-                                                    timeStatus = "Hoy";
-                                                    timeColor = "text-orange-600 font-bold animate-pulse";
-                                                } else if (daysDiff === 1) {
-                                                    timeStatus = "Mañana";
-                                                    timeColor = "text-amber-600 font-semibold";
-                                                } else if (daysDiff < 0) {
-                                                    timeStatus = `Atrasado (${formatDistanceToNow(itemDate, { locale: es, addSuffix: true })})`;
-                                                    timeColor = "text-red-600 font-bold";
-                                                } else {
-                                                    timeStatus = `En ${daysDiff} días`;
-                                                }
-                                            }
+                                            // Lógica para mostrar Fecha/Hora o "----"
+                                            const showDateTime = item.servicio !== 'ALFOMBRAS' || item.estado === 'scheduled_pickup';
 
                                             return (
                                                 <TableRow key={item.id} className="hover:bg-slate-50/80 transition-colors group">
@@ -473,12 +461,7 @@ export const Dashboard: React.FC = () => {
                                                             </div>
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell>
-                                                        <div className={`flex items-center gap-1.5 text-xs ${timeColor}`}>
-                                                            <Timer className="w-3.5 h-3.5" />
-                                                            {timeStatus}
-                                                        </div>
-                                                    </TableCell>
+                                                    {/* Columna Estado Tiempo Eliminada */}
                                                     <TableCell>
                                                         <div className="flex flex-col max-w-[200px]">
                                                             <a
@@ -491,20 +474,35 @@ export const Dashboard: React.FC = () => {
                                                                 <MapPin className="w-3 h-3 mt-0.5 shrink-0 text-slate-400" />
                                                                 <span className="truncate" title={item.lugar}>{item.lugar}</span>
                                                             </a>
-                                                            <span className="text-[10px] text-slate-500 font-medium ml-4 uppercase tracking-wider">{item.sector}</span>
+                                                            <div className="flex items-center gap-2 mt-1">
+                                                                <a 
+                                                                    href={`https://waze.com/ul?q=${encodeURIComponent(item.lugar)}`}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="text-[9px] bg-sky-100 text-sky-700 px-1.5 py-0.5 rounded border border-sky-200 font-black hover:bg-sky-200 transition-colors"
+                                                                    onClick={e => e.stopPropagation()}
+                                                                >
+                                                                    WAZE
+                                                                </a>
+                                                                <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">{item.sector}</span>
+                                                            </div>
                                                         </div>
                                                     </TableCell>
                                                     <TableCell>
-                                                        <div className="flex flex-col">
-                                                            <div className="flex items-center gap-1 text-xs font-bold text-slate-800">
-                                                                <Calendar className="w-3 h-3 text-slate-400" />
-                                                                {itemDate.toLocaleDateString('es-CL', { day: 'numeric', month: 'short' })}
+                                                        {showDateTime ? (
+                                                            <div className="flex flex-col">
+                                                                <div className="flex items-center gap-1 text-xs font-bold text-slate-800">
+                                                                    <Calendar className="w-3 h-3 text-slate-400" />
+                                                                    {itemDate.toLocaleDateString('es-CL', { day: 'numeric', month: 'short' })}
+                                                                </div>
+                                                                <div className="flex items-center gap-1 text-[11px] text-slate-500 font-medium">
+                                                                    <Clock className="w-3 h-3" />
+                                                                    {itemDate.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
+                                                                </div>
                                                             </div>
-                                                            <div className="flex items-center gap-1 text-[11px] text-slate-500 font-medium">
-                                                                <Clock className="w-3 h-3" />
-                                                                {itemDate.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
-                                                            </div>
-                                                        </div>
+                                                        ) : (
+                                                            <div className="text-slate-300 font-bold tracking-widest text-center pr-4">----</div>
+                                                        )}
                                                     </TableCell>
                                                     <TableCell>
                                                         <div className="flex flex-col gap-1">

@@ -10,7 +10,7 @@ export interface Trampa {
     id: string;
     tipo: 'cebo' | 'pegajosa' | 'mecanica' | 'jaula';
     ubicacion: string;
-    estado: 'activa' | 'retirada' | 'consumida';
+    estado: 'activa' | 'retirada' | 'consumida' | 'revisada_repuesta';
     fecha_instalacion: string;
     fecha_ultima_revision: string;
 }
@@ -28,10 +28,11 @@ const tiposDisponibles = [
     { id: 'jaula', label: 'Jaula Captura', icon: '📥' },
 ];
 
-const estadosInfo = {
+const estadosInfo: Record<string, { label: string; color: string; icon: any }> = {
     activa: { label: 'Activa', color: 'bg-green-100 text-green-800 border-green-200', icon: CheckCircle2 },
     retirada: { label: 'Retirada', color: 'bg-gray-100 text-gray-800 border-gray-200', icon: Trash2 },
     consumida: { label: 'Consumida y Repuesta', color: 'bg-orange-100 text-orange-800 border-orange-200', icon: AlertCircle },
+    revisada_repuesta: { label: 'Revisada y Repuesta', color: 'bg-blue-100 text-blue-800 border-blue-200', icon: CheckCircle2 },
 };
 
 export const GestorTrampas: React.FC<GestorTrampasProps> = ({ trampas = [], onChange, isEditing = true }) => {
@@ -68,6 +69,7 @@ export const GestorTrampas: React.FC<GestorTrampasProps> = ({ trampas = [], onCh
         total: (trampas || []).length,
         activas: (trampas || []).filter(t => t.estado === 'activa').length,
         consumidas: (trampas || []).filter(t => t.estado === 'consumida').length,
+        revisadas: (trampas || []).filter(t => t.estado === 'revisada_repuesta').length,
     };
 
     return (
@@ -79,7 +81,8 @@ export const GestorTrampas: React.FC<GestorTrampasProps> = ({ trampas = [], onCh
                 </h3>
                 <div className="flex gap-2">
                     {resumen.activas > 0 && <Badge className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100">{resumen.activas} Activas</Badge>}
-                    {resumen.consumidas > 0 && <Badge className="bg-red-100 text-red-800 border-red-200 hover:bg-red-100">{resumen.consumidas} Consumidas</Badge>}
+                    {resumen.consumidas > 0 && <Badge className="bg-orange-100 text-orange-800 border-orange-200 hover:bg-orange-100">{resumen.consumidas} Consumidas</Badge>}
+                    {resumen.revisadas > 0 && <Badge className="bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100">{resumen.revisadas} Revisadas</Badge>}
                 </div>
             </div>
 
@@ -120,7 +123,6 @@ export const GestorTrampas: React.FC<GestorTrampasProps> = ({ trampas = [], onCh
                 )}
 
                 {(trampas || []).map(trampa => {
-                    const StateIcon = estadosInfo[trampa.estado].icon;
                     return (
                         <Card key={trampa.id} className={`overflow-hidden border-l-4 ${trampa.estado === 'activa' ? 'border-l-green-500' :
                             trampa.estado === 'consumida' ? 'border-l-orange-500' : 'border-l-gray-400'
@@ -149,20 +151,21 @@ export const GestorTrampas: React.FC<GestorTrampasProps> = ({ trampas = [], onCh
                                 {isEditing ? (
                                     <div className="flex gap-2">
                                         <select
-                                            className={`flex-1 h-8 text-xs rounded border px-2 font-medium ${estadosInfo[trampa.estado].color}`}
+                                            className={`flex-1 h-8 text-xs rounded border px-2 font-medium ${estadosInfo[trampa.estado]?.color || 'bg-slate-100'}`}
                                             value={trampa.estado}
                                             onChange={(e) => handleActualizarEstado(trampa.id, e.target.value as Trampa['estado'])}
                                         >
                                             <option value="activa">Activa / OK</option>
-                                            <option value="consumida">Consumida y Repuesta</option>
-                                            <option value="retirada">Retirada</option>
+                                            <option value="revisada_repuesta">✅ Revisada y Repuesta (2ª Visita)</option>
+                                            <option value="consumida">🟠 Consumida y Repuesta</option>
+                                            <option value="retirada">🗑️ Retirada</option>
                                         </select>
                                     </div>
                                 ) : (
                                     <div className="flex gap-2 mt-1">
-                                        <Badge className={`px-2 py-1 flex items-center gap-1.5 text-xs border ${estadosInfo[trampa.estado].color}`}>
-                                            <StateIcon className="w-3.5 h-3.5" />
-                                            {estadosInfo[trampa.estado].label}
+                                        <Badge className={`px-2 py-1 flex items-center gap-1.5 text-xs border ${estadosInfo[trampa.estado]?.color || 'bg-slate-100 text-slate-700 border-slate-200'}`}>
+                                            {estadosInfo[trampa.estado]?.icon && (() => { const Icon = estadosInfo[trampa.estado].icon; return <Icon className="w-3.5 h-3.5" />; })()}
+                                            {estadosInfo[trampa.estado]?.label || trampa.estado}
                                         </Badge>
                                     </div>
                                 )}

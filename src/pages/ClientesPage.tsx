@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
-// import { Plus, Search, Eye, Pencil, UserX, UserCheck, ArrowLeft, Trash2 } from 'lucide-react';
-const Plus = ({ className }: { className?: string }) => <span className={className}>+</span>;
-const Search = ({ className }: { className?: string }) => <span className={className}>🔍</span>;
-const Eye = ({ className }: { className?: string }) => <span className={className}>👁️</span>;
-const Pencil = ({ className }: { className?: string }) => <span className={className}>✏️</span>;
-const UserX = ({ className }: { className?: string }) => <span className={className}>🚫</span>;
-const UserCheck = ({ className }: { className?: string }) => <span className={className}>✅</span>;
-const ArrowLeft = ({ className }: { className?: string }) => <span className={className}>⬅️</span>;
-const Trash2 = ({ className }: { className?: string }) => <span className={className}>🗑️</span>;
+import { 
+    Plus, 
+    Search, 
+    Eye, 
+    Pencil, 
+    UserX, 
+    UserCheck, 
+    Trash2,
+    ArrowLeft
+} from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
@@ -28,19 +29,11 @@ import {
     TableHeader,
     TableRow,
 } from '../components/ui/table';
-import {
-    Tabs,
-    TabsContent,
-    TabsList,
-    TabsTrigger,
-} from '../components/ui/tabs';
-
-// import { mockClients } from '../data/mockData';
 import { SECTORS } from '../lib/constants';
-import { TrapList } from '../components/TrapList';
 import { Pagination } from '../components/ui/pagination';
-import type { Trampa, Cliente, ClienteType, ClienteEstado } from '../types';
+import type { Cliente, ClienteType, ClienteEstado } from '../types';
 import { supabase } from '../lib/supabase';
+
 
 export const ClientesPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -66,12 +59,11 @@ export const ClientesPage = () => {
         }
     };
 
-    const [traps, setTraps] = useState<Trampa[]>([]);
     const [isAddClientOpen, setIsAddClientOpen] = useState(false);
+
     const [isEditClientOpen, setIsEditClientOpen] = useState(false);
     const [selectedClient, setSelectedClient] = useState<Cliente | null>(null);
     const [showInactive, setShowInactive] = useState(false);
-    const [serviceFilter, setServiceFilter] = useState<string>('all');
 
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
@@ -300,18 +292,6 @@ export const ClientesPage = () => {
         }
     };
 
-    const handleTrapAdded = (trap: Trampa) => {
-        setTraps([...traps, trap]);
-    };
-
-    const handleTrapUpdated = (updatedTrap: Trampa) => {
-        setTraps(traps.map(t => t.id === updatedTrap.id ? updatedTrap : t));
-    };
-
-    const handleTrapDeleted = (trapId: string) => {
-        setTraps(traps.filter(t => t.id !== trapId));
-    };
-
     // Vista de detalle del cliente
     if (selectedClient && !isEditClientOpen) {
         return (
@@ -349,104 +329,64 @@ export const ClientesPage = () => {
                     </div>
                 </div>
 
-                <Tabs defaultValue="info" className="w-full">
-                    <TabsList className="flex w-full overflow-x-auto justify-start sm:justify-center">
-                        <TabsTrigger value="info" className="text-xs sm:text-sm flex-shrink-0">Información</TabsTrigger>
-                        <TabsTrigger value="traps" className="text-xs sm:text-sm flex-shrink-0">Trampas</TabsTrigger>
-                        <TabsTrigger value="services" className="text-xs sm:text-sm flex-shrink-0">Servicios</TabsTrigger>
-                        <TabsTrigger value="certificates" className="text-xs sm:text-sm flex-shrink-0">Certificados</TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="info" className="space-y-4">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Datos del Cliente</CardTitle>
-                                <CardDescription>Información de contacto y detalles</CardDescription>
-                            </CardHeader>
-                            <CardContent className="grid gap-4">
-                                <div className="grid sm:grid-cols-2 gap-4">
-                                    <div>
-                                        <Label className="text-muted-foreground">Nombre Empresa</Label>
-                                        <p className="font-medium">{selectedClient.name}</p>
-                                    </div>
-                                    <div>
-                                        <Label className="text-muted-foreground">Tipo</Label>
-                                        <p className="font-medium">{selectedClient.type}</p>
-                                    </div>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Datos del Cliente</CardTitle>
+                        <CardDescription>Información de contacto y detalles</CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid gap-5">
+                        <div className="grid sm:grid-cols-2 gap-4">
+                            <div>
+                                <Label className="text-muted-foreground text-xs">Nombre Empresa</Label>
+                                <p className="font-medium">{selectedClient.name}</p>
+                            </div>
+                            <div>
+                                <Label className="text-muted-foreground text-xs">Tipo</Label>
+                                <p className="font-medium">{selectedClient.type}</p>
+                            </div>
+                        </div>
+                        <div className="grid sm:grid-cols-2 gap-4">
+                            <div>
+                                <Label className="text-muted-foreground text-xs">Contacto</Label>
+                                <p className="font-medium">{selectedClient.contact || '—'}</p>
+                            </div>
+                            <div>
+                                <Label className="text-muted-foreground text-xs">Email</Label>
+                                <p className="font-medium">{selectedClient.email || '—'}</p>
+                            </div>
+                        </div>
+                        <div className="grid sm:grid-cols-2 gap-4">
+                            <div>
+                                <Label className="text-muted-foreground text-xs">Teléfono</Label>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                    <p className="font-medium">{selectedClient.phone || '—'}</p>
+                                    {selectedClient.phone && (
+                                        <div className="flex gap-1.5">
+                                            <a href={(() => { let p = selectedClient.phone.replace(/\D/g, ''); if (p.length === 8) p = '569' + p; else if (p.length === 9) p = '56' + p; return `https://wa.me/${p}`; })()} target="_blank" rel="noopener noreferrer" className="text-[10px] font-bold bg-green-50 text-green-700 hover:bg-green-100 px-2 py-0.5 rounded border border-green-200">💬 WhatsApp</a>
+                                            <a href={(() => { let p = selectedClient.phone.replace(/\D/g, ''); if (p.length === 8) p = '569' + p; else if (p.length === 9) p = '56' + p; return `tel:+${p}`; })()} className="text-[10px] font-bold bg-blue-50 text-blue-700 hover:bg-blue-100 px-2 py-0.5 rounded border border-blue-200">📞 Llamar</a>
+                                        </div>
+                                    )}
                                 </div>
-                                <div className="grid sm:grid-cols-2 gap-4">
-                                    <div>
-                                        <Label className="text-muted-foreground">Contacto</Label>
-                                        <p className="font-medium">{selectedClient.contact}</p>
-                                    </div>
-                                    <div>
-                                        <Label className="text-muted-foreground">Email</Label>
-                                        <p className="font-medium">{selectedClient.email}</p>
-                                    </div>
-                                </div>
-                                <div className="grid sm:grid-cols-2 gap-4">
-                                    <div>
-                                        <Label className="text-muted-foreground">Teléfono</Label>
-                                        <p className="font-medium">{selectedClient.phone}</p>
-                                    </div>
-                                    <div>
-                                        <Label className="text-muted-foreground">Estado</Label>
-                                        <Badge variant={selectedClient.status === 'active' ? 'success' : 'secondary'}>
-                                            {selectedClient.status === 'active' ? 'Activo' : 'Inactivo'}
-                                        </Badge>
-                                    </div>
-                                </div>
-                                <div className="grid sm:grid-cols-2 gap-4">
-                                    <div>
-                                        <Label className="text-muted-foreground">Dirección</Label>
-                                        <p className="font-medium">{selectedClient.address}</p>
-                                    </div>
-                                    <div>
-                                        <Label className="text-muted-foreground">Sector</Label>
-                                        <p className="font-medium">{selectedClient.sector || 'Sin Asignar'}</p>
-                                    </div>
-                                </div>
-                                <div>
-                                    <Label className="text-muted-foreground">Último Servicio</Label>
-                                    <p className="font-medium">{selectedClient.lastService ? new Date(selectedClient.lastService).toLocaleDateString() : 'Sin servicio'}</p>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-
-                    <TabsContent value="traps">
-                        <Card>
-                            <CardContent className="pt-6">
-                                <TrapList
-                                    clientId={selectedClient.id}
-                                    clientName={selectedClient.name}
-                                    traps={traps}
-                                    onTrapAdded={handleTrapAdded}
-                                    onTrapUpdated={handleTrapUpdated}
-                                    onTrapDeleted={handleTrapDeleted}
-                                />
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-
-                    <TabsContent value="services">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Historial de Servicios</CardTitle>
-                                <CardDescription>Próximamente...</CardDescription>
-                            </CardHeader>
-                        </Card>
-                    </TabsContent>
-
-                    <TabsContent value="certificates">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Certificados Emitidos</CardTitle>
-                                <CardDescription>Próximamente...</CardDescription>
-                            </CardHeader>
-                        </Card>
-                    </TabsContent>
-                </Tabs>
+                            </div>
+                            <div>
+                                <Label className="text-muted-foreground text-xs">Estado</Label>
+                                <Badge variant={selectedClient.status === 'active' ? 'success' : 'secondary'} className="mt-1">
+                                    {selectedClient.status === 'active' ? 'Activo' : 'Inactivo'}
+                                </Badge>
+                            </div>
+                        </div>
+                        <div className="grid sm:grid-cols-2 gap-4">
+                            <div>
+                                <Label className="text-muted-foreground text-xs">Dirección</Label>
+                                <p className="font-medium">{selectedClient.address || '—'}</p>
+                            </div>
+                            <div>
+                                <Label className="text-muted-foreground text-xs">Sector</Label>
+                                <p className="font-medium">{selectedClient.sector || 'Sin Asignar'}</p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
         );
     }
@@ -490,27 +430,11 @@ export const ClientesPage = () => {
                         <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-2">
                             <Button
                                 variant="outline"
-                                onClick={() => {
-                                    setShowInactive(!showInactive);
-                                    setCurrentPage(1);
-                                }}
+                                onClick={() => { setShowInactive(!showInactive); setCurrentPage(1); }}
                                 className="w-full sm:w-auto"
                             >
                                 {showInactive ? 'Ocultar Inactivos' : 'Mostrar Inactivos'}
                             </Button>
-                            <select
-                                className="h-10 w-full sm:w-auto rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                                value={serviceFilter}
-                                onChange={(e) => {
-                                    setServiceFilter(e.target.value);
-                                    setCurrentPage(1); // Reset page on filter change
-                                }}
-                            >
-                                <option value="all">Todos los Servicios</option>
-                                <option value="cleaning">Limpieza</option>
-                                <option value="rugs">Alfombras</option>
-                                <option value="pest-control">Control de Plagas</option>
-                            </select>
                         </div>
                     </div>
 

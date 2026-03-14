@@ -2,59 +2,81 @@ import React, { useRef } from 'react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { Button } from './ui/button';
-import { FileText, Loader2 } from 'lucide-react';
-import type { ServicioControlPlagas, Trampa, ServicioTrampa } from '../types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-interface CertificateGeneratorProps {
-    service: ServicioControlPlagas;
-    traps: Trampa[];
-    serviceTraps: ServicioTrampa[];
-    onGenerated?: (url: string) => void;
+// Usamos el tipo real de PlagasPage para evitar discrepancias
+interface AreaServicio {
+    area: string;
+    servicios: string[];
 }
 
-export const CertificateGenerator: React.FC<CertificateGeneratorProps> = ({
-    service,
-    traps,
-    serviceTraps,
-}) => {
+interface Trampa {
+    id: string;
+    tipo: string;
+    ubicacion: string;
+    estado: string;
+    fecha_instalacion: string;
+}
+
+interface CertPropsReal {
+    service: {
+        id: string;
+        cliente_nombre: string;
+        cliente_id?: string;
+        sector?: string;
+        tipo_servicio?: string;
+        tipos_servicio?: string[];
+        tecnico_asignado?: string;
+        fecha_ejecucion?: string;
+        proxima_renovacion?: string;
+        numero_certificado?: string;
+        direccion?: string;
+        observaciones?: string;
+        trampas?: Trampa[];
+        areas_servicio?: AreaServicio[];
+    };
+    // Mantenemos compatibilidad con la firma anterior — no se usan
+    traps?: unknown[];
+    serviceTraps?: unknown[];
+}
+
+const ESTADO_LABELS: Record<string, string> = {
+    activa: 'Activa',
+    consumida: 'Consumida y Repuesta',
+    revisada_repuesta: 'Revisada y Repuesta',
+    retirada: 'Retirada',
+};
+
+const SERVICIO_LABELS: Record<string, string> = {
+    fumigacion: 'Fumigación',
+    sanitizacion: 'Sanitización',
+    desinsectacion: 'Desinsectación',
+    desratizacion: 'Desratización',
+    integral: 'Control Integral',
+};
+
+export const CertificateGenerator: React.FC<CertPropsReal> = ({ service }) => {
     const certificateRef = useRef<HTMLDivElement>(null);
     const [isGenerating, setIsGenerating] = React.useState(false);
 
     const generatePDF = async () => {
         if (!certificateRef.current) return;
-
         try {
             setIsGenerating(true);
-
-            // Create canvas from the certificate element
             const canvas = await html2canvas(certificateRef.current, {
-                scale: 2, // Higher resolution
+                scale: 2,
                 logging: false,
                 useCORS: true,
-                backgroundColor: '#ffffff'
+                backgroundColor: '#ffffff',
             });
-
-            // Calculate PDF dimensions
             const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF({
-                orientation: 'portrait',
-                unit: 'mm',
-                format: 'a4'
-            });
-
-            const imgWidth = 210; // A4 width in mm
+            const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+            const imgWidth = 210;
             const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
             pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-
-            // Generate filename based on service/client
-            const filename = `Certificado_${service.numeroCertificado || 'S/N'}_${format(new Date(), 'yyyyMMdd')}.pdf`;
-
-            // Save PDF
+            const filename = `Certificado_${service.numero_certificado || 'SN'}_${format(new Date(), 'yyyyMMdd')}.pdf`;
             pdf.save(filename);
-
         } catch (error) {
             console.error('Error generating PDF:', error);
         } finally {
@@ -62,182 +84,189 @@ export const CertificateGenerator: React.FC<CertificateGeneratorProps> = ({
         }
     };
 
+    const trampas: Trampa[] = Array.isArray(service.trampas) ? service.trampas : [];
+    const areasServicio: AreaServicio[] = Array.isArray(service.areas_servicio) ? service.areas_servicio : [];
+    const tiposServicio: string[] = Array.isArray(service.tipos_servicio)
+        ? service.tipos_servicio
+        : service.tipo_servicio
+            ? [service.tipo_servicio]
+            : [];
+
+    const fechaServicio = service.fecha_ejecucion
+        ? format(new Date(service.fecha_ejecucion.includes('T') ? service.fecha_ejecucion : `${service.fecha_ejecucion}T12:00:00`), 'dd/MM/yyyy', { locale: es })
+        : '---';
+
+    const fechaVencimiento = service.proxima_renovacion
+        ? format(new Date(service.proxima_renovacion.includes('T') ? service.proxima_renovacion : `${service.proxima_renovacion}T12:00:00`), 'dd/MM/yyyy', { locale: es })
+        : 'N/A';
+
     return (
         <div>
             <div className="mb-4">
                 <Button
                     onClick={generatePDF}
                     disabled={isGenerating}
-                    className="gap-2"
+                    className="gap-2 bg-green-600 hover:bg-green-700 text-white"
                 >
-                    {isGenerating ? (
-                        <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Generando...
-                        </>
-                    ) : (
-                        <>
-                            <FileText className="h-4 w-4" />
-                            Descargar Certificado PDF
-                        </>
-                    )}
+                    {isGenerating ? '⏳ Generando...' : '📄 Descargar Certificado PDF'}
                 </Button>
             </div>
 
-            {/* Hidden container for PDF generation (visible only off-screen or strictly for capture) 
-                Actually, we might want to show a preview. For now, let's make it visible but distinct.
-            */}
-            <div className="border rounded-lg p-4 bg-gray-50 overflow-auto max-h-[500px]">
-                <h3 className="text-sm font-medium mb-2 text-muted-foreground">Previsualización del Certificado:</h3>
+            {/* Plantilla del certificado */}
+            <div
+                ref={certificateRef}
+                className="bg-white text-black p-8 mx-auto shadow-sm font-sans"
+                style={{ width: '210mm', minHeight: '297mm', boxSizing: 'border-box' }}
+            >
+                {/* ── ENCABEZADO ────────────────────────────────── */}
+                <div className="flex justify-between items-start mb-6 border-b-2 border-orange-500 pb-4">
+                    <div>
+                        <h1 className="text-2xl font-black text-orange-600 tracking-tight">TELOLIMPIO</h1>
+                        <p className="text-sm text-gray-600 font-semibold">Control de Plagas & Limpieza Industrial</p>
+                        <p className="text-xs text-gray-400 mt-1">Concepción, Chile</p>
+                    </div>
+                    <div className="text-right">
+                        <h2 className="text-lg font-bold text-gray-800">CERTIFICADO DE SERVICIO</h2>
+                        <p className="text-sm font-mono mt-1 text-orange-700">N° {service.numero_certificado || '---'}</p>
+                        <p className="text-xs text-gray-500">Fecha: {fechaServicio}</p>
+                    </div>
+                </div>
 
-                {/* Certificate Template */}
-                <div
-                    ref={certificateRef}
-                    className="bg-white text-black p-8 mx-auto shadow-sm"
-                    style={{
-                        width: '210mm',
-                        minHeight: '297mm',
-                        boxSizing: 'border-box'
-                    }}
-                >
-                    {/* Header */}
-                    <div className="flex justify-between items-start mb-8 border-b pb-4">
+                {/* ── DATOS CLIENTE ─────────────────────────────── */}
+                <div className="mb-5 bg-gray-50 p-3 rounded-lg border">
+                    <h3 className="text-xs font-bold uppercase text-gray-500 mb-2 tracking-wider">Información del Cliente</h3>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
                         <div>
-                            <h1 className="text-2xl font-bold text-orange-600">TELOLIMPIO</h1>
-                            <p className="text-sm text-gray-600">Servicios de Limpieza y Control de Plagas</p>
-                            <p className="text-xs text-gray-500">Av. Ejemplo 123, Ciudad</p>
-                            <p className="text-xs text-gray-500">Tel: +56 9 1234 5678</p>
+                            <span className="font-semibold text-gray-700">Cliente:</span>{' '}
+                            <span>{service.cliente_nombre}</span>
                         </div>
-                        <div className="text-right">
-                            <h2 className="text-xl font-bold">CERTIFICADO DE SERVICIO</h2>
-                            <p className="text-sm font-mono mt-1">N° {service.numeroCertificado || '---'}</p>
-                            <p className="text-sm text-gray-500">Fecha: {format(new Date(service.fechaRealizada || new Date()), 'dd/MM/yyyy', { locale: es })}</p>
+                        <div>
+                            <span className="font-semibold text-gray-700">Dirección:</span>{' '}
+                            <span>{service.direccion || '—'}</span>
                         </div>
-                    </div>
-
-                    {/* Client Info */}
-                    <div className="mb-8">
-                        <h3 className="text-sm font-bold uppercase border-b mb-2 pb-1">Información del Cliente</h3>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                                <p><span className="font-semibold">Cliente:</span> {service.clienteNombre}</p>
-                                <p><span className="font-semibold">Dirección:</span> {'---'}</p>
-                            </div>
-                            <div>
-                                <p><span className="font-semibold">RUT/NIT:</span> {service.clienteId || '---'} (Simulado)</p>
-                            </div>
+                        <div>
+                            <span className="font-semibold text-gray-700">Sector:</span>{' '}
+                            <span>{service.sector || '—'}</span>
+                        </div>
+                        <div>
+                            <span className="font-semibold text-gray-700">Técnico Responsable:</span>{' '}
+                            <span>{service.tecnico_asignado || '—'}</span>
                         </div>
                     </div>
+                </div>
 
-                    {/* Service Details */}
-                    <div className="mb-6">
-                        <h3 className="text-sm font-bold uppercase border-b mb-2 pb-1">Detalles del Servicio</h3>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                                <p><span className="font-semibold">Tipo de Servicio:</span> {Array.isArray(service.tipoServicio) ? service.tipoServicio.join(', ') : service.tipoServicio}</p>
-                                <p><span className="font-semibold">Técnico Responsable:</span> {service.tecnicoAsignadoNombre}</p>
-                            </div>
-                            <div>
-                                <p><span className="font-semibold">Próximo Vencimiento:</span> {service.proximaRenovacion ? format(new Date(service.proximaRenovacion), 'dd/MM/yyyy') : 'N/A'}</p>
-                            </div>
+                {/* ── DETALLES SERVICIO ─────────────────────────── */}
+                <div className="mb-5">
+                    <h3 className="text-xs font-bold uppercase text-gray-500 mb-2 tracking-wider border-b pb-1">Detalles del Servicio</h3>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                            <span className="font-semibold text-gray-700">Tipo(s) de Servicio:</span>{' '}
+                            <span>{tiposServicio.map(t => SERVICIO_LABELS[t] || t).join(', ') || '—'}</span>
+                        </div>
+                        <div>
+                            <span className="font-semibold text-gray-700">Próximo Vencimiento:</span>{' '}
+                            <span>{fechaVencimiento}</span>
                         </div>
                     </div>
-
-                    {/* Tasks Checklist */}
-                    {service.tareasRealizadas && service.tareasRealizadas.length > 0 && (
-                        <div className="mb-6">
-                            <h3 className="text-sm font-bold uppercase border-b mb-2 pb-1">Actividades Realizadas</h3>
-                            <div className="grid grid-cols-2 gap-2 text-xs">
-                                {service.tareasRealizadas.map((task, idx) => (
-                                    <div key={idx} className="flex items-center gap-2">
-                                        <span className="text-green-600">✓</span> {task}
-                                    </div>
-                                ))}
-                            </div>
+                    {service.observaciones && (
+                        <div className="mt-2 text-sm">
+                            <span className="font-semibold text-gray-700">Observaciones:</span>{' '}
+                            <span className="italic text-gray-600">{service.observaciones}</span>
                         </div>
                     )}
+                </div>
 
-                    {/* Materials Used */}
-                    {service.productosUtilizados && service.productosUtilizados.length > 0 && (
-                        <div className="mb-6">
-                            <h3 className="text-sm font-bold uppercase border-b mb-2 pb-1">Materiales Utilizados</h3>
-                            <table className="w-full text-sm text-left">
-                                <thead>
-                                    <tr className="border-b bg-gray-50">
-                                        <th className="py-1 px-1">Producto</th>
-                                        <th className="py-1 px-1">Cantidad</th>
-                                        <th className="py-1 px-1">Lote</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {service.productosUtilizados.map((prod, idx) => (
-                                        <tr key={idx} className="border-b">
-                                            <td className="py-1 px-1">{prod.nombre}</td>
-                                            <td className="py-1 px-1">{prod.cantidad}</td>
-                                            <td className="py-1 px-1">{prod.lote || '-'}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-
-                    {/* Traps/Activity Summary */}
-                    <div className="mb-8">
-                        <h3 className="text-sm font-bold uppercase border-b mb-2 pb-1">Registro de Actividad (Trampas/Cebos)</h3>
+                {/* ── ÁREAS CON SERVICIOS REALIZADOS ───────────── */}
+                {areasServicio.length > 0 && (
+                    <div className="mb-5">
+                        <h3 className="text-xs font-bold uppercase text-gray-500 mb-2 tracking-wider border-b pb-1">
+                            Áreas Sanitizadas / Fumigadas
+                        </h3>
                         <table className="w-full text-sm text-left">
                             <thead>
-                                <tr className="border-b bg-gray-50">
-                                    <th className="py-2 px-1">Trampa #</th>
-                                    <th className="py-2 px-1">Ubicación</th>
-                                    <th className="py-2 px-1">Estado</th>
-                                    <th className="py-2 px-1">Cebo / Obs.</th>
+                                <tr className="bg-orange-50 border-b">
+                                    <th className="py-1.5 px-2 font-semibold text-gray-700">Área / Zona</th>
+                                    <th className="py-1.5 px-2 font-semibold text-gray-700">Servicios Realizados</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {serviceTraps.map((st) => {
-                                    const trampa = traps.find(t => t.id === st.trampaId);
-                                    return (
-                                        <tr key={st.id} className="border-b">
-                                            <td className="py-2 px-1 text-xs">{trampa?.numeroTrampa || '???'}</td>
-                                            <td className="py-2 px-1 text-xs">{trampa?.ubicacion || '-'}</td>
-                                            <td className="py-2 px-1 text-xs uppercase font-semibold">{st.estado.replace('_', ' ')}</td>
-                                            <td className="py-2 px-1 text-xs">
-                                                {st.ceboCambiado ? `Sí (${st.cantidadCebo || ''})` : 'No'}
-                                                {st.observaciones && <div className="italic text-gray-500">{st.observaciones}</div>}
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                                {serviceTraps.length === 0 && (
-                                    <tr>
-                                        <td colSpan={5} className="py-4 text-center text-gray-500 italic">
-                                            No se registraron trampas en este servicio.
+                                {areasServicio.map((a, idx) => (
+                                    <tr key={idx} className="border-b even:bg-gray-50">
+                                        <td className="py-1.5 px-2 font-medium">{a.area || '—'}</td>
+                                        <td className="py-1.5 px-2">
+                                            {a.servicios.length > 0
+                                                ? a.servicios.map(s => SERVICIO_LABELS[s] || s).join(' · ')
+                                                : '—'}
                                         </td>
                                     </tr>
-                                )}
+                                ))}
                             </tbody>
                         </table>
                     </div>
+                )}
 
-                    {/* Footer / Signatures */}
-                    <div className="mt-16 grid grid-cols-2 gap-16 text-center">
-                        <div className="border-t pt-2">
-                            <p className="font-semibold text-sm">{service.tecnicoAsignadoNombre}</p>
-                            <p className="text-xs text-gray-500">Firma Técnico</p>
-                        </div>
-                        <div className="border-t pt-2">
-                            <p className="font-semibold text-sm">Cliente / Responsable</p>
-                            <p className="text-xs text-gray-500">Firma Cliente</p>
-                        </div>
+                {/* ── REGISTRO DE TRAMPAS / CEBOS ──────────────── */}
+                <div className="mb-8">
+                    <h3 className="text-xs font-bold uppercase text-gray-500 mb-2 tracking-wider border-b pb-1">
+                        Registro de Actividad — Trampas / Cebos (Desratización)
+                    </h3>
+                    {trampas.length === 0 ? (
+                        <p className="text-sm italic text-gray-400 py-2">No se registraron trampas en este servicio.</p>
+                    ) : (
+                        <table className="w-full text-sm text-left">
+                            <thead>
+                                <tr className="bg-gray-50 border-b">
+                                    <th className="py-1.5 px-2 font-semibold text-gray-700">#</th>
+                                    <th className="py-1.5 px-2 font-semibold text-gray-700">Ubicación</th>
+                                    <th className="py-1.5 px-2 font-semibold text-gray-700">Tipo</th>
+                                    <th className="py-1.5 px-2 font-semibold text-gray-700">Estado</th>
+                                    <th className="py-1.5 px-2 font-semibold text-gray-700">Instalada</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {trampas.map((t, idx) => (
+                                    <tr key={t.id || idx} className="border-b even:bg-gray-50">
+                                        <td className="py-1.5 px-2 text-gray-500">{idx + 1}</td>
+                                        <td className="py-1.5 px-2 font-medium">{t.ubicacion}</td>
+                                        <td className="py-1.5 px-2 capitalize text-xs text-gray-600">{t.tipo}</td>
+                                        <td className="py-1.5 px-2">
+                                            <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                                                t.estado === 'activa' ? 'bg-green-100 text-green-800'
+                                                : t.estado === 'consumida' ? 'bg-orange-100 text-orange-800'
+                                                : t.estado === 'revisada_repuesta' ? 'bg-blue-100 text-blue-800'
+                                                : 'bg-gray-100 text-gray-700'
+                                            }`}>
+                                                {ESTADO_LABELS[t.estado] || t.estado}
+                                            </span>
+                                        </td>
+                                        <td className="py-1.5 px-2 text-xs text-gray-500">
+                                            {t.fecha_instalacion
+                                                ? new Date(t.fecha_instalacion).toLocaleDateString('es-CL')
+                                                : '—'}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
+                </div>
+
+                {/* ── FIRMAS ────────────────────────────────────── */}
+                <div className="mt-16 grid grid-cols-2 gap-16 text-center">
+                    <div className="border-t pt-2">
+                        <p className="font-semibold text-sm">{service.tecnico_asignado || 'Técnico'}</p>
+                        <p className="text-xs text-gray-500">Firma Técnico</p>
                     </div>
-
-                    {/* Legal / Disclaimer */}
-                    <div className="mt-12 text-[10px] text-gray-400 text-center">
-                        <p>Este documento certifica que el servicio ha sido realizado conforme a las normas sanitarias vigentes.</p>
-                        <p>Telolimpio - Control de Plagas y Limpieza Industrial</p>
+                    <div className="border-t pt-2">
+                        <p className="font-semibold text-sm">Cliente / Responsable</p>
+                        <p className="text-xs text-gray-500 text-red-400">Firma Cliente</p>
                     </div>
+                </div>
 
+                {/* ── PIE LEGAL ─────────────────────────────────── */}
+                <div className="mt-10 text-[9px] text-gray-400 text-center border-t pt-3">
+                    <p>Este documento certifica que el servicio ha sido realizado conforme a las normas sanitarias vigentes.</p>
+                    <p>Telolimpio — Control de Plagas y Limpieza Industrial · Concepción, Chile</p>
                 </div>
             </div>
         </div>

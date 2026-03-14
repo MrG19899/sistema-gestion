@@ -34,23 +34,20 @@ export interface ServicioAlfombra {
     id: string;
     cliente_id: string;
     cliente_nombre: string;
-    tipo_servicio: string; // lana, pelo corto, etc
-    dimensiones: string;
-    ancho: number | null;
-    largo: number | null;
-    m2: number | null;
-    valor_m2: number | null;
-    valor_total: number | null;
+    tipo_servicio: string;
     fecha_recepcion: string | null;
     fecha_entrega: string | null;
     ubicacion: string;
-    estado: string; // espera, in_process, ready, delivered
+    estado: string;
     photo_url?: string | null;
     is_pickup?: boolean;
     sector?: string;
     cliente_telefono?: string;
     cliente_direccion?: string;
     pickup_date?: string;
+    pedido_id?: string | null;
+    numero_item?: number | null;
+    total_items?: number | null;
 }
 
 const getStatusBadge = (status: string) => {
@@ -94,16 +91,30 @@ export const AlfombrasPage = () => {
 
     const [viewPhotoIndex, setViewPhotoIndex] = useState<number | null>(null);
 
+    // Filters (declarados antes del useEffect que los referencia)
+    const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState('all');
+    const [sectorFilter, setSectorFilter] = useState('all');
+
     // Fetch desde Supabase
     React.useEffect(() => {
-        fetchRugs();
-    }, []);
+        fetchRugs(statusFilter === 'delivered');
+    }, [statusFilter]);
 
-    const fetchRugs = async () => {
-        const { data, error } = await supabase
+    const fetchRugs = async (includeDelivered = false) => {
+        let query = supabase
             .from('servicios_alfombras')
             .select('*')
             .order('created_at', { ascending: false });
+
+        // Por defecto excluir entregados para no sobrecargar el listado
+        if (!includeDelivered) {
+            query = query.neq('estado', 'delivered');
+        } else {
+            query = query.eq('estado', 'delivered');
+        }
+
+        const { data, error } = await query;
 
         if (!error && data) {
             const mappedData = (data as ServicioAlfombra[]);
@@ -130,19 +141,16 @@ export const AlfombrasPage = () => {
         }
     };
 
-    // Filters
-    const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState('all');
-    const [sectorFilter, setSectorFilter] = useState('all');
 
     const filteredRugs = rugs.filter(rug => {
         const matchesSearch = (rug.cliente_nombre || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
             rug.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
             (rug.ubicacion || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
             (rug.cliente_direccion || '').toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = statusFilter === 'all' ||
-            rug.estado === statusFilter ||
-            (statusFilter === 'recepcionada' && rug.estado === 'received');
+        // 'all' = activos (delivered ya fue excluido desde el fetch)
+        const matchesStatus = statusFilter === 'all' || statusFilter === 'delivered'
+            ? true  // el fetch ya filtró por estado
+            : rug.estado === statusFilter || (statusFilter === 'recepcionada' && rug.estado === 'received');
         const matchesSector = sectorFilter === 'all' || (rug.sector && rug.sector === sectorFilter);
 
         return matchesSearch && matchesStatus && matchesSector;
@@ -474,7 +482,7 @@ export const AlfombrasPage = () => {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="client" className="text-base font-semibold">Cliente</Label>
+                            <Label htmlFor="client" className="text-base font-semibold">👤 Cliente / Empresa</Label>
                             <ClientAutocomplete
                                 onSelect={(client) => {
                                     setNewRug(prev => ({
@@ -486,6 +494,9 @@ export const AlfombrasPage = () => {
                                     }));
                                 }}
                                 selectedClientName={newRug.cliente_nombre}
+                                onClientCreated={(client) => {
+                                    console.log("Cliente creado desde Alfombras:", client.name);
+                                }}
                             />
                         </div>
 
@@ -801,7 +812,14 @@ export const AlfombrasPage = () => {
                                 <div className="flex items-center gap-2 text-xs text-gray-400">
                                     <span>ID: {rugsWithPhotos[viewPhotoIndex].id.substring(0, 8)}</span>
                                     <span>•</span>
-                                    <span className="text-blue-400 font-bold">Foto {viewPhotoIndex + 1} de {rugsWithPhotos.length}</span>
+                                    {/* Indicador del pedido: foto X/Y del mismo pedido */}
+                                    {rugsWithPhotos[viewPhotoIndex].total_items && rugsWithPhotos[viewPhotoIndex].total_items > 1 ? (
+                                        <span className="text-purple-400 font-bold bg-purple-900/50 px-2 py-0.5 rounded">
+                                            Alfombra {rugsWithPhotos[viewPhotoIndex].numero_item}/{rugsWithPhotos[viewPhotoIndex].total_items} del pedido
+                                        </span>
+                                    ) : (
+                                        <span className="text-blue-400 font-bold">Foto {viewPhotoIndex + 1} de {rugsWithPhotos.length}</span>
+                                    )}
                                 </div>
                             </div>
                             
@@ -892,24 +910,24 @@ export const AlfombrasPage = () => {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>ID</TableHead>
-                                <TableHead>Cliente</TableHead>
-                                <TableHead className="hidden lg:table-cell">Dirección / Sector</TableHead>
+                                <TableHead className="w-14">Foto</TableHead>
                                 <TableHead>Estado Tiempo</TableHead>
+                                <TableHead className="hidden lg:table-cell">Dirección / Sector</TableHead>
                                 <TableHead>Fecha / Hora</TableHead>
+                                <TableHead>Cliente</TableHead>
                                 <TableHead>Estado</TableHead>
-                                <TableHead>Ubicación</TableHead>
                                 <TableHead className="text-right min-w-[120px]">Acciones</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {paginatedRugs.map((item) => (
                                 <TableRow key={item.id}>
-                                    <TableCell className="font-mono text-xs font-bold text-primary">
-                                        <div className="flex items-center gap-2">
+                                    {/* COLUMNA 1: Foto + Indicador de pedido */}
+                                    <TableCell className="w-14">
+                                        <div className="flex flex-col items-center gap-1">
                                             {item.photo_url ? (
                                                 <div
-                                                    className="h-8 w-8 rounded overflow-hidden cursor-pointer border border-border hover:border-blue-500 transition-colors shrink-0"
+                                                    className="relative h-10 w-10 rounded overflow-hidden cursor-pointer border border-border hover:border-blue-500 transition-colors shrink-0"
                                                     onClick={() => {
                                                         const idx = rugsWithPhotos.findIndex(r => r.id === item.id);
                                                         setViewPhotoIndex(idx !== -1 ? idx : null);
@@ -918,52 +936,34 @@ export const AlfombrasPage = () => {
                                                     <img src={item.photo_url} alt="Miniatura" className="h-full w-full object-cover" />
                                                 </div>
                                             ) : (
-                                                <ImageIcon className="h-4 w-4 text-muted-foreground/30" />
-                                            )}
-                                            {item.id}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="font-medium">
-                                        <div className="flex flex-col">
-                                            <span>{item.cliente_nombre}</span>
-                                            {item.cliente_telefono ? (
-                                                <div className="flex flex-col gap-1 mt-1">
-                                                    <span className="text-xs font-medium text-slate-600 dark:text-slate-400">{item.cliente_telefono}</span>
-                                                    <div className="flex items-center gap-1.5">
-                                                        <a
-                                                            href={(() => {
-                                                                let p = item.cliente_telefono.replace(/\D/g, '');
-                                                                if (p.length === 8) p = '569' + p;
-                                                                else if (p.length === 9) p = '56' + p;
-                                                                return `https://wa.me/${p}`;
-                                                            })()}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="flex items-center gap-1 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 px-2 py-0.5 rounded border border-green-200 text-[10px] font-bold transition-colors"
-                                                            title="Enviar WhatsApp"
-                                                        >
-                                                            💬 WhatsApp
-                                                        </a>
-                                                        <a
-                                                            href={(() => {
-                                                                let p = item.cliente_telefono.replace(/\D/g, '');
-                                                                if (p.length === 8) p = '569' + p;
-                                                                else if (p.length === 9) p = '56' + p;
-                                                                return `tel:+${p}`;
-                                                            })()}
-                                                            className="flex items-center gap-1 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 px-2 py-0.5 rounded border border-blue-200 text-[10px] font-bold transition-colors"
-                                                            title="Llamar al cliente"
-                                                        >
-                                                            📞 Llamar
-                                                        </a>
-                                                    </div>
+                                                <div className="h-10 w-10 rounded bg-muted/40 flex items-center justify-center border border-dashed border-muted-foreground/20">
+                                                    <ImageIcon className="h-4 w-4 text-muted-foreground/30" />
                                                 </div>
-                                            ) : (
-                                                <span className="text-xs text-muted-foreground mt-1">Sin teléfono</span>
                                             )}
+                                            {/* Indicador de item en el pedido */}
+                                            {item.total_items && item.total_items > 1 ? (
+                                                <span className="text-[10px] font-bold bg-purple-600 text-white px-1 rounded leading-tight">
+                                                    {item.numero_item}/{item.total_items}
+                                                </span>
+                                            ) : null}
                                         </div>
                                     </TableCell>
+
+                                    {/* COLUMNA 2: Estado Tiempo */}
                                     <TableCell>
+                                        {item.estado === 'scheduled_pickup' ? (
+                                            <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                                                Programado
+                                            </span>
+                                        ) : (
+                                            <span className={`px-2 py-1 rounded-full text-xs font-semibold border ${item.fecha_recepcion ? getTrafficLightColor(item.fecha_recepcion) : ''}`}>
+                                                {item.fecha_recepcion ? `${Math.floor((new Date().getTime() - new Date(item.fecha_recepcion).getTime()) / (1000 * 3600 * 24))} días` : '-'}
+                                            </span>
+                                        )}
+                                    </TableCell>
+
+                                    {/* COLUMNA 3: Dirección / Sector */}
+                                    <TableCell className="hidden lg:table-cell">
                                         <div className="flex flex-col text-sm">
                                             <a
                                                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${item.cliente_direccion || item.ubicacion} ${item.sector || ''}`)}`}
@@ -977,17 +977,8 @@ export const AlfombrasPage = () => {
                                             <span className="text-muted-foreground text-xs">{item.sector || ''}</span>
                                         </div>
                                     </TableCell>
-                                    <TableCell>
-                                        {item.estado === 'scheduled_pickup' ? (
-                                            <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                                                Programado
-                                            </span>
-                                        ) : (
-                                            <span className={`px-2 py-1 rounded-full text-xs font-semibold border ${item.fecha_recepcion ? getTrafficLightColor(item.fecha_recepcion) : ''}`}>
-                                                {item.fecha_recepcion ? `${Math.floor((new Date().getTime() - new Date(item.fecha_recepcion).getTime()) / (1000 * 3600 * 24))} días` : '-'}
-                                            </span>
-                                        )}
-                                    </TableCell>
+
+                                    {/* COLUMNA 4: Fecha / Hora */}
                                     <TableCell>
                                         {item.estado === 'scheduled_pickup' ? (
                                             <div className="flex flex-col text-sm">
@@ -1004,22 +995,53 @@ export const AlfombrasPage = () => {
                                             </div>
                                         )}
                                     </TableCell>
-                                    <TableCell>
-                                        {getStatusBadge(item.estado)}
+
+                                    {/* COLUMNA 5: Cliente */}
+                                    <TableCell className="font-medium">
+                                        <div className="flex flex-col">
+                                            <span>{item.cliente_nombre}</span>
+                                            {item.cliente_telefono ? (
+                                                <div className="flex flex-col gap-1 mt-1">
+                                                    <span className="text-xs font-medium text-slate-600 dark:text-slate-400">{item.cliente_telefono}</span>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <a
+                                                            href={(() => {
+                                                                let p = item.cliente_telefono.replace(/\D/g, '');
+                                                                if (p.length === 8) p = '569' + p;
+                                                                else if (p.length === 9) p = '56' + p;
+                                                                return `https://wa.me/${p}`;
+                                                            })()}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="flex items-center gap-1 bg-green-50 text-green-700 hover:bg-green-100 px-2 py-0.5 rounded border border-green-200 text-[10px] font-bold transition-colors"
+                                                        >💬 WhatsApp</a>
+                                                        <a
+                                                            href={(() => {
+                                                                let p = item.cliente_telefono.replace(/\D/g, '');
+                                                                if (p.length === 8) p = '569' + p;
+                                                                else if (p.length === 9) p = '56' + p;
+                                                                return `tel:+${p}`;
+                                                            })()}
+                                                            className="flex items-center gap-1 bg-blue-50 text-blue-700 hover:bg-blue-100 px-2 py-0.5 rounded border border-blue-200 text-[10px] font-bold transition-colors"
+                                                        >📞 Llamar</a>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <span className="text-xs text-muted-foreground mt-1">Sin teléfono</span>
+                                            )}
+                                        </div>
                                     </TableCell>
+
+                                    {/* COLUMNA 6: Estado */}
+                                    <TableCell>{getStatusBadge(item.estado)}</TableCell>
+
+                                    {/* COLUMNA 7: Acciones */}
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => setSelectedRug(item)}
-                                            >
-                                                Actualizar
-                                            </Button>
+                                            <Button variant="ghost" size="sm" onClick={() => setSelectedRug(item)}>Actualizar</Button>
                                             {item.estado === 'scheduled_pickup' && (
                                                 <Button
-                                                    variant="ghost"
-                                                    size="sm"
+                                                    variant="ghost" size="sm"
                                                     className="hover:bg-green-50 hover:text-green-700"
                                                     title="Confirmar Retiro (Ingreso a Planta)"
                                                     onClick={() => handleConfirmPickup(item.id)}
@@ -1029,8 +1051,7 @@ export const AlfombrasPage = () => {
                                             )}
                                             {!isWorker && (
                                                 <Button
-                                                    variant="ghost"
-                                                    size="sm"
+                                                    variant="ghost" size="sm"
                                                     className="text-red-600 hover:text-red-700 hover:bg-red-50"
                                                     onClick={() => handleDeleteRug(item.id)}
                                                 >

@@ -1,13 +1,5 @@
 import { useState, useEffect } from 'react';
-// import { Plus, Calendar, Clock, MapPin, CheckCircle2, Clock3, AlertCircle, Trash2 } from 'lucide-react';
-const Plus = ({ className }: { className?: string }) => <span className={className}>+</span>;
-const Calendar = ({ className }: { className?: string }) => <span className={className}>📅</span>;
-const Clock = ({ className }: { className?: string }) => <span className={className}>🕒</span>;
-const MapPin = ({ className }: { className?: string }) => <span className={className}>📍</span>;
-const CheckCircle2 = ({ className }: { className?: string }) => <span className={className}>✅</span>;
-const Clock3 = ({ className }: { className?: string }) => <span className={className}>🕒</span>;
-const AlertCircle = ({ className }: { className?: string }) => <span className={className}>⚠️</span>;
-const Trash2 = ({ className }: { className?: string }) => <span className={className}>🗑️</span>;
+import { Plus, CheckCircle2, Trash2, MapPin, Calendar, Clock, AlertCircle } from 'lucide-react';
 import { ClientAutocomplete } from '../components/ClientAutocomplete';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -67,7 +59,7 @@ const getStatusIcon = (status: string) => {
         case 'completed':
             return <CheckCircle2 className="h-4 w-4 text-green-600" />;
         case 'scheduled':
-            return <Clock3 className="h-4 w-4 text-blue-600" />;
+            return <Clock className="h-4 w-4 text-blue-600" />;
         case 'pending':
             return <AlertCircle className="h-4 w-4 text-yellow-600" />;
         default:
@@ -82,16 +74,31 @@ export const LimpiezaPage = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 12;
 
-    // Supabase Fetch
-    useEffect(() => {
-        fetchServices();
-    }, []);
+    // Filters (antes del useEffect para que estén disponibles en él)
+    const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState('all');
+    const [sectorFilter, setSectorFilter] = useState('all');
 
-    const fetchServices = async () => {
-        const { data, error } = await supabase
+    // Supabase Fetch — excluye 'completed' y 'cancelado' por defecto
+    useEffect(() => {
+        fetchServices(statusFilter === 'completed' || statusFilter === 'cancelado');
+    }, [statusFilter]);
+
+    const fetchServices = async (soloCompletados = false) => {
+        let query = supabase
             .from('servicios_limpieza')
             .select('*')
             .order('fecha', { ascending: false });
+
+        if (soloCompletados) {
+            // Muestra solo los finalizados cuando se filtra explícitam.
+            query = query.in('estado', ['completed', 'cancelado']);
+        } else {
+            // Por defecto solo activos
+            query = query.not('estado', 'in', '("completed","cancelado")');
+        }
+
+        const { data, error } = await query;
 
         if (!error && data) {
             const mapped = data as ServicioLimpieza[];
@@ -111,15 +118,13 @@ export const LimpiezaPage = () => {
         }
     };
 
-    // Filters
-    const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState('all');
-    const [sectorFilter, setSectorFilter] = useState('all');
-
     const filteredServices = services.filter(service => {
         const matchesSearch = (service.cliente_nombre || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
             (service.direccion || '').toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = statusFilter === 'all' || service.estado === statusFilter;
+        // El fetch ya filtró por estado, acá solo aplicamos búsqueda y sector
+        const matchesStatus = statusFilter === 'all' || statusFilter === 'completed' || statusFilter === 'cancelado'
+            ? true
+            : service.estado === statusFilter;
         const matchesSector = sectorFilter === 'all' || service.sector === sectorFilter;
 
         return matchesSearch && matchesStatus && matchesSector;
@@ -265,7 +270,7 @@ export const LimpiezaPage = () => {
                 >
                     <form onSubmit={handleScheduleService} className="space-y-6">
                         <div className="space-y-2">
-                            <Label htmlFor="client" className="text-base font-semibold">Cliente</Label>
+                            <Label htmlFor="client" className="text-base font-semibold">👤 Cliente</Label>
                             <ClientAutocomplete
                                 onSelect={(client) => {
                                     setNewService(prev => ({
@@ -277,6 +282,9 @@ export const LimpiezaPage = () => {
                                     }));
                                 }}
                                 selectedClientName={newService.cliente_nombre}
+                                onClientCreated={(client) => {
+                                    console.log("Cliente creado desde Limpieza:", client.name);
+                                }}
                             />
                         </div>
 

@@ -1,12 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { BellRing } from 'lucide-react';
-const MapPin = ({ className }: { className?: string }) => <span className={className}>📍</span>;
+import {
+    BellRing,
+    MapPin,
+    Clock,
+    Calendar,
+    Phone,
+    MessageCircle,
+    Timer,
+    ArrowRight,
+    CheckCircle2
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
+import { Badge } from '../components/ui/badge';
 import { supabase } from '../lib/supabase';
 import { SECTORS } from '../lib/constants';
-import { isToday, isThisWeek } from 'date-fns';
+import { isToday, isThisWeek, formatDistanceToNow, differenceInDays, startOfDay } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 export interface AgendaItem {
     id: string;
@@ -379,122 +391,166 @@ export const Dashboard: React.FC = () => {
                     </div>
                 </CardHeader>
 
-                <CardContent className="h-[450px] flex flex-col">
-                    <div className="space-y-3 mt-4 flex-1 overflow-y-auto pr-2">
+                <CardContent className="flex flex-col">
+                    <div className="mt-4 flex-1">
                         {loading ? (
-                            <p className="text-sm text-center text-muted-foreground p-8 animate-pulse">Cargando servicios...</p>
+                            <div className="flex flex-col items-center justify-center p-20 space-y-4">
+                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                                <p className="text-sm text-muted-foreground animate-pulse font-medium">Sincronizando itinerario operativo...</p>
+                            </div>
                         ) : filteredItems.length === 0 ? (
-                            <p className="text-sm text-center font-semibold text-muted-foreground p-8 bg-slate-50 border border-dashed rounded-xl border-slate-200">
-                                No hay servicios para el filtro seleccionado. ¡Buen trabajo! 🎉
-                            </p>
+                            <div className="flex flex-col items-center justify-center p-20 bg-slate-50 border border-dashed rounded-xl border-slate-200">
+                                <span className="text-4xl mb-4">🎉</span>
+                                <p className="text-sm text-center font-bold text-slate-600">
+                                    No hay servicios para el filtro seleccionado.
+                                </p>
+                                <p className="text-xs text-slate-500 mt-1">Todo está al día por ahora.</p>
+                            </div>
                         ) : (
-                            filteredItems.map(item => {
-                                const isDone = ['recepcionada', 'in_process', 'ready'].includes(item.estado);
-                                return (
-                                    <div
-                                        key={item.id}
-                                        onClick={() => navigate(getRouteForService(item.servicio))}
-                                        className={`flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg border transition-all gap-2 shadow-sm cursor-pointer ${isDone
-                                            ? 'bg-green-50 border-green-200 hover:border-green-400'
-                                            : 'bg-slate-50 border-slate-100 hover:bg-white hover:border-slate-300'
-                                            }`}
-                                        title={`Ir a ${item.servicio}`}
-                                    >
-                                        {/* Izquierda */}
-                                        <div className="flex gap-2.5 items-start flex-1 min-w-0">
-                                            <div className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center text-sm ${isDone ? 'bg-green-100' : `${item.bg} bg-opacity-10`
-                                                }`}>
-                                                {isDone ? '✅' : (item.servicio === 'PLAGAS' ? '🐛' : item.servicio === 'LIMPIEZA' ? '🧹' : '🪣')}
-                                            </div>
-                                            <div className="min-w-0">
-                                                <div className="flex items-center gap-1.5 flex-wrap">
-                                                    <h4 className={`font-bold text-xs ${isDone ? 'text-green-800' : 'text-slate-800'}`}>{item.titulo}</h4>
-                                                    <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold text-white uppercase tracking-wider ${item.bg}`}>
-                                                        {item.servicio}
-                                                    </span>
-                                                    {isDone && (
-                                                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-green-600 text-white uppercase">
-                                                            En Taller
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
-                                                    <span className="text-xs font-semibold text-slate-700">👤 {item.cliente}</span>
-                                                    {item.telefono ? (
-                                                        <div className="flex items-center gap-1.5 overflow-hidden">
-                                                            <span className="text-xs font-medium text-slate-600 mr-1">{item.telefono}</span>
+                            <div className="rounded-xl border shadow-sm overflow-hidden bg-white">
+                                <Table>
+                                    <TableHeader className="bg-slate-50/50">
+                                        <TableRow>
+                                            <TableHead className="font-bold text-slate-600">ID / Estado</TableHead>
+                                            <TableHead className="font-bold text-slate-600">Estado Tiempo</TableHead>
+                                            <TableHead className="font-bold text-slate-600">Dirección / Sector</TableHead>
+                                            <TableHead className="font-bold text-slate-600">Fecha / Hora</TableHead>
+                                            <TableHead className="font-bold text-slate-600">Cliente</TableHead>
+                                            <TableHead className="text-right font-bold text-slate-600">Acciones</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {filteredItems.map(item => {
+                                            const isDone = ['recepcionada', 'in_process', 'ready'].includes(item.estado);
+                                            const itemDate = new Date(item.fechaRaw);
+                                            const daysDiff = differenceInDays(startOfDay(itemDate), startOfDay(new Date()));
+                                            
+                                            // Lógica para "Estado Tiempo"
+                                            let timeStatus = "";
+                                            let timeColor = "text-slate-500";
+                                            if (item.servicio === 'ALFOMBRAS' && isDone) {
+                                                timeStatus = `En taller (${formatDistanceToNow(itemDate, { locale: es, addSuffix: false })})`;
+                                                timeColor = "text-blue-600 font-semibold";
+                                            } else {
+                                                if (isToday(itemDate)) {
+                                                    timeStatus = "Hoy";
+                                                    timeColor = "text-orange-600 font-bold animate-pulse";
+                                                } else if (daysDiff === 1) {
+                                                    timeStatus = "Mañana";
+                                                    timeColor = "text-amber-600 font-semibold";
+                                                } else if (daysDiff < 0) {
+                                                    timeStatus = `Atrasado (${formatDistanceToNow(itemDate, { locale: es, addSuffix: true })})`;
+                                                    timeColor = "text-red-600 font-bold";
+                                                } else {
+                                                    timeStatus = `En ${daysDiff} días`;
+                                                }
+                                            }
+
+                                            return (
+                                                <TableRow key={item.id} className="hover:bg-slate-50/80 transition-colors group">
+                                                    <TableCell>
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className={`px-2 py-0.5 rounded-md text-[10px] font-black text-white uppercase tracking-tighter ${item.bg}`}>
+                                                                    {item.servicio}
+                                                                </span>
+                                                                <code className="text-[10px] text-slate-400 font-mono">#{item.id.split('-').pop()?.substring(0, 6)}</code>
+                                                            </div>
+                                                            <div className="flex items-center gap-1.5">
+                                                                {isDone ? (
+                                                                    <Badge variant="success" className="text-[10px] px-1.5 py-0 h-5">
+                                                                        <CheckCircle2 className="w-3 h-3 mr-1" /> Listo
+                                                                    </Badge>
+                                                                ) : item.estado === 'scheduled_pickup' ? (
+                                                                    <Badge variant="warning" className="text-[10px] px-1.5 py-0 h-5">
+                                                                        <Timer className="w-3 h-3 mr-1" /> Por Retirar
+                                                                    </Badge>
+                                                                ) : (
+                                                                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5">
+                                                                        <Clock className="w-3 h-3 mr-1" /> {item.estado === 'pending' ? 'Pendiente' : 'Programado'}
+                                                                    </Badge>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className={`flex items-center gap-1.5 text-xs ${timeColor}`}>
+                                                            <Timer className="w-3.5 h-3.5" />
+                                                            {timeStatus}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="flex flex-col max-w-[200px]">
                                                             <a
-                                                                href={(() => {
-                                                                    let p = item.telefono.replace(/\D/g, '');
-                                                                    if (p.length === 8) p = '569' + p;
-                                                                    else if (p.length === 9) p = '56' + p;
-                                                                    return `https://wa.me/${p}`;
-                                                                })()}
+                                                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.lugar)}`}
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
-                                                                className="flex items-center gap-1 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 px-2 py-0.5 rounded border border-green-200 text-[10px] font-bold transition-colors"
+                                                                className="flex items-start gap-1 text-xs font-semibold text-slate-700 hover:text-blue-600 transition-colors group-hover:underline"
                                                                 onClick={e => e.stopPropagation()}
-                                                                title="Abrir WhatsApp"
                                                             >
-                                                                💬 WhatsApp
+                                                                <MapPin className="w-3 h-3 mt-0.5 shrink-0 text-slate-400" />
+                                                                <span className="truncate" title={item.lugar}>{item.lugar}</span>
                                                             </a>
-                                                            <a
-                                                                href={(() => {
-                                                                    let p = item.telefono.replace(/\D/g, '');
-                                                                    if (p.length === 8) p = '569' + p;
-                                                                    else if (p.length === 9) p = '56' + p;
-                                                                    return `tel:+${p}`;
-                                                                })()}
-                                                                className="flex items-center gap-1 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 px-2 py-0.5 rounded border border-blue-200 text-[10px] font-bold transition-colors"
-                                                                onClick={e => e.stopPropagation()}
-                                                                title="Llamar al cliente"
-                                                            >
-                                                                📞 Llamar
-                                                            </a>
+                                                            <span className="text-[10px] text-slate-500 font-medium ml-4 uppercase tracking-wider">{item.sector}</span>
                                                         </div>
-                                                    ) : null}
-                                                </div>
-                                                <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-500">
-                                                    <span className="flex-1 truncate text-slate-600 font-medium" title={item.lugar}>📌 {item.lugar}</span>
-                                                    <a
-                                                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.lugar)}`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="flex items-center gap-1 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 px-2 py-1 rounded border border-slate-200"
-                                                        onClick={e => e.stopPropagation()}
-                                                        title="Abrir en Google Maps"
-                                                    >
-                                                        <MapPin className="w-2.5 h-2.5" /> Maps
-                                                    </a>
-                                                    <a
-                                                        href={`https://waze.com/ul?q=${encodeURIComponent(item.lugar)}`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="flex items-center gap-1 bg-slate-100 hover:bg-sky-50 hover:text-sky-600 px-2 py-1 rounded border border-slate-200"
-                                                        onClick={e => e.stopPropagation()}
-                                                        title="Abrir en Waze"
-                                                    >
-                                                        🚙 Waze
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Derecha: fecha/hora */}
-                                        <div className="text-left sm:text-right shrink-0 border-t border-slate-200 mt-1 sm:mt-0 sm:border-none pt-2 sm:pt-0 flex items-center justify-between sm:block">
-                                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest sm:mb-1">Ejecución</p>
-                                            <div className="flex items-center sm:flex-col sm:items-end gap-1 sm:gap-0">
-                                                <p className="font-bold text-slate-800 text-xs">
-                                                    {new Date(item.fechaRaw).toLocaleDateString('es-CL', { weekday: 'short', day: 'numeric', month: 'short' })}
-                                                </p>
-                                                <p className="text-slate-500 text-[11px] font-medium">
-                                                    {new Date(item.fechaRaw).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="flex flex-col">
+                                                            <div className="flex items-center gap-1 text-xs font-bold text-slate-800">
+                                                                <Calendar className="w-3 h-3 text-slate-400" />
+                                                                {itemDate.toLocaleDateString('es-CL', { day: 'numeric', month: 'short' })}
+                                                            </div>
+                                                            <div className="flex items-center gap-1 text-[11px] text-slate-500 font-medium">
+                                                                <Clock className="w-3 h-3" />
+                                                                {itemDate.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
+                                                            </div>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="flex flex-col gap-1">
+                                                            <span className="text-xs font-bold text-slate-800">{item.cliente}</span>
+                                                            {item.telefono && (
+                                                                <div className="flex items-center gap-1.5">
+                                                                    <a
+                                                                        href={`https://wa.me/${item.telefono.replace(/\D/g, '')}`}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="p-1 rounded-full bg-green-50 text-green-600 hover:bg-green-600 hover:text-white transition-all border border-green-200"
+                                                                        onClick={e => e.stopPropagation()}
+                                                                        title="WhatsApp"
+                                                                    >
+                                                                        <MessageCircle className="w-3 h-3" />
+                                                                    </a>
+                                                                    <a
+                                                                        href={`tel:+${item.telefono.replace(/\D/g, '')}`}
+                                                                        className="p-1 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all border border-blue-200"
+                                                                        onClick={e => e.stopPropagation()}
+                                                                        title="Llamar"
+                                                                    >
+                                                                        <Phone className="w-3 h-3" />
+                                                                    </a>
+                                                                    <span className="text-[10px] font-mono text-slate-400">{item.telefono}</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="text-right">
+                                                        <Button 
+                                                            variant="ghost" 
+                                                            size="sm" 
+                                                            onClick={() => navigate(getRouteForService(item.servicio))}
+                                                            className="h-8 w-8 p-0 rounded-full hover:bg-primary hover:text-white transition-all shadow-sm border border-slate-100"
+                                                            title="Ver Detalles"
+                                                        >
+                                                            <ArrowRight className="w-4 h-4" />
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                            );
+                                        })}
+                                    </TableBody>
+                                </Table>
+                            </div>
                         )}
                     </div>
                 </CardContent>

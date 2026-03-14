@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
-const ShieldCheck = ({ className }: { className?: string }) => <span className={className}>🛡️</span>;
-const AlertTriangle = ({ className }: { className?: string }) => <span className={className}>⚠️</span>;
-const Clock = ({ className }: { className?: string }) => <span className={className}>🕐</span>;
-const FileText = ({ className }: { className?: string }) => <span className={className}>📄</span>;
-const Trash2 = ({ className }: { className?: string }) => <span className={className}>🗑️</span>;
-const Phone = ({ className }: { className?: string }) => <span className={className}>📞</span>;
-const MapPin = ({ className }: { className?: string }) => <span className={className}>📍</span>;
+import { 
+    ShieldCheck, 
+    AlertTriangle, 
+    Bug, 
+    FileText, 
+    MapPin, 
+    Clock, 
+    Trash2, 
+    Phone 
+} from 'lucide-react';
 
 import { ClientAutocomplete } from '../components/ClientAutocomplete';
 import { CertificateGenerator } from '../components/CertificateGenerator';
@@ -56,6 +59,7 @@ export interface ServicioControlPlagasReal {
     estado: string;
     direccion?: string;
     observaciones?: string;
+    areas_servicio?: Array<{ area: string; servicios: string[] }>;
 }
 
 // Helpers de estado visual
@@ -256,6 +260,7 @@ export const PlagasPage = () => {
                 tipo_servicio: selectedService.tipo_servicio,
                 observaciones: selectedService.observaciones,
                 trampas: selectedService.trampas,
+                areas_servicio: selectedService.areas_servicio,
             })
             .eq('id', selectedService.id);
 
@@ -290,7 +295,7 @@ export const PlagasPage = () => {
                     onClick={() => setIsFormOpen(true)}
                     className="bg-orange-600 hover:bg-orange-700 text-white font-bold px-6"
                 >
-                    🐛 Registrar Servicio
+                    <Bug className="mr-2 h-4 w-4" /> Registrar Servicio
                 </Button>
             </div>
 
@@ -532,10 +537,14 @@ export const PlagasPage = () => {
                                 sector: client.sector || prev.sector,
                             }))}
                             selectedClientName={form.clienteNombre}
+                            onClientCreated={(client) => {
+                                // El autocomplete ya maneja la selección, pero aquí aseguramos el feedback
+                                console.log("Cliente creado desde Plagas:", client.name);
+                            }}
                         />
                         {form.clienteTelefono && (
-                            <p className="text-sm text-green-700 font-semibold flex items-center gap-1 mt-1">
-                                <Phone className="w-4 h-4" /> {form.clienteTelefono}
+                            <p className="text-sm text-green-700 font-bold flex items-center gap-1 mt-1 bg-green-50 w-fit px-2 py-1 rounded border border-green-100 italic">
+                                <Phone className="w-3.5 h-3.5" /> {form.clienteTelefono}
                             </p>
                         )}
                     </div>
@@ -839,6 +848,86 @@ export const PlagasPage = () => {
                                 onChange={(nuevasTrampas) => setSelectedService({ ...selectedService, trampas: nuevasTrampas })}
                                 isEditing={isEditing}
                             />
+                        </div>
+
+                        {/* PANEL ÁREAS DE SERVICIO */}
+                        <div className="pt-2 border-t mt-6">
+                            <div className="flex justify-between items-center bg-orange-50 p-3 rounded-lg border border-orange-200 mb-3">
+                                <h3 className="font-bold text-orange-900 flex items-center gap-2">🦠 Áreas con Servicios Realizados</h3>
+                                {isEditing && (
+                                    <button
+                                        type="button"
+                                        className="flex items-center gap-1 text-xs font-bold text-orange-700 hover:text-orange-900 bg-orange-100 hover:bg-orange-200 px-3 py-1.5 rounded-lg border border-orange-300 transition-colors"
+                                        onClick={() => setSelectedService({
+                                            ...selectedService,
+                                            areas_servicio: [...(selectedService.areas_servicio || []), { area: '', servicios: [] }]
+                                        })}
+                                    >+ Agregar Área</button>
+                                )}
+                            </div>
+                            {(!selectedService.areas_servicio || selectedService.areas_servicio.length === 0) ? (
+                                <div className="text-center p-4 text-muted-foreground border-2 border-dashed rounded-lg bg-slate-50 text-sm">
+                                    {isEditing ? 'Haz clic en "+ Agregar Área" para registrar las zonas fumigadas o sanitizadas.' : 'No se registraron áreas de servicio en esta visita.'}
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {(selectedService.areas_servicio || []).map((area, idx) => (
+                                        <div key={idx} className="bg-white border rounded-xl p-3 space-y-2">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-sm font-semibold text-slate-600 w-16 flex-shrink-0">📍 Área:</span>
+                                                {isEditing ? (
+                                                    <div className="flex flex-1 gap-2">
+                                                        <input
+                                                            className="flex-1 h-9 text-sm rounded-md border border-input bg-background px-3"
+                                                            placeholder="Ej: Cocina, Bodega Norte, Área de carga..."
+                                                            value={area.area}
+                                                            onChange={(e) => {
+                                                                const updated = [...(selectedService.areas_servicio || [])];
+                                                                updated[idx] = { ...updated[idx], area: e.target.value };
+                                                                setSelectedService({ ...selectedService, areas_servicio: updated });
+                                                            }}
+                                                        />
+                                                        <button type="button" className="text-red-400 hover:text-red-600 p-1" title="Eliminar área"
+                                                            onClick={() => {
+                                                                const updated = (selectedService.areas_servicio || []).filter((_, i) => i !== idx);
+                                                                setSelectedService({ ...selectedService, areas_servicio: updated });
+                                                            }}
+                                                        >🗑️</button>
+                                                    </div>
+                                                ) : (
+                                                    <span className="font-medium">{area.area || '—'}</span>
+                                                )}
+                                            </div>
+                                            <div className="flex items-start gap-2">
+                                                <span className="text-sm font-semibold text-slate-600 w-16 flex-shrink-0 pt-0.5">🛡️ Servicios:</span>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {['fumigacion', 'sanitizacion', 'desinsectacion'].map(srv => {
+                                                        const labels: Record<string, string> = { fumigacion: '💨 Fumigación', sanitizacion: '🧴 Sanitización', desinsectacion: '🐜 Desinsectación' };
+                                                        const checked = area.servicios.includes(srv);
+                                                        return isEditing ? (
+                                                            <label key={srv} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 cursor-pointer text-xs font-bold transition-colors ${
+                                                                checked ? 'bg-orange-100 border-orange-500 text-orange-900' : 'bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300'
+                                                            }`}>
+                                                                <input type="checkbox" checked={checked} className="sr-only"
+                                                                    onChange={() => {
+                                                                        const updated = [...(selectedService.areas_servicio || [])];
+                                                                        const current = updated[idx].servicios;
+                                                                        updated[idx] = { ...updated[idx], servicios: checked ? current.filter(s => s !== srv) : [...current, srv] };
+                                                                        setSelectedService({ ...selectedService, areas_servicio: updated });
+                                                                    }}
+                                                                />
+                                                                {labels[srv]}
+                                                            </label>
+                                                        ) : checked ? (
+                                                            <span key={srv} className="px-2 py-0.5 rounded-full bg-orange-100 border border-orange-200 text-orange-800 text-xs font-semibold">{labels[srv]}</span>
+                                                        ) : null;
+                                                    })}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                         <div className="pt-4 flex justify-end gap-2 flex-wrap">

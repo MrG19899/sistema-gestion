@@ -180,7 +180,7 @@ export const Dashboard: React.FC = () => {
                         servicio: 'ALFOMBRAS',
                         estado: 'scheduled_pickup',
                         fechaRaw: dateNorm,
-                        lugar: item.sector ? `Domicilio – ${item.sector}` : 'Domicilio Cliente',
+                        lugar: item.ubicacion || (item.sector ? `Domicilio – ${item.sector}` : 'Domicilio Cliente'),
                         clienteId: item.cliente_id || '',
                         cliente: item.cliente_nombre || 'Sin nombre',
                         telefono: '',
@@ -225,7 +225,7 @@ export const Dashboard: React.FC = () => {
                         servicio: 'ALFOMBRAS',
                         estado: 'ready',
                         fechaRaw: primerItem.created_at || new Date().toISOString(),
-                        lugar: primerItem.sector ? `${primerItem.sector}` : 'Domicilio Cliente',
+                        lugar: primerItem.ubicacion || (primerItem.sector ? `Domicilio – ${primerItem.sector}` : 'Domicilio Cliente'),
                         clienteId: primerItem.cliente_id || '',
                         cliente: primerItem.cliente_nombre || 'Sin nombre',
                         telefono: '',
@@ -268,11 +268,9 @@ export const Dashboard: React.FC = () => {
                             }
                         } else {
                             // En Alfombras
-                            if (item.estado === 'ready' || item.estado === 'scheduled_pickup') {
-                                if (!item.lugar || item.lugar.includes('Domicilio') || item.lugar.includes('Contactar Cliente')) {
-                                     item.lugar = item.sector ? `${realAddress}, ${item.sector}` : realAddress;
-                                }
-                            }
+                        if (!item.lugar || item.lugar.includes('Domicilio') || item.lugar.includes('Contactar Cliente') || SECTORS.includes(item.lugar)) {
+                             item.lugar = item.sector ? `${realAddress}, ${item.sector}` : realAddress;
+                        }
                         }
                     }
                 });

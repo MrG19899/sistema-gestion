@@ -6,8 +6,10 @@ import { Badge } from './ui/badge';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { SignaturePad } from './SignaturePad';
+import templateImg from '../assets/template_certificado.jpg';
+import firmaDuenioImg from '../assets/firma_dueño.jpg';
 
-interface AreaServicio {
+export interface AreaServicio {
     area: string;
     servicios: string[];
 }
@@ -41,20 +43,7 @@ interface CertPropsReal {
     serviceTraps?: unknown[];
 }
 
-const ESTADO_LABELS: Record<string, string> = {
-    activa: 'Activa',
-    consumida: 'Consumida y Repuesta',
-    revisada_repuesta: 'Revisada y Repuesta',
-    retirada: 'Retirada',
-};
 
-const SERVICIO_LABELS: Record<string, string> = {
-    fumigacion: 'Fumigación',
-    sanitizacion: 'Sanitización',
-    desinsectacion: 'Desinsectación',
-    desratizacion: 'Desratización',
-    integral: 'Control Integral',
-};
 
 export const CertificateGenerator: React.FC<CertPropsReal> = ({ service }) => {
     const certificateRef = useRef<HTMLDivElement>(null);
@@ -63,12 +52,7 @@ export const CertificateGenerator: React.FC<CertPropsReal> = ({ service }) => {
     const [showSignaturePad, setShowSignaturePad] = React.useState(false);
 
     const trampas: Trampa[] = Array.isArray(service.trampas) ? service.trampas : [];
-    const areasServicio: AreaServicio[] = Array.isArray(service.areas_servicio) ? service.areas_servicio : [];
-    const tiposServicio: string[] = Array.isArray(service.tipos_servicio)
-        ? service.tipos_servicio
-        : service.tipo_servicio
-            ? [service.tipo_servicio]
-            : [];
+
 
     const fechaServicio = service.fecha_ejecucion
         ? format(new Date(service.fecha_ejecucion.includes('T') ? service.fecha_ejecucion : `${service.fecha_ejecucion}T12:00:00`), 'dd/MM/yyyy', { locale: es })
@@ -162,163 +146,91 @@ export const CertificateGenerator: React.FC<CertPropsReal> = ({ service }) => {
             {/* Plantilla del certificado */}
             <div
                 ref={certificateRef}
-                className="bg-white text-black p-8 mx-auto shadow-sm font-sans"
-                style={{ width: '210mm', minHeight: '297mm', boxSizing: 'border-box' }}
+                className="bg-white text-black mx-auto relative overflow-hidden"
+                style={{ 
+                    width: '210mm', 
+                    height: '297mm', 
+                    boxSizing: 'border-box',
+                    backgroundImage: `url(${templateImg})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    fontFamily: '"Geist", sans-serif'
+                }}
             >
-                {/* ── ENCABEZADO ────────────────────────────────── */}
-                <div className="flex justify-between items-start mb-6 border-b-2 border-orange-500 pb-4">
-                    <div>
-                        <h1 className="text-2xl font-black text-orange-600 tracking-tight">TELOLIMPIO</h1>
-                        <p className="text-sm text-gray-600 font-semibold">Control de Plagas & Limpieza Industrial</p>
-                        <p className="text-xs text-gray-400 mt-1">Concepción, Chile</p>
-                    </div>
-                    <div className="text-right">
-                        <h2 className="text-lg font-bold text-gray-800">CERTIFICADO DE SERVICIO</h2>
-                        <p className="text-sm font-mono mt-1 text-orange-700">N° {service.numero_certificado || '---'}</p>
-                        <p className="text-xs text-gray-500">Fecha: {fechaServicio}</p>
-                    </div>
+                {/* ── DATOS DINÁMICOS SOBREPUESTOS ───────────────── */}
+                
+                {/* Folio Correlativo (arriba derecha) */}
+                <div className="absolute top-[188px] right-[85px] font-bold text-lg text-red-700">
+                    {service.numero_certificado || '---'}
                 </div>
 
-                {/* ── DATOS CLIENTE ─────────────────────────────── */}
-                <div className="mb-5 bg-gray-50 p-3 rounded-lg border">
-                    <h3 className="text-xs font-bold uppercase text-gray-500 mb-2 tracking-wider">Información del Cliente</h3>
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                        <div>
-                            <span className="font-semibold text-gray-700">Cliente:</span>{' '}
-                            <span>{service.cliente_nombre}</span>
-                        </div>
-                        <div>
-                            <span className="font-semibold text-gray-700">Dirección:</span>{' '}
-                            <span>{service.direccion || '—'}</span>
-                        </div>
-                        <div>
-                            <span className="font-semibold text-gray-700">Sector:</span>{' '}
-                            <span>{service.sector || '—'}</span>
-                        </div>
-                        <div>
-                            <span className="font-semibold text-gray-700">Técnico Responsable:</span>{' '}
-                            <span>{service.tecnico_asignado || '—'}</span>
-                        </div>
-                    </div>
+                {/* Bloque Identificación del Inmueble */}
+                <div className="absolute top-[284px] left-[200px] text-sm font-medium w-[300px]">
+                    {service.direccion || '—'}
+                </div>
+                <div className="absolute top-[284px] right-[70px] text-sm font-medium w-[200px]">
+                    {service.cliente_nombre}
                 </div>
 
-                {/* ── DETALLES SERVICIO ─────────────────────────── */}
-                <div className="mb-5">
-                    <h3 className="text-xs font-bold uppercase text-gray-500 mb-2 tracking-wider border-b pb-1">Detalles del Servicio</h3>
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                        <div>
-                            <span className="font-semibold text-gray-700">Tipo(s) de Servicio:</span>{' '}
-                            <span>{tiposServicio.map(t => SERVICIO_LABELS[t] || t).join(', ') || '—'}</span>
-                        </div>
-                        <div>
-                            <span className="font-semibold text-gray-700">Próximo Vencimiento:</span>{' '}
-                            <span>{fechaVencimiento}</span>
-                        </div>
-                    </div>
-                    {service.observaciones && (
-                        <div className="mt-2 text-sm">
-                            <span className="font-semibold text-gray-700">Observaciones:</span>{' '}
-                            <span className="italic text-gray-600">{service.observaciones}</span>
-                        </div>
-                    )}
+                <div className="absolute top-[308px] left-[200px] text-sm font-medium w-[300px]">
+                    {service.cliente_nombre}
+                </div>
+                <div className="absolute top-[308px] right-[70px] text-sm font-medium w-[200px]">
+                    {/* RUT Propietario - (No lo tenemos, usar guión) */} —
                 </div>
 
-                {/* ── ÁREAS CON SERVICIOS REALIZADOS ───────────── */}
-                {areasServicio.length > 0 && (
-                    <div className="mb-5">
-                        <h3 className="text-xs font-bold uppercase text-gray-500 mb-2 tracking-wider border-b pb-1">
-                            Áreas Sanitizadas / Fumigadas
-                        </h3>
-                        <table className="w-full text-sm text-left">
-                            <thead>
-                                <tr className="bg-orange-50 border-b">
-                                    <th className="py-1.5 px-2 font-semibold text-gray-700">Área / Zona</th>
-                                    <th className="py-1.5 px-2 font-semibold text-gray-700">Servicios Realizados</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {areasServicio.map((a, idx) => (
-                                    <tr key={idx} className="border-b even:bg-gray-50">
-                                        <td className="py-1.5 px-2 font-medium">{a.area || '—'}</td>
-                                        <td className="py-1.5 px-2">
-                                            {a.servicios.length > 0
-                                                ? a.servicios.map(s => SERVICIO_LABELS[s] || s).join(' · ')
-                                                : '—'}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
+                <div className="absolute top-[332px] left-[200px] text-sm font-medium w-[300px]">
+                    {service.tecnico_asignado || '—'}
+                </div>
+                <div className="absolute top-[332px] right-[70px] text-sm font-medium w-[200px]">
+                    {/* RUT Solicitante */} —
+                </div>
 
-                {/* ── REGISTRO DE TRAMPAS / CEBOS ──────────────── */}
-                <div className="mb-8">
-                    <h3 className="text-xs font-bold uppercase text-gray-500 mb-2 tracking-wider border-b pb-1">
-                        Registro de Actividad — Trampas / Cebos (Desratización)
-                    </h3>
-                    {trampas.length === 0 ? (
-                        <p className="text-sm italic text-gray-400 py-2">No se registraron trampas en este servicio.</p>
+                {/* Tabla de Trampas (Posicionamiento absoluto sobre la tabla de la imagen) */}
+                <div className="absolute top-[418px] left-[118px] right-[118px]">
+                    {trampas.slice(0, 10).map((t, idx) => (
+                        <div key={t.id || idx} className="grid grid-cols-[38px_45px_155px_100px_85px_105px_150px] h-[24.5px] items-center text-[10px] pl-1">
+                            <div className="text-center truncate">RT</div> {/* Tipo fijo según el template RT=Roedor? */}
+                            <div className="text-center font-bold">{idx + 1}</div>
+                            <div className="pl-2 truncate">{t.ubicacion}</div>
+                            <div className="text-center">{/* Cantidad inicial */} 100g</div>
+                            <div className="text-center capitalize">{t.estado === 'activa' ? 'NO' : 'SI'}</div>
+                            <div className="text-center">{fechaVencimiento}</div>
+                            <div className="pl-2 italic truncate text-[9px]">{t.estado}</div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Fecha inicio tratamiento */}
+                <div className="absolute top-[698px] right-[130px] text-sm font-bold">
+                    {fechaServicio}
+                </div>
+
+                {/* Observaciones y recomendaciones */}
+                <div className="absolute top-[780px] left-[130px] right-[120px] text-[11px] leading-tight italic text-slate-700">
+                    {service.observaciones || 'Se recomienda mantener limpieza periódica y evitar acumulación de residuos en las áreas tratadas.'}
+                </div>
+
+                {/* FIRMAS ────────────────────────────────────── */}
+                {/* Firma Cliente */}
+                <div className="absolute bottom-[115px] left-[150px] w-48 flex flex-col items-center">
+                    {signature ? (
+                        <img src={signature} alt="Firma Cliente" className="h-16 mb-1 object-contain mix-blend-multiply" />
                     ) : (
-                        <table className="w-full text-sm text-left">
-                            <thead>
-                                <tr className="bg-gray-50 border-b">
-                                    <th className="py-1.5 px-2 font-semibold text-gray-700">#</th>
-                                    <th className="py-1.5 px-2 font-semibold text-gray-700">Ubicación</th>
-                                    <th className="py-1.5 px-2 font-semibold text-gray-700">Tipo</th>
-                                    <th className="py-1.5 px-2 font-semibold text-gray-700">Estado</th>
-                                    <th className="py-1.5 px-2 font-semibold text-gray-700">Instalada</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {trampas.map((t, idx) => (
-                                    <tr key={t.id || idx} className="border-b even:bg-gray-50">
-                                        <td className="py-1.5 px-2 text-gray-500">{idx + 1}</td>
-                                        <td className="py-1.5 px-2 font-medium">{t.ubicacion}</td>
-                                        <td className="py-1.5 px-2 capitalize text-xs text-gray-600">{t.tipo}</td>
-                                        <td className="py-1.5 px-2">
-                                            <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                                                t.estado === 'activa' ? 'bg-green-100 text-green-800'
-                                                : t.estado === 'consumida' ? 'bg-orange-100 text-orange-800'
-                                                : t.estado === 'revisada_repuesta' ? 'bg-blue-100 text-blue-800'
-                                                : 'bg-gray-100 text-gray-700'
-                                            }`}>
-                                                {ESTADO_LABELS[t.estado] || t.estado}
-                                            </span>
-                                        </td>
-                                        <td className="py-1.5 px-2 text-xs text-gray-500">
-                                            {t.fecha_instalacion
-                                                ? new Date(t.fecha_instalacion).toLocaleDateString('es-CL')
-                                                : '—'}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                        <div className="h-16 mb-1"></div>
                     )}
+                    <p className="text-[10px] font-bold text-gray-800 uppercase text-center">{service.cliente_nombre}</p>
                 </div>
 
-                {/* ── FIRMAS ────────────────────────────────────── */}
-                <div className="mt-16 grid grid-cols-2 gap-16 text-center">
-                    <div className="border-t pt-2">
-                        <p className="font-semibold text-sm">{service.tecnico_asignado || 'Técnico'}</p>
-                        <p className="text-xs text-gray-500">Firma Técnico</p>
-                    </div>
-                    <div className="border-t pt-2 flex flex-col items-center">
-                        {signature ? (
-                            <img src={signature} alt="Firma Cliente" className="h-16 mb-1 object-contain" />
-                        ) : (
-                            <div className="h-16 mb-1"></div>
-                        )}
-                        <p className="font-semibold text-sm">Cliente / Responsable</p>
-                        <p className="text-[10px] text-gray-400">Firma Digital Capturada en Dispositivo</p>
-                    </div>
+                {/* Firma Técnico (Firma Dueño cargada de assets) */}
+                <div className="absolute bottom-[115px] right-[150px] w-48 flex flex-col items-center">
+                    <img src={firmaDuenioImg} alt="Firma Autorizada" className="h-16 mb-1 object-contain mix-blend-multiply" />
+                    <p className="text-[10px] font-bold text-gray-800 uppercase text-center">{service.tecnico_asignado || 'Francisco García C.'}</p>
                 </div>
 
-                {/* ── PIE LEGAL ─────────────────────────────────── */}
-                <div className="mt-10 text-[9px] text-gray-400 text-center border-t pt-3">
-                    <p>Este documento certifica que el servicio ha sido realizado conforme a las normas sanitarias vigentes.</p>
-                    <p>Telolimpio — Control de Plagas y Limpieza Industrial · Concepción, Chile</p>
+                {/* Datos de contacto pie de página (opcional, si el template no los tiene claros) */}
+                <div className="absolute bottom-[50px] left-0 right-0 text-center text-[8px] text-gray-400">
+                    Telolimpio & Control de Plagas · Concepción · +569 68031107
                 </div>
             </div>
         </div>

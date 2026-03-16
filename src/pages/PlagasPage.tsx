@@ -14,6 +14,7 @@ import { ClientAutocomplete } from '../components/ClientAutocomplete';
 import { CertificateGenerator } from '../components/CertificateGenerator';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import type { AreaServicio } from '../components/CertificateGenerator';
 
 import { SECTORS } from '../lib/constants';
 import { Pagination } from '../components/ui/pagination';
@@ -174,6 +175,7 @@ export const PlagasPage = () => {
         generarCertificado: false, numeroCertificado: '',
         observaciones: '',
         trampas: [] as Trampa[],
+        areas_servicio: [] as AreaServicio[],
     };
     const [form, setForm] = useState(emptyForm);
 
@@ -214,7 +216,7 @@ export const PlagasPage = () => {
             estado: form.estado,
             observaciones: form.observaciones,
             trampas: form.trampas,
-            areas_servicio: [], // Inicialmente vacío en el form de creación
+            areas_servicio: (form as any).areas_servicio || [], // Asegurar que se envíe como array (jsonb)
         };
         if (proxima) {
             insertData.proxima_renovacion = proxima;
@@ -262,7 +264,7 @@ export const PlagasPage = () => {
                 tipo_servicio: selectedService.tipo_servicio,
                 observaciones: selectedService.observaciones,
                 trampas: selectedService.trampas,
-                areas_servicio: selectedService.areas_servicio,
+                areas_servicio: selectedService.areas_servicio || [],
             })
             .eq('id', selectedService.id);
 

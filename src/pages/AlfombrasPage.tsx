@@ -96,6 +96,9 @@ export const AlfombrasPage = () => {
     const [statusFilter, setStatusFilter] = useState('all');
     const [sectorFilter, setSectorFilter] = useState('all');
 
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [compressingIdx, setCompressingIdx] = useState<number | null>(null);
+
     // Fetch desde Supabase
     React.useEffect(() => {
         fetchRugs(statusFilter === 'delivered');
@@ -207,75 +210,89 @@ export const AlfombrasPage = () => {
     const handlePhotoChange = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const rawFile = e.target.files[0];
-            // Comprimir antes de guardar en estado (evita timeouts por imágenes pesadas de celular)
-            const compressed = await compressImage(rawFile);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setPhotosPreview(prev => {
-                    const newArr = [...prev];
-                    newArr[index] = reader.result as string;
-                    return newArr;
-                });
-            };
-            reader.readAsDataURL(compressed);
+            setCompressingIdx(index);
+            try {
+                // Comprimir antes de guardar en estado (evita timeouts por imágenes pesadas de celular)
+                const compressed = await compressImage(rawFile);
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    setPhotosPreview(prev => {
+                        const newArr = [...prev];
+                        newArr[index] = reader.result as string;
+                        return newArr;
+                    });
+                    setCompressingIdx(null);
+                };
+                reader.readAsDataURL(compressed);
+            } catch (err) {
+                console.error("Error al procesar la foto:", err);
+                setCompressingIdx(null);
+                alert("Error al procesar la imagen. Intente con otra o una de menor tamaño.");
+            }
         }
     };
 
     const handleReceiveRug = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (isSubmitting) return;
 
         if (!newRug.cliente_id) {
             alert('Debe buscar un cliente real en el autocompletar.');
             return;
         }
 
-        const today = new Date();
-        const deliveryDate = addBusinessDays(today, 5);
-        let recepcionFinal = today.toISOString();
-        if (newRug.isPickup && newRug.pickupDate) {
-            const timeStr = newRug.pickupTime || '09:00';
-            recepcionFinal = new Date(`${newRug.pickupDate}T${timeStr}:00`).toISOString();
-        }
+        setIsSubmitting(true);
+        try {
+            const today = new Date();
+            const deliveryDate = addBusinessDays(today, 5);
+            let recepcionFinal = today.toISOString();
+            if (newRug.isPickup && newRug.pickupDate) {
+                const timeStr = newRug.pickupTime || '09:00';
+                recepcionFinal = new Date(`${newRug.pickupDate}T${timeStr}:00`).toISOString();
+            }
 
-        const pedido_id = crypto.randomUUID();
-        const numItems = newRug.cantidad || 1;
-        const insertDataArray = [];
+            const pedido_id = crypto.randomUUID();
+            const numItems = newRug.cantidad || 1;
+            const insertDataArray = [];
 
-        for (let i = 0; i < numItems; i++) {
-            insertDataArray.push({
-                cliente_id: newRug.cliente_id,
-                cliente_nombre: newRug.cliente_nombre,
-                tipo_servicio: newRug.type || 'Estandar',
-                dimensiones: newRug.dims,
-                fecha_recepcion: recepcionFinal,
-                fecha_entrega: newRug.isPickup ? null : deliveryDate.toISOString(),
-                estado: newRug.isPickup ? 'scheduled_pickup' : 'recepcionada',
-                ubicacion: newRug.isPickup ? (newRug.direccion || 'Domicilio (Sin detallar)') : 'Recepción',
-                sector: newRug.sector,
-                is_pickup: newRug.isPickup,
-                pickup_date: newRug.pickupDate || null,
-                photo_url: photosPreview[i] || null,
-                pedido_id: pedido_id,
-                numero_item: i + 1,
-                total_items: numItems
-            });
-        }
+            for (let i = 0; i < numItems; i++) {
+                insertDataArray.push({
+                    cliente_id: newRug.cliente_id,
+                    cliente_nombre: newRug.cliente_nombre,
+                    tipo_servicio: newRug.type || 'Estandar',
+                    dimensiones: newRug.dims,
+                    fecha_recepcion: recepcionFinal,
+                    fecha_entrega: newRug.isPickup ? null : deliveryDate.toISOString(),
+                    estado: newRug.isPickup ? 'scheduled_pickup' : 'recepcionada',
+                    ubicacion: newRug.isPickup ? (newRug.direccion || 'Domicilio (Sin detallar)') : 'Recepción',
+                    sector: newRug.sector,
+                    is_pickup: newRug.isPickup,
+                    pickup_date: newRug.pickupDate || null,
+                    photo_url: photosPreview[i] || null,
+                    pedido_id: pedido_id,
+                    numero_item: i + 1,
+                    total_items: numItems
+                });
+            }
 
-        const { data, error } = await supabase
-            .from('servicios_alfombras')
-            .insert(insertDataArray)
-            .select('*');
+            const { data, error } = await supabase
+                .from('servicios_alfombras')
+                .insert(insertDataArray)
+                .select('*');
 
-        if (error) {
-            alert('Error grabando: ' + error.message);
-            return;
-        }
+            if (error) throw error;
 
-        if (data && data.length > 0) {
-            setRugs([...data, ...rugs]);
-            setIsReceiveOpen(false);
-            setNewRug({ cliente_id: '', cliente_nombre: '', dims: '', type: '', notes: '', isPickup: false, pickupDate: '', pickupTime: '', sector: '', direccion: '', telefono: '', cantidad: 1 });
-            setPhotosPreview([null]);
+            if (data && data.length > 0) {
+                setRugs(prevRugs => [...data, ...prevRugs]);
+                setIsReceiveOpen(false);
+                setNewRug({ cliente_id: '', cliente_nombre: '', dims: '', type: '', notes: '', isPickup: false, pickupDate: '', pickupTime: '', sector: '', direccion: '', telefono: '', cantidad: 1 });
+                setPhotosPreview([null]);
+            }
+        } catch (error: any) {
+            console.error('Error grabando alfombras:', error);
+            alert('Error al grabar los datos: ' + (error.message || 'Error desconocido de red'));
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -433,7 +450,12 @@ export const AlfombrasPage = () => {
                                     {Array.from({ length: newRug.cantidad }).map((_, idx) => (
                                         <div key={idx} className="flex flex-col gap-2">
                                             <div className="relative w-full h-40 bg-muted rounded-xl flex flex-col items-center justify-center border-2 border-dashed border-muted-foreground/25">
-                                                {photosPreview[idx] ? (
+                                                {compressingIdx === idx ? (
+                                                    <div className="flex flex-col items-center">
+                                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
+                                                        <p className="text-sm font-bold text-blue-600">Comprimiendo...</p>
+                                                    </div>
+                                                ) : photosPreview[idx] ? (
                                                     <img src={photosPreview[idx]!} alt={`Preview ${idx + 1}`} className="w-full h-full object-cover rounded-xl" />
                                                 ) : (
                                                     <div className="text-center p-4">
@@ -581,10 +603,29 @@ export const AlfombrasPage = () => {
                             <p className="text-lg font-bold text-blue-900">{addBusinessDays(new Date(), 5).toLocaleDateString()}</p>
                         </div>
 
-                        <div className="pt-4">
-                            <Button type="submit" size="lg" className="h-14 w-full text-lg font-bold bg-green-600 hover:bg-green-700 shadow-lg">
-                                Ingresar Alfombra
+                        <div className="pt-4 pb-20">
+                            <Button 
+                                type="submit" 
+                                size="lg" 
+                                disabled={isSubmitting || compressingIdx !== null}
+                                className={`h-14 w-full text-lg font-bold shadow-lg transition-all ${
+                                    isSubmitting ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700'
+                                }`}
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                                        Registrando...
+                                    </>
+                                ) : (
+                                    'Ingresar Alfombra'
+                                )}
                             </Button>
+                            {isSubmitting && (
+                                <p className="text-center text-xs text-muted-foreground mt-2 animate-pulse">
+                                    Por favor espere, estamos guardando los datos en la nube...
+                                </p>
+                            )}
                         </div>
                     </form>
                 </FullScreenDialog>

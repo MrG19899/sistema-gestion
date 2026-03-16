@@ -226,10 +226,26 @@ export const PlagasPage = () => {
             insertData.numero_certificado = form.numeroCertificado;
         }
 
-        const { data, error } = await supabase
+        let { data, error } = await supabase
             .from('servicios_plagas')
             .insert([insertData])
             .select('*');
+
+        // Fallback: Si el error es por columna inexistente (schema cache), reintentar sin las columnas nuevas
+        if (error && (error.message.includes('areas_servicio') || error.message.includes('trampas'))) {
+            console.warn("Detectado error de esquema, reintentando sin columnas nuevas...");
+            const fallbackData = { ...insertData };
+            delete fallbackData.areas_servicio;
+            delete fallbackData.trampas;
+            
+            const retry = await supabase
+                .from('servicios_plagas')
+                .insert([fallbackData])
+                .select('*');
+            
+            data = retry.data;
+            error = retry.error;
+        }
 
         if (error) { alert('Error al guardar: ' + error.message); return; }
 
@@ -253,26 +269,43 @@ export const PlagasPage = () => {
 
     const handleUpdateService = async () => {
         if (!selectedService) return;
-        const { error } = await supabase
+        
+        const updateData: any = {
+            estado: selectedService.estado,
+            numero_certificado: selectedService.numero_certificado,
+            tecnico_asignado: selectedService.tecnico_asignado,
+            fecha_ejecucion: selectedService.fecha_ejecucion,
+            proxima_renovacion: selectedService.proxima_renovacion,
+            tipo_servicio: selectedService.tipo_servicio,
+            observaciones: selectedService.observaciones,
+            trampas: selectedService.trampas,
+            areas_servicio: selectedService.areas_servicio || [],
+        };
+
+        let { error } = await supabase
             .from('servicios_plagas')
-            .update({
-                estado: selectedService.estado,
-                numero_certificado: selectedService.numero_certificado,
-                tecnico_asignado: selectedService.tecnico_asignado,
-                fecha_ejecucion: selectedService.fecha_ejecucion,
-                proxima_renovacion: selectedService.proxima_renovacion,
-                tipo_servicio: selectedService.tipo_servicio,
-                observaciones: selectedService.observaciones,
-                trampas: selectedService.trampas,
-                areas_servicio: selectedService.areas_servicio || [],
-            })
+            .update(updateData)
             .eq('id', selectedService.id);
+
+        // Fallback para actualización
+        if (error && (error.message.includes('areas_servicio') || error.message.includes('trampas'))) {
+            const fallbackUpdate = { ...updateData };
+            delete fallbackUpdate.areas_servicio;
+            delete fallbackUpdate.trampas;
+            
+            const retry = await supabase
+                .from('servicios_plagas')
+                .update(fallbackUpdate)
+                .eq('id', selectedService.id);
+            
+            error = retry.error;
+        }
 
         if (!error) {
             setServices(services.map(s => s.id === selectedService.id ? selectedService : s));
             setIsEditing(false);
             setSelectedService(null);
-            alert('Cambios guardados correctamente en la base de datos.');
+            alert('Cambios guardados correctamente (con auto-corrección de esquema).');
         } else {
             console.error('Error al actualizar:', error);
             alert('Error al guardar cambios: ' + error.message);

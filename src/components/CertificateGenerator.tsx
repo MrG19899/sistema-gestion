@@ -268,22 +268,22 @@ export const CertificateGenerator: React.FC<CertPropsReal> = ({ service }) => {
                 >
                     {selectedTemplate === templateRoedoresImg && (
                         <>
-                            {/* ROEDORES - Coordenadas Excatas (Ajustadas a X:0 Y:0) */}
-                            <div className="absolute top-[208px] right-[210px] font-bold text-sm tracking-tight">{service.numero_certificado || '---'}</div>
+                            {/* ROEDORES - Coordenadas Finales Horneadas (X:110, Y:60) */}
+                            <div className="absolute top-[373px] right-[100px] font-bold text-sm tracking-tight">{service.numero_certificado || '---'}</div>
                             
-                            <div className="absolute top-[305px] left-[280px] text-[10px] font-bold w-[250px] uppercase truncate">{service.direccion || '—'}</div>
-                            <div className="absolute top-[305px] left-[630px] text-[10px] font-bold w-[120px] uppercase truncate">{service.cliente_nombre}</div>
+                            <div className="absolute top-[470px] left-[280px] text-[10px] font-bold w-[250px] uppercase truncate">{service.direccion || '—'}</div>
+                            <div className="absolute top-[470px] left-[630px] text-[10px] font-bold w-[120px] uppercase truncate">{service.cliente_nombre}</div>
                             
-                            <div className="absolute top-[320px] left-[280px] text-[10px] font-bold w-[250px] uppercase truncate">{service.cliente_nombre}</div>
-                            <div className="absolute top-[320px] left-[630px] text-[10px] font-bold w-[120px]">—</div>
+                            <div className="absolute top-[485px] left-[280px] text-[10px] font-bold w-[250px] uppercase truncate">{service.cliente_nombre}</div>
+                            <div className="absolute top-[485px] left-[630px] text-[10px] font-bold w-[120px]">—</div>
                             
-                            <div className="absolute top-[337px] left-[280px] text-[10px] font-bold w-[250px] uppercase truncate">{service.tecnico_asignado || '—'}</div>
-                            <div className="absolute top-[337px] left-[630px] text-[10px] font-bold w-[120px]">—</div>
+                            <div className="absolute top-[502px] left-[280px] text-[10px] font-bold w-[250px] uppercase truncate">{service.tecnico_asignado || '—'}</div>
+                            <div className="absolute top-[502px] left-[630px] text-[10px] font-bold w-[120px]">—</div>
 
-                            {/* ROEDORES - Tabla de Trampas (Ajustada) */}
-                            <div className="absolute top-[411px] left-[13px] right-[203px] flex flex-col">
+                            {/* ROEDORES - Tabla de Trampas (Ajuste fino de celdas) */}
+                            <div className="absolute top-[580px] left-[140px] right-[76px] flex flex-col">
                                 {trampas.slice(0, 16).map((t, idx) => (
-                                    <div key={t.id || idx} className="grid grid-cols-[38px_30px_160px_90px_70px_110px_1fr] h-[14.5px] items-center text-[8px] pl-1">
+                                    <div key={t.id || idx} className="grid grid-cols-[38px_30px_160px_90px_70px_110px_1fr] h-[19px] items-center text-[9px] pl-1">
                                         <div className="text-center font-bold px-1">RT</div>
                                         <div className="text-center font-bold leading-none">{idx + 1}</div>
                                         <div className="px-2 truncate leading-none uppercase font-bold">{t.ubicacion}</div>
@@ -295,8 +295,8 @@ export const CertificateGenerator: React.FC<CertPropsReal> = ({ service }) => {
                                 ))}
                             </div>
 
-                            <div className="absolute top-[649px] left-[590px] text-[11px] font-bold">{fechaServicio}</div>
-                            <div className="absolute top-[690px] left-[130px] right-[120px] text-[9px] w-[500px] uppercase leading-tight font-bold text-slate-800">
+                            <div className="absolute top-[908px] left-[590px] text-[11px] font-bold">{fechaServicio}</div>
+                            <div className="absolute top-[952px] left-[130px] right-[120px] text-[9px] w-[500px] uppercase leading-tight font-bold text-slate-800">
                                 {service.observaciones || 'Se recomienda mantener limpieza periódica y evitar acumulación de residuos en las áreas tratadas.'}
                             </div>
                         </>
@@ -321,40 +321,40 @@ export const CertificateGenerator: React.FC<CertPropsReal> = ({ service }) => {
 
                     {selectedTemplate === templateSanitizacionImg && (
                         <>
-                            {/* SANITIZACION - Coordenadas Re-ajustadas (Bajadas ~160px adicionales a la anterior) */}
+                            {/* SANITIZACION - Coordenadas Ajustadas masivamente */}
                             <div className="absolute top-[132px] left-[705px] font-bold text-sm tracking-wide">{service.numero_certificado || '---'}</div>
                             <div className="absolute top-[150px] left-[705px] font-bold text-sm tracking-wide">{fechaServicio}</div>
                             
-                            <div className="absolute top-[522px] left-[150px] text-[10px] font-bold w-[400px] uppercase">{service.direccion || '—'}</div>
-                            <div className="absolute top-[562px] left-[150px] text-[10px] font-bold w-[400px]">—</div>
-                            <div className="absolute top-[600px] left-[150px] text-[10px] font-bold w-[400px] uppercase">{service.cliente_nombre}</div>
+                            <div className="absolute top-[430px] left-[150px] text-[10px] font-bold w-[400px] uppercase">{service.direccion || '—'}</div>
+                            <div className="absolute top-[470px] left-[150px] text-[10px] font-bold w-[400px]">—</div>
+                            <div className="absolute top-[510px] left-[150px] text-[10px] font-bold w-[400px] uppercase">{service.cliente_nombre}</div>
                             
-                            <div className="absolute top-[685px] left-[70px] text-[9px] font-bold w-[450px] uppercase leading-relaxed">
+                            <div className="absolute top-[595px] left-[70px] text-[9px] font-bold w-[450px] uppercase leading-relaxed">
                                 {service.tipos_servicio?.join(', ')}
                             </div>
 
-                            <div className="absolute top-[775px] left-[70px] text-[8px] uppercase font-bold w-[450px] leading-tight pr-4">
+                            <div className="absolute top-[685px] left-[70px] text-[8px] uppercase font-bold w-[450px] leading-tight pr-4">
                                 {service.observaciones || 'Aplicación de amonio cuaternario y desinfección preventiva en superficies de alto contacto.'}
                             </div>
                             
-                            <div className="absolute top-[901px] left-[330px] text-[12px] font-bold">{fechaServicio}</div>
-                            <div className="absolute top-[920px] left-[330px] text-[12px] font-bold">{fechaVencimiento !== 'N/A' ? fechaVencimiento : ''}</div>
+                            <div className="absolute top-[811px] left-[330px] text-[12px] font-bold">{fechaServicio}</div>
+                            <div className="absolute top-[830px] left-[330px] text-[12px] font-bold">{fechaVencimiento !== 'N/A' ? fechaVencimiento : ''}</div>
                         </>
                     )}
 
                     {/* Firma Cliente */}
-                    <div className="absolute bottom-[135px] left-[130px] w-56 flex flex-col items-center">
+                    <div className="absolute bottom-[185px] left-[130px] w-56 flex flex-col items-center">
                         {signature ? (
-                            <img src={signature} alt="Firma Cliente" className="h-16 mb-1 object-contain mix-blend-multiply" />
+                            <img src={signature} alt="Firma Cliente" className="h-20 mb-1 object-contain mix-blend-multiply" />
                         ) : (
-                            <div className="h-16 mb-1"></div>
+                            <div className="h-20 mb-1"></div>
                         )}
                         <p className="text-[10px] font-bold text-gray-800 uppercase text-center w-full px-2 leading-none">{service.cliente_nombre}</p>
                     </div>
 
                     {/* Firma Técnico (Firma Dueño cargada de assets) */}
-                    <div className="absolute bottom-[130px] right-[130px] w-56 flex flex-col items-center">
-                        <img src={firmaDuenioImg} alt="Firma Autorizada" className="h-[88px] -mb-4 object-contain mix-blend-multiply" />
+                    <div className="absolute bottom-[180px] right-[130px] w-56 flex flex-col items-center">
+                        <img src={firmaDuenioImg} alt="Firma Autorizada" className="h-[95px] -mb-5 object-contain mix-blend-multiply" />
                         <p className="text-[10px] font-bold text-gray-800 uppercase text-center w-full px-2 leading-none">{service.tecnico_asignado || 'Francisco García C.'}</p>
                     </div>
                 </div>

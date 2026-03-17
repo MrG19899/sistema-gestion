@@ -9,7 +9,6 @@ import { SignaturePad } from './SignaturePad';
 import templateRoedoresImg from '../assets/template_roedores.png';
 import templateDesinsectacionImg from '../assets/template_desinsectacion.png';
 import templateSanitizacionImg from '../assets/template_sanitizacion.png';
-import logoImg from '../assets/logo_telolimpio.jpg';
 import firmaDuenioImg from '../assets/firma_dueño.jpg';
 
 export interface AreaServicio {

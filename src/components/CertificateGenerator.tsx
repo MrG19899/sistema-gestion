@@ -281,21 +281,21 @@ export const CertificateGenerator: React.FC<CertPropsReal> = ({ service }) => {
 
                             {/* ROEDORES - Tabla de Trampas */}
                             <div className="absolute top-[515px] left-[108px] right-[108px]">
-                                {trampas.slice(0, 10).map((t, idx) => (
-                                    <div key={t.id || idx} className="grid grid-cols-[33px_33px_120px_88px_73px_95px_flex-1] h-[20.8px] items-center text-[10px] pl-1">
+                                {trampas.slice(0, 16).map((t, idx) => (
+                                    <div key={t.id || idx} className="grid grid-cols-[38px_30px_160px_90px_70px_110px_flex-1] h-[13.8px] items-center text-[9px] pl-1">
                                         <div className="text-center font-bold px-1">RT</div>
-                                        <div className="text-center font-bold">{idx + 1}</div>
-                                        <div className="px-2 truncate leading-tight uppercase text-[9px] font-bold">{t.ubicacion}</div>
-                                        <div className="text-center px-1 font-bold pt-[2px]">100g</div>
-                                        <div className="text-center capitalize px-1 font-bold pt-[1px]">{t.estado === 'activa' ? 'NO' : 'SI'}</div>
-                                        <div className="text-center px-1 font-bold pt-[1px]">{fechaVencimiento !== 'N/A' ? fechaVencimiento : 'N/A'}</div>
-                                        <div className="pl-3 truncate text-[9px] uppercase font-bold text-slate-700">{t.estado}</div>
+                                        <div className="text-center font-bold leading-none">{idx + 1}</div>
+                                        <div className="px-2 truncate leading-none uppercase font-bold">{t.ubicacion}</div>
+                                        <div className="text-center px-1 font-bold pt-[1px] leading-none">100g</div>
+                                        <div className="text-center capitalize px-1 font-bold pt-[1px] leading-none">{t.estado === 'activa' ? 'NO' : 'SI'}</div>
+                                        <div className="text-center px-1 font-bold pt-[1px] leading-none">{fechaVencimiento !== 'N/A' ? fechaVencimiento : 'N/A'}</div>
+                                        <div className="pl-3 truncate uppercase font-bold text-slate-700 leading-none">{t.estado}</div>
                                     </div>
                                 ))}
                             </div>
 
-                            <div className="absolute top-[752px] left-[452px] text-xs font-bold">{fechaServicio}</div>
-                            <div className="absolute top-[825px] left-[130px] right-[120px] text-[10px] uppercase leading-tight font-bold text-slate-800">
+                            <div className="absolute top-[754px] left-[480px] text-[11px] font-bold">{fechaServicio}</div>
+                            <div className="absolute top-[795px] left-[130px] right-[120px] text-[9px] w-[500px] uppercase leading-tight font-bold text-slate-800">
                                 {service.observaciones || 'Se recomienda mantener limpieza periódica y evitar acumulación de residuos en las áreas tratadas.'}
                             </div>
                         </>
@@ -321,26 +321,27 @@ export const CertificateGenerator: React.FC<CertPropsReal> = ({ service }) => {
                     {selectedTemplate === templateSanitizacionImg && (
                         <>
                             {/* SANITIZACION - Coordenadas Exactas */}
-                            <div className="absolute top-[252px] left-[555px] font-bold text-sm tracking-wide">{service.numero_certificado || '---'}</div>
-                            <div className="absolute top-[267px] left-[555px] font-bold text-sm tracking-wide">{fechaServicio}</div>
+                            <div className="absolute top-[230px] left-[595px] font-bold text-sm tracking-wide">{service.numero_certificado || '---'}</div>
+                            <div className="absolute top-[248px] left-[595px] font-bold text-sm tracking-wide">{fechaServicio}</div>
                             
                             {/* Bloque principal Sanitización */}
-                            <div className="absolute top-[452px] left-[150px] text-xs font-bold w-[450px] uppercase">{service.direccion || '—'}</div>
-                            <div className="absolute top-[484px] left-[150px] text-xs font-bold w-[450px] uppercase">{service.cliente_nombre}</div>
-                            <div className="absolute top-[468px] left-[150px] text-xs font-bold w-[450px]">{/* RUT */}</div>
+                            <div className="absolute top-[466px] left-[250px] text-[11px] font-bold w-[400px] uppercase outline-none">{service.direccion || '—'}</div>
+                            <div className="absolute top-[507px] left-[250px] text-[11px] font-bold w-[400px] outline-none">{/* RUT */}</div>
+                            <div className="absolute top-[545px] left-[250px] text-[11px] font-bold w-[400px] uppercase outline-none">{service.cliente_nombre}</div>
                             
                             {/* Detalle del trabajo */}
-                            <div className="absolute top-[528px] left-[150px] text-[11px] font-bold w-[450px] uppercase leading-relaxed">
+                            <div className="absolute top-[630px] left-[170px] text-[10px] font-bold w-[450px] uppercase leading-relaxed outline-none">
                                 {service.tipos_servicio?.join(', ')}
                             </div>
 
                             {/* Observaciones Sanitización */}
-                            <div className="absolute top-[620px] left-[150px] text-[10px] uppercase font-bold w-[450px] leading-tight pr-4">
+                            <div className="absolute top-[720px] left-[170px] text-[9px] uppercase font-bold w-[450px] leading-tight pr-4 outline-none">
                                 {service.observaciones || 'Aplicación de amonio cuaternario y desinfección preventiva en superficies de alto contacto.'}
                             </div>
                             
-                            <div className="absolute top-[690px] left-[445px] text-sm font-bold">{fechaServicio}</div>
-                            <div className="absolute top-[705px] left-[445px] text-sm font-bold">{fechaVencimiento !== 'N/A' ? fechaVencimiento : ''}</div>
+                            {/* Fechas Finales Bottom */}
+                            <div className="absolute top-[846px] left-[430px] text-sm font-bold">{fechaServicio}</div>
+                            <div className="absolute top-[865px] left-[430px] text-sm font-bold">{fechaVencimiento !== 'N/A' ? fechaVencimiento : ''}</div>
                         </>
                     )}
 

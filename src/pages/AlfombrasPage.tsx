@@ -1015,10 +1015,12 @@ export const AlfombrasPage = () => {
                                                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${item.cliente_direccion || item.ubicacion} ${item.sector || ''}`)}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="hover:text-blue-600 hover:underline flex items-center gap-1 leading-tight"
+                                                className="hover:text-blue-600 hover:underline flex items-center gap-1 leading-tight line-clamp-3"
                                                 title="Abrir en Maps"
                                             >
-                                                {item.cliente_direccion || 'Sin dirección registrada'}
+                                                {item.ubicacion && item.ubicacion !== 'Recepción' && item.ubicacion !== 'Planta' 
+                                                    ? item.ubicacion 
+                                                    : (item.cliente_direccion || item.ubicacion || 'Sin dirección registrada')}
                                             </a>
                                             <span className="text-muted-foreground text-xs">{item.sector || ''}</span>
                                         </div>

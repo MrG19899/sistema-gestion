@@ -213,57 +213,82 @@ export const CertificateGenerator: React.FC<CertPropsReal> = ({ service }) => {
             >
                 {/* ── DATOS DINÁMICOS SOBREPUESTOS ───────────────── */}
                 
-                {/* Folio Correlativo (arriba derecha) */}
-                <div className="absolute top-[188px] right-[85px] font-bold text-lg text-red-700">
-                    {service.numero_certificado || '---'}
-                </div>
+                {/* ── DATOS DINÁMICOS SOBREPUESTOS SEGÚN PLANTILLA ───────────────── */}
+                
+                {selectedTemplate === templateRoedoresImg && (
+                    <>
+                        <div className="absolute top-[188px] right-[85px] font-bold text-lg text-red-700">{service.numero_certificado || '---'}</div>
+                        <div className="absolute top-[284px] left-[200px] text-sm font-medium w-[300px]">{service.direccion || '—'}</div>
+                        <div className="absolute top-[284px] right-[70px] text-sm font-medium w-[200px]">{service.cliente_nombre}</div>
+                        <div className="absolute top-[308px] left-[200px] text-sm font-medium w-[300px]">{service.cliente_nombre}</div>
+                        <div className="absolute top-[308px] right-[70px] text-sm font-medium w-[200px]">—</div>
+                        <div className="absolute top-[332px] left-[200px] text-sm font-medium w-[300px]">{service.tecnico_asignado || '—'}</div>
+                        <div className="absolute top-[332px] right-[70px] text-sm font-medium w-[200px]">—</div>
 
-                {/* Bloque Identificación del Inmueble */}
-                <div className="absolute top-[284px] left-[200px] text-sm font-medium w-[300px]">
-                    {service.direccion || '—'}
-                </div>
-                <div className="absolute top-[284px] right-[70px] text-sm font-medium w-[200px]">
-                    {service.cliente_nombre}
-                </div>
-
-                <div className="absolute top-[308px] left-[200px] text-sm font-medium w-[300px]">
-                    {service.cliente_nombre}
-                </div>
-                <div className="absolute top-[308px] right-[70px] text-sm font-medium w-[200px]">
-                    {/* RUT Propietario - (No lo tenemos, usar guión) */} —
-                </div>
-
-                <div className="absolute top-[332px] left-[200px] text-sm font-medium w-[300px]">
-                    {service.tecnico_asignado || '—'}
-                </div>
-                <div className="absolute top-[332px] right-[70px] text-sm font-medium w-[200px]">
-                    {/* RUT Solicitante */} —
-                </div>
-
-                {/* Tabla de Trampas (Posicionamiento absoluto sobre la tabla de la imagen) */}
-                <div className="absolute top-[420px] left-[111px] right-[100px]">
-                    {trampas.slice(0, 10).map((t, idx) => (
-                        <div key={t.id || idx} className="grid grid-cols-[38px_40px_143px_100px_88px_110px_flex-1] h-[24.5px] items-center text-[10px] pl-1">
-                            <div className="text-center font-bold px-1">RT</div>
-                            <div className="text-center font-bold">{idx + 1}</div>
-                            <div className="px-2 truncate">{t.ubicacion}</div>
-                            <div className="text-center px-1">100g</div>
-                            <div className="text-center capitalize px-1">{t.estado === 'activa' ? 'NO' : 'SI'}</div>
-                            <div className="text-center px-1">{fechaVencimiento !== 'N/A' ? fechaVencimiento : 'N/A'}</div>
-                            <div className="pl-3 italic truncate text-[9px]">{t.estado}</div>
+                        <div className="absolute top-[420px] left-[111px] right-[100px]">
+                            {trampas.slice(0, 10).map((t, idx) => (
+                                <div key={t.id || idx} className="grid grid-cols-[38px_40px_143px_100px_88px_110px_flex-1] h-[24.5px] items-center text-[10px] pl-1">
+                                    <div className="text-center font-bold px-1">RT</div>
+                                    <div className="text-center font-bold">{idx + 1}</div>
+                                    <div className="px-2 truncate">{t.ubicacion}</div>
+                                    <div className="text-center px-1">100g</div>
+                                    <div className="text-center capitalize px-1">{t.estado === 'activa' ? 'NO' : 'SI'}</div>
+                                    <div className="text-center px-1">{fechaVencimiento !== 'N/A' ? fechaVencimiento : 'N/A'}</div>
+                                    <div className="pl-3 italic truncate text-[9px]">{t.estado}</div>
+                                </div>
+                            ))}
                         </div>
-                    ))}
-                </div>
 
-                {/* Fecha inicio tratamiento */}
-                <div className="absolute top-[698px] right-[130px] text-sm font-bold">
-                    {fechaServicio}
-                </div>
+                        <div className="absolute top-[698px] right-[130px] text-sm font-bold">{fechaServicio}</div>
+                        <div className="absolute top-[780px] left-[130px] right-[120px] text-[11px] leading-tight italic text-slate-700">
+                            {service.observaciones || 'Se recomienda mantener limpieza periódica y evitar acumulación de residuos en las áreas tratadas.'}
+                        </div>
+                    </>
+                )}
 
-                {/* Observaciones y recomendaciones */}
-                <div className="absolute top-[780px] left-[130px] right-[120px] text-[11px] leading-tight italic text-slate-700">
-                    {service.observaciones || 'Se recomienda mantener limpieza periódica y evitar acumulación de residuos en las áreas tratadas.'}
-                </div>
+                {selectedTemplate === templateDesinsectacionImg && (
+                    <>
+                        <div className="absolute top-[188px] right-[85px] font-bold text-lg text-red-700">{service.numero_certificado || '---'}</div>
+                        
+                        {/* Coordenadas estimadas para Desinsectación, requiere ajuste fino */}
+                        <div className="absolute top-[284px] left-[200px] text-sm font-medium w-[300px]">{service.direccion || '—'}</div>
+                        <div className="absolute top-[284px] right-[70px] text-sm font-medium w-[200px]">{service.cliente_nombre}</div>
+                        <div className="absolute top-[308px] left-[200px] text-sm font-medium w-[300px]">{service.cliente_nombre}</div>
+                        
+                        {/* Se omiten trampas o se usa otra tabla si corresponde a insectos */}
+                        <div className="absolute top-[698px] right-[130px] text-sm font-bold">{fechaServicio}</div>
+                        <div className="absolute top-[780px] left-[130px] right-[120px] text-[11px] leading-tight italic text-slate-700">
+                            {service.observaciones || 'Tratamiento de desinsectación realizado conforme a normativa.'}
+                        </div>
+                    </>
+                )}
+
+                {selectedTemplate === templateSanitizacionImg && (
+                    <>
+                        <div className="absolute top-[365px] right-[190px] font-bold text-base">{service.numero_certificado || '---'}</div>
+                        <div className="absolute top-[385px] right-[160px] font-bold text-sm">{fechaServicio}</div>
+                        
+                        {/* Bloque principal Sanitización (calculado según captura 2) */}
+                        <div className="absolute top-[550px] left-[150px] text-xs font-bold w-[450px] uppercase">{service.direccion || '—'}</div>
+                        <div className="absolute top-[590px] left-[150px] text-xs font-bold w-[450px] uppercase">{service.cliente_nombre}</div>
+                        <div className="absolute top-[608px] left-[150px] text-xs font-bold w-[450px]">{/* RUT */}</div>
+                        
+                        {/* Detalle del trabajo */}
+                        <div className="absolute top-[650px] left-[150px] text-xs font-medium w-[450px] leading-relaxed">
+                            {service.tipos_servicio?.join(', ')}
+                        </div>
+
+                        {/* Observaciones Sanitización */}
+                        <div className="absolute top-[735px] left-[150px] text-xs font-medium w-[320px] leading-tight pr-4">
+                            {service.observaciones || 'Aplicación de amonio cuaternario y desinfección preventiva en superficies de alto contacto.'}
+                        </div>
+                        
+                        <div className="absolute top-[735px] right-[140px] text-sm font-bold">{fechaVencimiento !== 'N/A' ? fechaVencimiento : ''}</div>
+
+                        <div className="absolute top-[825px] left-[400px] text-sm font-bold">{fechaServicio}</div>
+                        <div className="absolute top-[843px] left-[400px] text-sm font-bold">{fechaVencimiento !== 'N/A' ? fechaVencimiento : ''}</div>
+                    </>
+                )}
 
                 {/* Firma Cliente */}
                 <div className="absolute bottom-[115px] left-[130px] w-56 flex flex-col items-center">

@@ -459,7 +459,7 @@ export const Dashboard: React.FC = () => {
                                                                 onClick={e => e.stopPropagation()}
                                                             >
                                                                 <MapPin className="w-3 h-3 mt-0.5 shrink-0 text-slate-400" />
-                                                                <span className="truncate" title={item.lugar}>{item.lugar}</span>
+                                                                <span className="line-clamp-2 leading-tight" title={item.lugar}>{item.lugar}</span>
                                                             </a>
                                                             <div className="flex items-center gap-2 mt-1">
                                                                 <a 

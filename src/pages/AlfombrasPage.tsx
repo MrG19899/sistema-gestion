@@ -246,9 +246,11 @@ export const AlfombrasPage = () => {
             const today = new Date();
             const deliveryDate = addBusinessDays(today, 5);
             let recepcionFinal = today.toISOString();
+            
+            // Allow pickupTime to be free text ("en la mañana", "15:00")
+            // We just record the date at 09:00:00 as a placeholder to avoid invalid time values
             if (newRug.isPickup && newRug.pickupDate) {
-                const timeStr = newRug.pickupTime || '09:00';
-                recepcionFinal = new Date(`${newRug.pickupDate}T${timeStr}:00`).toISOString();
+                recepcionFinal = new Date(`${newRug.pickupDate}T09:00:00`).toISOString();
             }
 
             const pedido_id = crypto.randomUUID();
@@ -264,7 +266,10 @@ export const AlfombrasPage = () => {
                     fecha_recepcion: recepcionFinal,
                     fecha_entrega: newRug.isPickup ? null : deliveryDate.toISOString(),
                     estado: newRug.isPickup ? 'scheduled_pickup' : 'recepcionada',
-                    ubicacion: newRug.isPickup ? (newRug.direccion || 'Domicilio (Sin detallar)') : 'Recepción',
+                    // Si hay instrucciones de horario, se las añadimos a la ubicación para que el chofer lo vea
+                    ubicacion: newRug.isPickup 
+                        ? `${newRug.direccion || 'Domicilio (Sin detallar)'} ${newRug.pickupTime ? `(Horario/Instr: ${newRug.pickupTime})` : ''}` 
+                        : 'Recepción',
                     sector: newRug.sector,
                     is_pickup: newRug.isPickup,
                     pickup_date: newRug.pickupDate || null,

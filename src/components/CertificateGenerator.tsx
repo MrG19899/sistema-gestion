@@ -54,17 +54,31 @@ export const CertificateGenerator: React.FC<CertPropsReal> = ({ service }) => {
     const [signature, setSignature] = React.useState<string | null>(null);
     const [showSignaturePad, setShowSignaturePad] = React.useState(false);
     const [selectedTemplate, setSelectedTemplate] = React.useState<string>(templateRoedoresImg);
+    const [availableTemplates, setAvailableTemplates] = React.useState<{ id: string, name: string, img: string }[]>([]);
 
+    // Detect all applicable templates based on the service types
     React.useEffect(() => {
         const types = service.tipos_servicio || [];
+        const templates = [];
+
         if (types.includes('desratizacion')) {
-            setSelectedTemplate(templateRoedoresImg);
-        } else if (types.includes('desinsectacion')) {
-            setSelectedTemplate(templateDesinsectacionImg);
-        } else if (types.includes('sanitizacion') || types.includes('fumigacion') || types.includes('integral')) {
-            setSelectedTemplate(templateSanitizacionImg);
-        } else {
-            setSelectedTemplate(templateRoedoresImg); // Default
+            templates.push({ id: 'roedores', name: 'Roedores', img: templateRoedoresImg });
+        }
+        if (types.includes('desinsectacion')) {
+            templates.push({ id: 'desinsectacion', name: 'Desinsectación', img: templateDesinsectacionImg });
+        }
+        if (types.includes('sanitizacion') || types.includes('fumigacion') || types.includes('integral')) {
+            templates.push({ id: 'sanitizacion', name: 'Sanitización', img: templateSanitizacionImg });
+        }
+
+        // Default to roedores if none matched but there's a single service like "control_plagas"
+        if (templates.length === 0) {
+            templates.push({ id: 'roedores', name: 'Control de Plagas', img: templateRoedoresImg });
+        }
+
+        setAvailableTemplates(templates);
+        if (templates.length > 0 && !templates.find(t => t.img === selectedTemplate)) {
+            setSelectedTemplate(templates[0].img);
         }
     }, [service.tipos_servicio]);
 
@@ -82,6 +96,11 @@ export const CertificateGenerator: React.FC<CertPropsReal> = ({ service }) => {
     const generatePDF = async () => {
         if (!certificateRef.current) return;
         try {
+            if (!signature) {
+                const proceed = window.confirm('¿Descargar sin firma del cliente?');
+                if (!proceed) return;
+            }
+
             const defaultFilename = `Certificado_${service.numero_certificado || 'SN'}_${format(new Date(), 'yyyyMMdd')}`;
             const userFilename = window.prompt('Introduce el nombre para el archivo PDF:', defaultFilename);
             
@@ -141,12 +160,31 @@ export const CertificateGenerator: React.FC<CertPropsReal> = ({ service }) => {
 
                 <Button
                     onClick={generatePDF}
-                    disabled={isGenerating || (!signature && !window.confirm('¿Descargar sin firma del cliente?'))}
+                    disabled={isGenerating}
                     className="gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold"
                 >
                     {isGenerating ? '⏳ Generando...' : '📄 Descargar PDF'}
                 </Button>
             </div>
+
+            {/* Pestañas para Selección de Múltiples Certificados */}
+            {availableTemplates.length > 1 && (
+                <div className="flex gap-2 justify-center print:hidden border-b pb-2">
+                    {availableTemplates.map(template => (
+                        <button
+                            key={template.id}
+                            onClick={() => setSelectedTemplate(template.img)}
+                            className={`px-4 py-2 rounded-t-lg font-bold text-sm transition-colors border ${
+                                selectedTemplate === template.img 
+                                    ? 'bg-blue-600 text-white border-blue-600' 
+                                    : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-100'
+                            }`}
+                        >
+                            Ver Cert. {template.name}
+                        </button>
+                    ))}
+                </div>
+            )}
 
             {showSignaturePad && (
                 <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
@@ -174,14 +212,6 @@ export const CertificateGenerator: React.FC<CertPropsReal> = ({ service }) => {
                     fontFamily: '"Geist", sans-serif'
                 }}
             >
-                {/* Logo Overlay only for templates that don't have it (Roedores and Desinsectación) */}
-                {selectedTemplate !== templateSanitizacionImg && (
-                    <img 
-                        src={logoImg} 
-                        alt="Logo Telolimpio" 
-                        className="absolute top-10 left-10 h-28 object-contain mix-blend-multiply" 
-                    />
-                )}
                 {/* ── DATOS DINÁMICOS SOBREPUESTOS ───────────────── */}
                 
                 {/* Folio Correlativo (arriba derecha) */}
@@ -212,16 +242,16 @@ export const CertificateGenerator: React.FC<CertPropsReal> = ({ service }) => {
                 </div>
 
                 {/* Tabla de Trampas (Posicionamiento absoluto sobre la tabla de la imagen) */}
-                <div className="absolute top-[418px] left-[118px] right-[118px]">
+                <div className="absolute top-[420px] left-[111px] right-[100px]">
                     {trampas.slice(0, 10).map((t, idx) => (
-                        <div key={t.id || idx} className="grid grid-cols-[38px_45px_155px_100px_85px_105px_150px] h-[24.5px] items-center text-[10px] pl-1">
-                            <div className="text-center truncate">RT</div> {/* Tipo fijo según el template RT=Roedor? */}
+                        <div key={t.id || idx} className="grid grid-cols-[38px_40px_143px_100px_88px_110px_flex-1] h-[24.5px] items-center text-[10px] pl-1">
+                            <div className="text-center font-bold px-1">RT</div>
                             <div className="text-center font-bold">{idx + 1}</div>
-                            <div className="pl-2 truncate">{t.ubicacion}</div>
-                            <div className="text-center">{/* Cantidad inicial */} 100g</div>
-                            <div className="text-center capitalize">{t.estado === 'activa' ? 'NO' : 'SI'}</div>
-                            <div className="text-center">{fechaVencimiento}</div>
-                            <div className="pl-2 italic truncate text-[9px]">{t.estado}</div>
+                            <div className="px-2 truncate">{t.ubicacion}</div>
+                            <div className="text-center px-1">100g</div>
+                            <div className="text-center capitalize px-1">{t.estado === 'activa' ? 'NO' : 'SI'}</div>
+                            <div className="text-center px-1">{fechaVencimiento !== 'N/A' ? fechaVencimiento : 'N/A'}</div>
+                            <div className="pl-3 italic truncate text-[9px]">{t.estado}</div>
                         </div>
                     ))}
                 </div>
@@ -236,21 +266,20 @@ export const CertificateGenerator: React.FC<CertPropsReal> = ({ service }) => {
                     {service.observaciones || 'Se recomienda mantener limpieza periódica y evitar acumulación de residuos en las áreas tratadas.'}
                 </div>
 
-                {/* FIRMAS ────────────────────────────────────── */}
                 {/* Firma Cliente */}
-                <div className="absolute bottom-[115px] left-[150px] w-48 flex flex-col items-center">
+                <div className="absolute bottom-[115px] left-[130px] w-56 flex flex-col items-center">
                     {signature ? (
                         <img src={signature} alt="Firma Cliente" className="h-16 mb-1 object-contain mix-blend-multiply" />
                     ) : (
                         <div className="h-16 mb-1"></div>
                     )}
-                    <p className="text-[10px] font-bold text-gray-800 uppercase text-center">{service.cliente_nombre}</p>
+                    <p className="text-[10px] font-bold text-gray-800 uppercase text-center w-full px-2">{service.cliente_nombre}</p>
                 </div>
 
                 {/* Firma Técnico (Firma Dueño cargada de assets) */}
-                <div className="absolute bottom-[115px] right-[150px] w-48 flex flex-col items-center">
-                    <img src={firmaDuenioImg} alt="Firma Autorizada" className="h-16 mb-1 object-contain mix-blend-multiply" />
-                    <p className="text-[10px] font-bold text-gray-800 uppercase text-center">{service.tecnico_asignado || 'Francisco García C.'}</p>
+                <div className="absolute bottom-[110px] right-[130px] w-56 flex flex-col items-center">
+                    <img src={firmaDuenioImg} alt="Firma Autorizada" className="h-[88px] -mb-2 object-contain mix-blend-multiply" />
+                    <p className="text-[10px] font-bold text-gray-800 uppercase text-center w-full px-2">{service.tecnico_asignado || 'Francisco García C.'}</p>
                 </div>
 
                 {/* Datos de contacto pie de página (opcional, si el template no los tiene claros) */}

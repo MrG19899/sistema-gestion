@@ -157,48 +157,11 @@ export const Dashboard: React.FC = () => {
             });
 
             // --- ALFOMBRAS ---
-            // LÓGICA DE AGRUPACIÓN:
-            // 1. Agrupar TODAS las alfombras activas por pedido_id
-            // 2. Un pedido aparece en Dashboard como entrega SOLO cuando TODAS sus alfombras son 'ready'
-            // 3. Si aún hay alfombras en proceso, el pedido no aparece en el Dashboard
-            // Agrupar TODAS las alfombras activas por pedido_id
             const pedidosMap: Record<string, any[]> = {};
 
-            alfombras?.forEach((rawItem: any) => {
-                const item = rawItem as any;
-                const estado = item.estado || '';
-
-                // scheduled_pickup siempre va directo (es una cita futura, no un pedido en taller)
-                if (estado === 'scheduled_pickup') {
-                    const dateStr = item.fecha_recepcion;
-                    if (!dateStr) return;
-                    const dateNorm = dateStr.includes('T') ? dateStr : `${dateStr}T12:00:00`;
-                    if (!matchesDateFilter(new Date(dateNorm))) return;
-                    allItems.push({
-                        id: `A-${item.id}`,
-                        titulo: '🚚 Retiro Programado',
-                        servicio: 'ALFOMBRAS',
-                        estado: 'scheduled_pickup',
-                        fechaRaw: dateNorm,
-                        lugar: item.ubicacion || (item.sector ? `Domicilio – ${item.sector}` : 'Domicilio Cliente'),
-                        clienteId: item.cliente_id || '',
-                        cliente: item.cliente_nombre || 'Sin nombre',
-                        telefono: '',
-                        color: 'text-purple-600',
-                        bg: 'bg-purple-600',
-                        sector: item.sector
-                    });
-                    return;
-                }
-
-                // Alfombras en taller (recepcionada, in_process, ready)
-                // Agrupar por pedido_id real, o por (cliente_id + fecha_recepcion) como fallback
-                const pid = (item.pedido_id && item.pedido_id !== item.id)
+            alfombras?.forEach((item: any) => {
+                const key = (item.pedido_id && item.pedido_id !== item.id)
                     ? item.pedido_id
-                    : null;
-
-                const key = pid
-                    ? pid
                     : `${item.cliente_id}_${item.fecha_recepcion || item.created_at?.substring(0, 10)}`;
 
                 if (!pedidosMap[key]) pedidosMap[key] = [];
@@ -207,35 +170,61 @@ export const Dashboard: React.FC = () => {
 
             // Procesar cada grupo de pedido
             Object.values(pedidosMap).forEach(grupo => {
-                if (!grupo || grupo.length === 0) return;
+                if (grupo.length === 0) return;
 
                 const primerItem = grupo[0];
-                const totalEnGrupo = grupo.length;
-                const readyCount = grupo.filter((a: any) => a.estado === 'ready').length;
-
-                // Solo lanzar al Dashboard si TODAS las alfombras del grupo están ready
-                const allReady = readyCount === totalEnGrupo;
-
-                if (allReady) {
-                    allItems.push({
-                        id: `A-Pedido-${primerItem.pedido_id || primerItem.cliente_id}`,
-                        titulo: totalEnGrupo > 1
-                            ? `✅ Entrega de Alfombras (${totalEnGrupo} Listas)`
-                            : '✅ Lista para Entrega',
-                        servicio: 'ALFOMBRAS',
-                        estado: 'ready',
-                        fechaRaw: primerItem.created_at || new Date().toISOString(),
-                        lugar: primerItem.ubicacion || (primerItem.sector ? `Domicilio – ${primerItem.sector}` : 'Domicilio Cliente'),
-                        clienteId: primerItem.cliente_id || '',
-                        cliente: primerItem.cliente_nombre || 'Sin nombre',
-                        telefono: '',
-                        color: 'text-purple-600',
-                        bg: 'bg-purple-600',
-                        sector: primerItem.sector
-                    });
+                const totalItems = grupo.length;
+                
+                // Determinar el estado para el Dashboard
+                // Si alguna es scheduled_pickup, el grupo se trata como retiro (si no ha sido recepcionada ninguna)
+                // Si no, si todas son ready, se trata como entrega
+                // El usuario quiere ver un solo registro por pedido
+                
+                const hasScheduledPickup = grupo.some(a => a.estado === 'scheduled_pickup');
+                const allReady = grupo.every(a => a.estado === 'ready');
+                
+                let titulo = '';
+                let estado = '';
+                let fechaRaw = primerItem.fecha_recepcion || primerItem.created_at || new Date().toISOString();
+                
+                if (hasScheduledPickup) {
+                    titulo = totalItems > 1 ? `🚚 Retiro de Alfombras (${totalItems})` : '🚚 Retiro Programado';
+                    estado = 'scheduled_pickup';
+                    fechaRaw = primerItem.fecha_recepcion || primerItem.created_at;
+                } else if (allReady) {
+                    titulo = totalItems > 1 ? `✅ Entrega de Alfombras (${totalItems} Listas)` : '✅ Lista para Entrega';
+                    estado = 'ready';
+                } else {
+                    // En proceso (pero el usuario quiere ver un registro)
+                    titulo = `🧼 Lavado en Proceso (${totalItems} Alfs.)`;
+                    estado = 'in_process';
                 }
-                // Si NO están todas ready, no se muestra en Dashboard (están en taller)
+
+                if (!fechaRaw) return;
+                const dateNorm = fechaRaw.includes('T') ? fechaRaw : `${fechaRaw}T12:00:00`;
+                if (!matchesDateFilter(new Date(dateNorm))) return;
+
+                allItems.push({
+                    id: `A-Pedido-${keyForGroup(primerItem)}`,
+                    titulo: titulo,
+                    servicio: 'ALFOMBRAS',
+                    estado: estado,
+                    fechaRaw: dateNorm,
+                    lugar: primerItem.ubicacion || (primerItem.sector ? `Domicilio – ${primerItem.sector}` : 'Domicilio Cliente'),
+                    clienteId: primerItem.cliente_id || '',
+                    cliente: primerItem.cliente_nombre || 'Sin nombre',
+                    telefono: '',
+                    color: 'text-purple-600',
+                    bg: 'bg-purple-600',
+                    sector: primerItem.sector
+                });
             });
+
+            function keyForGroup(item: any) {
+                return (item.pedido_id && item.pedido_id !== item.id)
+                    ? item.pedido_id
+                    : `${item.cliente_id}_${item.fecha_recepcion || item.created_at?.substring(0, 10)}`;
+            }
 
             // Ordenar cronológicamente
             allItems.sort((a, b) => new Date(a.fechaRaw).getTime() - new Date(b.fechaRaw).getTime());

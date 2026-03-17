@@ -59,9 +59,9 @@ export const CertificateGenerator: React.FC<CertPropsReal> = ({ service }) => {
     // Calibration State
     const [isCalibrating, setIsCalibrating] = useState(false);
     const [offsets, setOffsets] = useState<Record<string, {x: number, y: number}>>({
-        [templateRoedoresImg]: { x: 0, y: 0 },
-        [templateDesinsectacionImg]: { x: 0, y: 0 },
-        [templateSanitizacionImg]: { x: 0, y: 0 }
+        [templateRoedoresImg]: { x: 110, y: -105 },
+        [templateDesinsectacionImg]: { x: 110, y: -105 },
+        [templateSanitizacionImg]: { x: 110, y: -105 }
     });
 
     const handleNudge = (dx: number, dy: number) => {
@@ -280,16 +280,16 @@ export const CertificateGenerator: React.FC<CertPropsReal> = ({ service }) => {
                             <div className="absolute top-[442px] left-[520px] text-[11px] font-bold w-[200px]">—</div>
 
                             {/* ROEDORES - Tabla de Trampas */}
-                            <div className="absolute top-[515px] left-[108px] right-[108px]">
+                            <div className="absolute top-[516px] left-[108px] right-[108px] flex flex-col">
                                 {trampas.slice(0, 16).map((t, idx) => (
-                                    <div key={t.id || idx} className="grid grid-cols-[38px_30px_160px_90px_70px_110px_flex-1] h-[13.8px] items-center text-[9px] pl-1">
+                                    <div key={t.id || idx} className="grid grid-cols-[38px_30px_160px_90px_70px_110px_1fr] h-[14px] items-center text-[9px] pl-1 border-b border-transparent">
                                         <div className="text-center font-bold px-1">RT</div>
-                                        <div className="text-center font-bold leading-none">{idx + 1}</div>
-                                        <div className="px-2 truncate leading-none uppercase font-bold">{t.ubicacion}</div>
-                                        <div className="text-center px-1 font-bold pt-[1px] leading-none">100g</div>
-                                        <div className="text-center capitalize px-1 font-bold pt-[1px] leading-none">{t.estado === 'activa' ? 'NO' : 'SI'}</div>
-                                        <div className="text-center px-1 font-bold pt-[1px] leading-none">{fechaVencimiento !== 'N/A' ? fechaVencimiento : 'N/A'}</div>
-                                        <div className="pl-3 truncate uppercase font-bold text-slate-700 leading-none">{t.estado}</div>
+                                        <div className="text-center font-bold leading-normal">{idx + 1}</div>
+                                        <div className="px-2 truncate leading-normal uppercase font-bold">{t.ubicacion}</div>
+                                        <div className="text-center px-1 font-bold pt-[1px] leading-normal">100g</div>
+                                        <div className="text-center capitalize px-1 font-bold pt-[1px] leading-normal">{t.estado === 'activa' ? 'NO' : 'SI'}</div>
+                                        <div className="text-center px-1 font-bold pt-[1px] leading-normal">{fechaVencimiento !== 'N/A' ? fechaVencimiento : 'N/A'}</div>
+                                        <div className="pl-3 truncate uppercase font-bold text-slate-700 leading-normal">{t.estado}</div>
                                     </div>
                                 ))}
                             </div>

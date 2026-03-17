@@ -217,30 +217,34 @@ export const CertificateGenerator: React.FC<CertPropsReal> = ({ service }) => {
                 
                 {selectedTemplate === templateRoedoresImg && (
                     <>
-                        <div className="absolute top-[188px] right-[85px] font-bold text-lg text-red-700">{service.numero_certificado || '---'}</div>
-                        <div className="absolute top-[284px] left-[200px] text-sm font-medium w-[300px]">{service.direccion || '—'}</div>
-                        <div className="absolute top-[284px] right-[70px] text-sm font-medium w-[200px]">{service.cliente_nombre}</div>
-                        <div className="absolute top-[308px] left-[200px] text-sm font-medium w-[300px]">{service.cliente_nombre}</div>
-                        <div className="absolute top-[308px] right-[70px] text-sm font-medium w-[200px]">—</div>
-                        <div className="absolute top-[332px] left-[200px] text-sm font-medium w-[300px]">{service.tecnico_asignado || '—'}</div>
-                        <div className="absolute top-[332px] right-[70px] text-sm font-medium w-[200px]">—</div>
+                        {/* ROEDORES - Coordenadas Excatas */}
+                        <div className="absolute top-[313px] right-[100px] font-bold text-sm">{service.numero_certificado || '---'}</div>
+                        <div className="absolute top-[410px] left-[170px] text-[11px] font-bold w-[250px] uppercase truncate">{service.direccion || '—'}</div>
+                        <div className="absolute top-[410px] left-[520px] text-[11px] font-bold w-[200px] uppercase truncate">{service.cliente_nombre}</div>
+                        
+                        <div className="absolute top-[425px] left-[170px] text-[11px] font-bold w-[250px] uppercase truncate">{service.cliente_nombre}</div>
+                        <div className="absolute top-[425px] left-[520px] text-[11px] font-bold w-[200px]">—</div>
+                        
+                        <div className="absolute top-[442px] left-[170px] text-[11px] font-bold w-[250px] uppercase truncate">{service.tecnico_asignado || '—'}</div>
+                        <div className="absolute top-[442px] left-[520px] text-[11px] font-bold w-[200px]">—</div>
 
-                        <div className="absolute top-[420px] left-[111px] right-[100px]">
+                        {/* ROEDORES - Tabla de Trampas */}
+                        <div className="absolute top-[515px] left-[108px] right-[108px]">
                             {trampas.slice(0, 10).map((t, idx) => (
-                                <div key={t.id || idx} className="grid grid-cols-[38px_40px_143px_100px_88px_110px_flex-1] h-[24.5px] items-center text-[10px] pl-1">
+                                <div key={t.id || idx} className="grid grid-cols-[33px_33px_120px_88px_73px_95px_flex-1] h-[20.8px] items-center text-[10px] pl-1">
                                     <div className="text-center font-bold px-1">RT</div>
                                     <div className="text-center font-bold">{idx + 1}</div>
-                                    <div className="px-2 truncate">{t.ubicacion}</div>
-                                    <div className="text-center px-1">100g</div>
-                                    <div className="text-center capitalize px-1">{t.estado === 'activa' ? 'NO' : 'SI'}</div>
-                                    <div className="text-center px-1">{fechaVencimiento !== 'N/A' ? fechaVencimiento : 'N/A'}</div>
-                                    <div className="pl-3 italic truncate text-[9px]">{t.estado}</div>
+                                    <div className="px-2 truncate leading-tight uppercase text-[9px] font-bold">{t.ubicacion}</div>
+                                    <div className="text-center px-1 font-bold pt-[2px]">100g</div>
+                                    <div className="text-center capitalize px-1 font-bold pt-[1px]">{t.estado === 'activa' ? 'NO' : 'SI'}</div>
+                                    <div className="text-center px-1 font-bold pt-[1px]">{fechaVencimiento !== 'N/A' ? fechaVencimiento : 'N/A'}</div>
+                                    <div className="pl-3 truncate text-[9px] uppercase font-bold text-slate-700">{t.estado}</div>
                                 </div>
                             ))}
                         </div>
 
-                        <div className="absolute top-[698px] right-[130px] text-sm font-bold">{fechaServicio}</div>
-                        <div className="absolute top-[780px] left-[130px] right-[120px] text-[11px] leading-tight italic text-slate-700">
+                        <div className="absolute top-[752px] left-[452px] text-xs font-bold">{fechaServicio}</div>
+                        <div className="absolute top-[825px] left-[130px] right-[120px] text-[10px] uppercase leading-tight font-bold text-slate-800">
                             {service.observaciones || 'Se recomienda mantener limpieza periódica y evitar acumulación de residuos en las áreas tratadas.'}
                         </div>
                     </>
@@ -265,28 +269,27 @@ export const CertificateGenerator: React.FC<CertPropsReal> = ({ service }) => {
 
                 {selectedTemplate === templateSanitizacionImg && (
                     <>
-                        <div className="absolute top-[365px] right-[190px] font-bold text-base">{service.numero_certificado || '---'}</div>
-                        <div className="absolute top-[385px] right-[160px] font-bold text-sm">{fechaServicio}</div>
+                        {/* SANITIZACION - Coordenadas Exactas */}
+                        <div className="absolute top-[252px] left-[555px] font-bold text-sm tracking-wide">{service.numero_certificado || '---'}</div>
+                        <div className="absolute top-[267px] left-[555px] font-bold text-sm tracking-wide">{fechaServicio}</div>
                         
-                        {/* Bloque principal Sanitización (calculado según captura 2) */}
-                        <div className="absolute top-[550px] left-[150px] text-xs font-bold w-[450px] uppercase">{service.direccion || '—'}</div>
-                        <div className="absolute top-[590px] left-[150px] text-xs font-bold w-[450px] uppercase">{service.cliente_nombre}</div>
-                        <div className="absolute top-[608px] left-[150px] text-xs font-bold w-[450px]">{/* RUT */}</div>
+                        {/* Bloque principal Sanitización */}
+                        <div className="absolute top-[452px] left-[150px] text-xs font-bold w-[450px] uppercase">{service.direccion || '—'}</div>
+                        <div className="absolute top-[484px] left-[150px] text-xs font-bold w-[450px] uppercase">{service.cliente_nombre}</div>
+                        <div className="absolute top-[468px] left-[150px] text-xs font-bold w-[450px]">{/* RUT */}</div>
                         
                         {/* Detalle del trabajo */}
-                        <div className="absolute top-[650px] left-[150px] text-xs font-medium w-[450px] leading-relaxed">
+                        <div className="absolute top-[528px] left-[150px] text-[11px] font-bold w-[450px] uppercase leading-relaxed">
                             {service.tipos_servicio?.join(', ')}
                         </div>
 
                         {/* Observaciones Sanitización */}
-                        <div className="absolute top-[735px] left-[150px] text-xs font-medium w-[320px] leading-tight pr-4">
+                        <div className="absolute top-[620px] left-[150px] text-[10px] uppercase font-bold w-[450px] leading-tight pr-4">
                             {service.observaciones || 'Aplicación de amonio cuaternario y desinfección preventiva en superficies de alto contacto.'}
                         </div>
                         
-                        <div className="absolute top-[735px] right-[140px] text-sm font-bold">{fechaVencimiento !== 'N/A' ? fechaVencimiento : ''}</div>
-
-                        <div className="absolute top-[825px] left-[400px] text-sm font-bold">{fechaServicio}</div>
-                        <div className="absolute top-[843px] left-[400px] text-sm font-bold">{fechaVencimiento !== 'N/A' ? fechaVencimiento : ''}</div>
+                        <div className="absolute top-[690px] left-[445px] text-sm font-bold">{fechaServicio}</div>
+                        <div className="absolute top-[705px] left-[445px] text-sm font-bold">{fechaVencimiento !== 'N/A' ? fechaVencimiento : ''}</div>
                     </>
                 )}
 

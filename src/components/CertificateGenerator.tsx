@@ -59,9 +59,9 @@ export const CertificateGenerator: React.FC<CertPropsReal> = ({ service }) => {
     // Calibration State
     const [isCalibrating, setIsCalibrating] = useState(false);
     const [offsets, setOffsets] = useState<Record<string, {x: number, y: number}>>({
-        [templateRoedoresImg]: { x: 110, y: -105 },
-        [templateDesinsectacionImg]: { x: 110, y: -105 },
-        [templateSanitizacionImg]: { x: 110, y: -105 }
+        [templateRoedoresImg]: { x: 0, y: 0 },
+        [templateDesinsectacionImg]: { x: 0, y: 0 },
+        [templateSanitizacionImg]: { x: 0, y: 0 }
     });
 
     const handleNudge = (dx: number, dy: number) => {
@@ -268,34 +268,35 @@ export const CertificateGenerator: React.FC<CertPropsReal> = ({ service }) => {
                 >
                     {selectedTemplate === templateRoedoresImg && (
                         <>
-                            {/* ROEDORES - Coordenadas Excatas */}
-                            <div className="absolute top-[313px] right-[100px] font-bold text-sm">{service.numero_certificado || '---'}</div>
-                            <div className="absolute top-[410px] left-[170px] text-[11px] font-bold w-[250px] uppercase truncate">{service.direccion || '—'}</div>
-                            <div className="absolute top-[410px] left-[520px] text-[11px] font-bold w-[200px] uppercase truncate">{service.cliente_nombre}</div>
+                            {/* ROEDORES - Coordenadas Excatas (Ajustadas a X:0 Y:0) */}
+                            <div className="absolute top-[208px] right-[210px] font-bold text-sm tracking-tight">{service.numero_certificado || '---'}</div>
                             
-                            <div className="absolute top-[425px] left-[170px] text-[11px] font-bold w-[250px] uppercase truncate">{service.cliente_nombre}</div>
-                            <div className="absolute top-[425px] left-[520px] text-[11px] font-bold w-[200px]">—</div>
+                            <div className="absolute top-[305px] left-[280px] text-[10px] font-bold w-[250px] uppercase truncate">{service.direccion || '—'}</div>
+                            <div className="absolute top-[305px] left-[630px] text-[10px] font-bold w-[120px] uppercase truncate">{service.cliente_nombre}</div>
                             
-                            <div className="absolute top-[442px] left-[170px] text-[11px] font-bold w-[250px] uppercase truncate">{service.tecnico_asignado || '—'}</div>
-                            <div className="absolute top-[442px] left-[520px] text-[11px] font-bold w-[200px]">—</div>
+                            <div className="absolute top-[320px] left-[280px] text-[10px] font-bold w-[250px] uppercase truncate">{service.cliente_nombre}</div>
+                            <div className="absolute top-[320px] left-[630px] text-[10px] font-bold w-[120px]">—</div>
+                            
+                            <div className="absolute top-[337px] left-[280px] text-[10px] font-bold w-[250px] uppercase truncate">{service.tecnico_asignado || '—'}</div>
+                            <div className="absolute top-[337px] left-[630px] text-[10px] font-bold w-[120px]">—</div>
 
-                            {/* ROEDORES - Tabla de Trampas */}
-                            <div className="absolute top-[516px] left-[108px] right-[108px] flex flex-col">
+                            {/* ROEDORES - Tabla de Trampas (Ajustada) */}
+                            <div className="absolute top-[411px] left-[13px] right-[203px] flex flex-col">
                                 {trampas.slice(0, 16).map((t, idx) => (
-                                    <div key={t.id || idx} className="grid grid-cols-[38px_30px_160px_90px_70px_110px_1fr] h-[14px] items-center text-[9px] pl-1 border-b border-transparent">
+                                    <div key={t.id || idx} className="grid grid-cols-[38px_30px_160px_90px_70px_110px_1fr] h-[14.5px] items-center text-[8px] pl-1">
                                         <div className="text-center font-bold px-1">RT</div>
-                                        <div className="text-center font-bold leading-normal">{idx + 1}</div>
-                                        <div className="px-2 truncate leading-normal uppercase font-bold">{t.ubicacion}</div>
-                                        <div className="text-center px-1 font-bold pt-[1px] leading-normal">100g</div>
-                                        <div className="text-center capitalize px-1 font-bold pt-[1px] leading-normal">{t.estado === 'activa' ? 'NO' : 'SI'}</div>
-                                        <div className="text-center px-1 font-bold pt-[1px] leading-normal">{fechaVencimiento !== 'N/A' ? fechaVencimiento : 'N/A'}</div>
-                                        <div className="pl-3 truncate uppercase font-bold text-slate-700 leading-normal">{t.estado}</div>
+                                        <div className="text-center font-bold leading-none">{idx + 1}</div>
+                                        <div className="px-2 truncate leading-none uppercase font-bold">{t.ubicacion}</div>
+                                        <div className="text-center px-1 font-bold pt-[1px] leading-none">100g</div>
+                                        <div className="text-center capitalize px-1 font-bold pt-[1px] leading-none">{t.estado === 'activa' ? 'NO' : 'SI'}</div>
+                                        <div className="text-center px-1 font-bold pt-[1px] leading-none">{fechaVencimiento !== 'N/A' ? fechaVencimiento : 'N/A'}</div>
+                                        <div className="pl-3 truncate uppercase font-bold text-slate-700 leading-none">{t.estado}</div>
                                     </div>
                                 ))}
                             </div>
 
-                            <div className="absolute top-[754px] left-[480px] text-[11px] font-bold">{fechaServicio}</div>
-                            <div className="absolute top-[795px] left-[130px] right-[120px] text-[9px] w-[500px] uppercase leading-tight font-bold text-slate-800">
+                            <div className="absolute top-[649px] left-[590px] text-[11px] font-bold">{fechaServicio}</div>
+                            <div className="absolute top-[690px] left-[130px] right-[120px] text-[9px] w-[500px] uppercase leading-tight font-bold text-slate-800">
                                 {service.observaciones || 'Se recomienda mantener limpieza periódica y evitar acumulación de residuos en las áreas tratadas.'}
                             </div>
                         </>
@@ -320,45 +321,41 @@ export const CertificateGenerator: React.FC<CertPropsReal> = ({ service }) => {
 
                     {selectedTemplate === templateSanitizacionImg && (
                         <>
-                            {/* SANITIZACION - Coordenadas Exactas */}
-                            <div className="absolute top-[230px] left-[595px] font-bold text-sm tracking-wide">{service.numero_certificado || '---'}</div>
-                            <div className="absolute top-[248px] left-[595px] font-bold text-sm tracking-wide">{fechaServicio}</div>
+                            {/* SANITIZACION - Coordenadas Re-ajustadas (Bajadas ~160px adicionales a la anterior) */}
+                            <div className="absolute top-[132px] left-[705px] font-bold text-sm tracking-wide">{service.numero_certificado || '---'}</div>
+                            <div className="absolute top-[150px] left-[705px] font-bold text-sm tracking-wide">{fechaServicio}</div>
                             
-                            {/* Bloque principal Sanitización */}
-                            <div className="absolute top-[466px] left-[250px] text-[11px] font-bold w-[400px] uppercase outline-none">{service.direccion || '—'}</div>
-                            <div className="absolute top-[507px] left-[250px] text-[11px] font-bold w-[400px] outline-none">{/* RUT */}</div>
-                            <div className="absolute top-[545px] left-[250px] text-[11px] font-bold w-[400px] uppercase outline-none">{service.cliente_nombre}</div>
+                            <div className="absolute top-[522px] left-[150px] text-[10px] font-bold w-[400px] uppercase">{service.direccion || '—'}</div>
+                            <div className="absolute top-[562px] left-[150px] text-[10px] font-bold w-[400px]">—</div>
+                            <div className="absolute top-[600px] left-[150px] text-[10px] font-bold w-[400px] uppercase">{service.cliente_nombre}</div>
                             
-                            {/* Detalle del trabajo */}
-                            <div className="absolute top-[630px] left-[170px] text-[10px] font-bold w-[450px] uppercase leading-relaxed outline-none">
+                            <div className="absolute top-[685px] left-[70px] text-[9px] font-bold w-[450px] uppercase leading-relaxed">
                                 {service.tipos_servicio?.join(', ')}
                             </div>
 
-                            {/* Observaciones Sanitización */}
-                            <div className="absolute top-[720px] left-[170px] text-[9px] uppercase font-bold w-[450px] leading-tight pr-4 outline-none">
+                            <div className="absolute top-[775px] left-[70px] text-[8px] uppercase font-bold w-[450px] leading-tight pr-4">
                                 {service.observaciones || 'Aplicación de amonio cuaternario y desinfección preventiva en superficies de alto contacto.'}
                             </div>
                             
-                            {/* Fechas Finales Bottom */}
-                            <div className="absolute top-[846px] left-[430px] text-sm font-bold">{fechaServicio}</div>
-                            <div className="absolute top-[865px] left-[430px] text-sm font-bold">{fechaVencimiento !== 'N/A' ? fechaVencimiento : ''}</div>
+                            <div className="absolute top-[901px] left-[330px] text-[12px] font-bold">{fechaServicio}</div>
+                            <div className="absolute top-[920px] left-[330px] text-[12px] font-bold">{fechaVencimiento !== 'N/A' ? fechaVencimiento : ''}</div>
                         </>
                     )}
 
                     {/* Firma Cliente */}
-                    <div className="absolute bottom-[115px] left-[130px] w-56 flex flex-col items-center">
+                    <div className="absolute bottom-[135px] left-[130px] w-56 flex flex-col items-center">
                         {signature ? (
                             <img src={signature} alt="Firma Cliente" className="h-16 mb-1 object-contain mix-blend-multiply" />
                         ) : (
                             <div className="h-16 mb-1"></div>
                         )}
-                        <p className="text-[10px] font-bold text-gray-800 uppercase text-center w-full px-2">{service.cliente_nombre}</p>
+                        <p className="text-[10px] font-bold text-gray-800 uppercase text-center w-full px-2 leading-none">{service.cliente_nombre}</p>
                     </div>
 
                     {/* Firma Técnico (Firma Dueño cargada de assets) */}
-                    <div className="absolute bottom-[110px] right-[130px] w-56 flex flex-col items-center">
-                        <img src={firmaDuenioImg} alt="Firma Autorizada" className="h-[88px] -mb-2 object-contain mix-blend-multiply" />
-                        <p className="text-[10px] font-bold text-gray-800 uppercase text-center w-full px-2">{service.tecnico_asignado || 'Francisco García C.'}</p>
+                    <div className="absolute bottom-[130px] right-[130px] w-56 flex flex-col items-center">
+                        <img src={firmaDuenioImg} alt="Firma Autorizada" className="h-[88px] -mb-4 object-contain mix-blend-multiply" />
+                        <p className="text-[10px] font-bold text-gray-800 uppercase text-center w-full px-2 leading-none">{service.tecnico_asignado || 'Francisco García C.'}</p>
                     </div>
                 </div>
 

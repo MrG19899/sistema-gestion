@@ -159,8 +159,33 @@ export const AlfombrasPage = () => {
         return matchesSearch && matchesStatus && matchesSector;
     });
 
-    const totalPages = Math.ceil(filteredRugs.length / itemsPerPage);
-    const paginatedRugs = filteredRugs.slice(
+    // --- LÓGICA DE AGRUPAMIENTO ---
+    const groupedRugs = React.useMemo(() => {
+        const groups: Record<string, ServicioAlfombra[]> = {};
+        
+        filteredRugs.forEach(rug => {
+            const key = rug.pedido_id || rug.id; // Fallback a ID si no hay pedido_id
+            if (!groups[key]) groups[key] = [];
+            groups[key].push(rug);
+        });
+
+        return Object.values(groups).map(group => {
+            if (group.length === 1) return group[0];
+            
+            // Si hay más de una, devolvemos un "objeto resumen" del grupo
+            // Usamos los datos de la primera alfombra del grupo para la fila
+            return {
+                ...group[0],
+                // El total_items ya debería venir de la DB, pero nos aseguramos
+                total_items: group.length,
+                is_group: true,
+                group_ids: group.map(r => r.id)
+            };
+        });
+    }, [filteredRugs]);
+
+    const totalPages = Math.ceil(groupedRugs.length / itemsPerPage);
+    const paginatedRugs = groupedRugs.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
     );
@@ -296,9 +321,10 @@ export const AlfombrasPage = () => {
         }
     };
 
-    const handleConfirmPickup = async (id: string) => {
+    const handleConfirmPickup = async (rug: ServicioAlfombra | any) => {
         const today = new Date();
         const deliveryDate = addBusinessDays(today, 5);
+        const ids = rug.is_group ? rug.group_ids : [rug.id];
 
         const { error } = await supabase
             .from('servicios_alfombras')
@@ -308,11 +334,11 @@ export const AlfombrasPage = () => {
                 ubicacion: 'Planta',
                 fecha_entrega: deliveryDate.toISOString()
             })
-            .eq('id', id);
+            .in('id', ids);
 
         if (!error) {
             setRugs(rugs.map(r =>
-                r.id === id
+                ids.includes(r.id)
                     ? {
                         ...r,
                         estado: 'recepcionada',
@@ -327,15 +353,16 @@ export const AlfombrasPage = () => {
 
     const handleUpdateStatus = async (status: string) => {
         if (!selectedRug) return;
+        const ids = (selectedRug as any).is_group ? (selectedRug as any).group_ids : [selectedRug.id];
 
         const { error } = await supabase
             .from('servicios_alfombras')
             .update({ estado: status })
-            .eq('id', selectedRug.id);
+            .in('id', ids);
 
         if (!error) {
             const updatedRugs = rugs.map(r =>
-                r.id === selectedRug.id ? { ...r, estado: status } : r
+                ids.includes(r.id) ? { ...r, estado: status } : r
             );
             setRugs(updatedRugs);
             setSelectedRug(null);
@@ -384,15 +411,20 @@ export const AlfombrasPage = () => {
         }
     };
 
-    const handleDeleteRug = async (id: string) => {
-        if (window.confirm('¿Estás seguro de que deseas eliminar este registro permanentemente?')) {
+    const handleDeleteRug = async (rug: any) => {
+        if (window.confirm('¿Estás seguro de que deseas eliminar este registro (o el pedido completo si están agrupados) permanentemente?')) {
+            const idsToDelete = rug.is_group ? rug.group_ids : [rug.id];
+            
             const { error } = await supabase
                 .from('servicios_alfombras')
                 .delete()
-                .eq('id', id);
+                .in('id', idsToDelete);
 
             if (!error) {
-                setRugs(rugs.filter(r => r.id !== id));
+                setRugs(rugs.filter(r => !idsToDelete.includes(r.id)));
+                setSelectedRug(null);
+            } else {
+                alert('Error al eliminar: ' + error.message);
             }
         }
     };
@@ -548,13 +580,13 @@ export const AlfombrasPage = () => {
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="pickupTime" className="text-sm font-medium">Bloque Horario</Label>
+                                        <Label htmlFor="pickupTime" className="text-sm font-medium">🕒 Bloque Horario / Instrucciones</Label>
                                         <Input
                                             type="text"
                                             id="pickupTime"
                                             name="pickupTime"
                                             className="h-12 bg-white"
-                                            placeholder="10:00 - 12:00"
+                                            placeholder="Ej: Durante la mañana / 15:00 - 17:00"
                                             value={newRug.pickupTime}
                                             onChange={handleInputChange}
                                         />
@@ -961,8 +993,8 @@ export const AlfombrasPage = () => {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {paginatedRugs.map((item) => (
-                                <TableRow key={item.id}>
+                            {paginatedRugs.map((item: any) => (
+                                <TableRow key={item.id} className={item.is_group ? "bg-slate-50/50" : ""}>
                                     {/* COLUMNA 1: Foto + Indicador de pedido */}
                                     <TableCell className="w-14">
                                         <div className="flex flex-col items-center gap-1">
@@ -983,8 +1015,8 @@ export const AlfombrasPage = () => {
                                             )}
                                             {/* Indicador de item en el pedido */}
                                             {item.total_items && item.total_items > 1 ? (
-                                                <span className="text-[10px] font-bold bg-purple-600 text-white px-1 rounded leading-tight">
-                                                    {item.numero_item}/{item.total_items}
+                                                <span className="text-[10px] font-bold bg-purple-600 text-white px-1.5 py-0.5 rounded leading-tight shadow-sm">
+                                                    {item.is_group ? `${item.total_items} Alfs.` : `${item.numero_item}/${item.total_items}`}
                                                 </span>
                                             ) : null}
                                         </div>
@@ -1085,7 +1117,7 @@ export const AlfombrasPage = () => {
                                                     variant="ghost" size="sm"
                                                     className="hover:bg-green-50 hover:text-green-700"
                                                     title="Confirmar Retiro (Ingreso a Planta)"
-                                                    onClick={() => handleConfirmPickup(item.id)}
+                                                    onClick={() => handleConfirmPickup(item)}
                                                 >
                                                     <Inbox className="h-4 w-4 text-green-600" />
                                                 </Button>
@@ -1094,7 +1126,7 @@ export const AlfombrasPage = () => {
                                                 <Button
                                                     variant="ghost" size="sm"
                                                     className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                    onClick={() => handleDeleteRug(item.id)}
+                                                    onClick={() => handleDeleteRug(item)}
                                                 >
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>

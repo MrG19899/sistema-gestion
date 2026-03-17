@@ -208,8 +208,8 @@ export const PlagasPage = () => {
             cliente_id: form.clienteId,
             cliente_nombre: form.clienteNombre,
             sector: form.sector,
-            tipos_servicio: form.tiposServicio,
-            tipo_servicio: form.tiposServicio.join(', '), // Fallback para compatibilidad
+            tipos_servicio: form.tiposServicio, 
+            tipo_servicio: form.tiposServicio, // Ahora enviamos el array directamente para evitar el error de "malformed array literal"
             tecnico_asignado: form.tecnico,
             fecha_ejecucion: form.fecha,
             direccion: finalAddress,
@@ -276,7 +276,8 @@ export const PlagasPage = () => {
             tecnico_asignado: selectedService.tecnico_asignado,
             fecha_ejecucion: selectedService.fecha_ejecucion,
             proxima_renovacion: selectedService.proxima_renovacion,
-            tipo_servicio: selectedService.tipo_servicio,
+            tipo_servicio: selectedService.tipos_servicio || [selectedService.tipo_servicio], // Aseguramos formato de array
+            tipos_servicio: selectedService.tipos_servicio || [selectedService.tipo_servicio],
             observaciones: selectedService.observaciones,
             trampas: selectedService.trampas,
             areas_servicio: selectedService.areas_servicio || [],

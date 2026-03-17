@@ -6,7 +6,10 @@ import { Badge } from './ui/badge';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { SignaturePad } from './SignaturePad';
-import templateImg from '../assets/template_certificado.jpg';
+import templateRoedoresImg from '../assets/template_roedores.png';
+import templateDesinsectacionImg from '../assets/template_desinsectacion.png';
+import templateSanitizacionImg from '../assets/template_sanitizacion.png';
+import logoImg from '../assets/logo_telolimpio.jpg';
 import firmaDuenioImg from '../assets/firma_dueño.jpg';
 
 export interface AreaServicio {
@@ -50,6 +53,20 @@ export const CertificateGenerator: React.FC<CertPropsReal> = ({ service }) => {
     const [isGenerating, setIsGenerating] = React.useState(false);
     const [signature, setSignature] = React.useState<string | null>(null);
     const [showSignaturePad, setShowSignaturePad] = React.useState(false);
+    const [selectedTemplate, setSelectedTemplate] = React.useState<string>(templateRoedoresImg);
+
+    React.useEffect(() => {
+        const types = service.tipos_servicio || [];
+        if (types.includes('desratizacion')) {
+            setSelectedTemplate(templateRoedoresImg);
+        } else if (types.includes('desinsectacion')) {
+            setSelectedTemplate(templateDesinsectacionImg);
+        } else if (types.includes('sanitizacion') || types.includes('fumigacion') || types.includes('integral')) {
+            setSelectedTemplate(templateSanitizacionImg);
+        } else {
+            setSelectedTemplate(templateRoedoresImg); // Default
+        }
+    }, [service.tipos_servicio]);
 
     const trampas: Trampa[] = Array.isArray(service.trampas) ? service.trampas : [];
 
@@ -151,12 +168,20 @@ export const CertificateGenerator: React.FC<CertPropsReal> = ({ service }) => {
                     width: '210mm', 
                     height: '297mm', 
                     boxSizing: 'border-box',
-                    backgroundImage: `url(${templateImg})`,
+                    backgroundImage: `url(${selectedTemplate})`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     fontFamily: '"Geist", sans-serif'
                 }}
             >
+                {/* Logo Overlay only for templates that don't have it (Roedores and Desinsectación) */}
+                {selectedTemplate !== templateSanitizacionImg && (
+                    <img 
+                        src={logoImg} 
+                        alt="Logo Telolimpio" 
+                        className="absolute top-10 left-10 h-28 object-contain mix-blend-multiply" 
+                    />
+                )}
                 {/* ── DATOS DINÁMICOS SOBREPUESTOS ───────────────── */}
                 
                 {/* Folio Correlativo (arriba derecha) */}

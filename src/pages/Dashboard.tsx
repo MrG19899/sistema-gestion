@@ -199,12 +199,20 @@ export const Dashboard: React.FC = () => {
                     return;
                 }
 
+                const isReadyForDelivery = estado === 'ready';
+                
                 if (!fechaRaw) return;
                 const dateNorm = fechaRaw.includes('T') ? fechaRaw : `${fechaRaw}T12:00:00`;
-                if (!matchesDateFilter(new Date(dateNorm))) return;
+                
+                // Si está listo para entrega, lo mostramos siempre (es una tarea pendiente de despacho)
+                // de lo contrario, aplicamos el filtro normal de fecha (programados para hoy/semana)
+                if (!isReadyForDelivery && !matchesDateFilter(new Date(dateNorm))) return;
+
+                const groupKey = keyForGroup(primerItem);
+                const displayId = groupKey.length > 20 ? groupKey.substring(0, 6) : groupKey;
 
                 allItems.push({
-                    id: `A-Pedido-${keyForGroup(primerItem)}`,
+                    id: `A-Pedido-${displayId}`,
                     titulo: titulo,
                     servicio: 'ALFOMBRAS',
                     estado: estado,
@@ -428,7 +436,12 @@ export const Dashboard: React.FC = () => {
                                                                 <span className={`px-2 py-0.5 rounded-md text-[10px] font-black text-white uppercase tracking-tighter ${item.bg}`}>
                                                                     {item.servicio}
                                                                 </span>
-                                                                <code className="text-[10px] text-slate-400 font-mono">#{item.id.split('-').pop()?.substring(0, 6)}</code>
+                                                                <code className="text-[10px] text-slate-400 font-mono">
+                                                                    {item.id.includes('Pedido') ? '📦 PED-' : '#'}{item.id.split('-').pop()?.substring(0, 6)}
+                                                                </code>
+                                                            </div>
+                                                            <div className="text-[11px] font-bold text-slate-700 leading-tight">
+                                                                {item.titulo}
                                                             </div>
                                                             <div className="flex items-center gap-1.5">
                                                                 {isDone ? (

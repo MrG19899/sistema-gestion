@@ -195,9 +195,8 @@ export const Dashboard: React.FC = () => {
                     titulo = totalItems > 1 ? `✅ Entrega de Alfombras (${totalItems} Listas)` : '✅ Lista para Entrega';
                     estado = 'ready';
                 } else {
-                    // En proceso (pero el usuario quiere ver un registro)
-                    titulo = `🧼 Lavado en Proceso (${totalItems} Alfs.)`;
-                    estado = 'in_process';
+                    // En taller (recepcionada o en proceso): El usuario quiere que salgan del dashboard
+                    return;
                 }
 
                 if (!fechaRaw) return;

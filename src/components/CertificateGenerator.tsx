@@ -283,7 +283,7 @@ export const CertificateGenerator: React.FC<CertPropsReal> = ({ service }) => {
                             {/* ROEDORES - Tabla de Trampas (Ajuste fino de celdas) */}
                             <div className="absolute top-[580px] left-[140px] right-[76px] flex flex-col">
                                 {trampas.slice(0, 16).map((t, idx) => (
-                                    <div key={t.id || idx} className="grid grid-cols-[38px_30px_160px_90px_70px_110px_1fr] h-[19px] items-center text-[9px] pl-1">
+                                    <div key={t.id || idx} className="grid grid-cols-[38px_30px_160px_90px_70px_110px_1fr] h-[19px] items-center text-[8.5px] pl-1">
                                         <div className="text-center font-bold px-1">RT</div>
                                         <div className="text-center font-bold leading-none">{idx + 1}</div>
                                         <div className="px-2 truncate leading-none uppercase font-bold">{t.ubicacion}</div>
